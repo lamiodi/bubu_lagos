@@ -1,0 +1,72 @@
+services:
+  - type: web
+    name: bubu-lagos-backend
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm ci
+    preDeployCommand: npm run migrate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bubu-lagos-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        value: noreply@bubulagos.com
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: UPLOADS_PATH
+        value: /data/uploads
+      - key: CORS_ORIGIN
+        value: https://your-vercel-domain.vercel.app  # Update after Vercel deployment
+      - key: FRONTEND_URL
+        value: https://your-vercel-domain.vercel.app
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+      - key: PG_POOL_MAX
+        value: "10"
+      - key: EMAIL_TIMEOUT_MS
+        value: "5000"
+    disk:
+      name: uploads
+      mountPath: /data/uploads
+      sizeGB: 1
+
+  - type: web
+    name: bubu-lagos-frontend
+    env: static
+    region: oregon
+    plan: starter
+    buildCommand: cd bubu-lagos-web && npm ci && npm run build
+    staticPublishPath: bubu-lagos-web/dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://bubu-lagos-backend.onrender.com/api/*
+    envVars:
+      - key: VITE_API_URL
+        value: https://bubu-lagos-backend.onrender.com
+
+databases:
+  - name: bubu-lagos-db
+    region: oregon
+    plan: starter

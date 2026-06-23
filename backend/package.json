@@ -1,0 +1,39 @@
+{
+  "name": "bubu-lagos-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Bubu Lagos",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "migrate": "node src/migrate.js",
+    "lint": "eslint src --ext js --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "paystack": "^2.0.1",
+    "pg": "^8.13.3",
+    "resend": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.16",
+    "eslint": "^8.56.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0",
+    "vitest": "^4.0.16"
+  }
+}
