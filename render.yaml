@@ -25,7 +25,7 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: FROM_EMAIL
-        value: noreply@bubulagos.com
+        value: noreply@bubulagos.org
       - key: ADMIN_EMAIL
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
