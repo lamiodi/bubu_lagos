@@ -1,0 +1,3 @@
+# Ignore everything except the frontend directory
+*
+!bubu-lagos-web/
