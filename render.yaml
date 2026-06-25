@@ -37,7 +37,7 @@ services:
       - key: UPLOADS_PATH
         value: /data/uploads
       - key: CORS_ORIGIN
-        value: https://www.bubulagos.org
+        value: https://www.bubulagos.org,https://bubulagos.org
       - key: FRONTEND_URL
         value: https://www.bubulagos.org
       - key: RATE_LIMIT_MAX_REQUESTS
