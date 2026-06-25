@@ -9,7 +9,7 @@
  * - Single `request()` path used by every verb (get, post, put, delete, upload).
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 let sessionKind = 'customer'; // 'admin' | 'customer'
 
@@ -51,7 +51,7 @@ function clearSession() {
 }
 
 async function request(endpoint, { method = 'GET', body, headers = {}, isForm = false, signal } = {}) {
-  const url = `${API_URL}${endpoint}`;
+  const url = `${API_BASE}${endpoint}`;
 
   const config = {
     method,
