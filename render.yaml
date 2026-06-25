@@ -37,9 +37,9 @@ services:
       - key: UPLOADS_PATH
         value: /data/uploads
       - key: CORS_ORIGIN
-        value: https://your-vercel-domain.vercel.app  # Update after Vercel deployment
+        value: https://www.bubulagos.org
       - key: FRONTEND_URL
-        value: https://your-vercel-domain.vercel.app
+        value: https://www.bubulagos.org
       - key: RATE_LIMIT_MAX_REQUESTS
         value: "100"
       - key: PG_POOL_MAX
@@ -61,10 +61,10 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://bubu-lagos-backend.onrender.com/api/*
+        destination: https://bubu-lagos-backend.onrender.com/api/*  # update if your render service name differs
     envVars:
       - key: VITE_API_URL
-        value: https://bubu-lagos-backend.onrender.com
+        value: https://bubu-lagos-backend.onrender.com/api
 
 databases:
   - name: bubu-lagos-db
