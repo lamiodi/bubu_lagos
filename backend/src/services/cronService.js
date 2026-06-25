@@ -1,5 +1,21 @@
 import { query, getClient } from '../db.js';
 
+// ---------------------------------------------------------------------------
+// Self-pinger — keeps the Render free-tier instance from spinning down by
+// hitting our own /api/health endpoint every 14 minutes. Render's free plan
+// sleeps after 15 minutes of inactivity, so this stays just under that.
+// ---------------------------------------------------------------------------
+const HEALTH_URL = process.env.HEALTH_URL || 'http://localhost:5000/api/health';
+
+const selfPing = async () => {
+  try {
+    const res = await fetch(HEALTH_URL, { signal: AbortSignal.timeout(10000) });
+    console.log(`[self-ping] ${res.status} ${res.statusText}`);
+  } catch (err) {
+    console.warn(`[self-ping] failed: ${err.message}`);
+  }
+};
+
 export const cleanupPendingOrders = async () => {
   const client = await getClient();
   try {
@@ -48,7 +64,9 @@ export const cleanupPendingOrders = async () => {
 };
 
 export const startCronJobs = () => {
+  // Self-ping every 14 minutes to keep Render free tier awake
+  setInterval(selfPing, 14 * 60 * 1000);
   // Run every 15 minutes
   setInterval(cleanupPendingOrders, 15 * 60 * 1000);
-  console.log('Cron jobs started (Pending orders cleanup every 15m)');
+  console.log('Cron jobs started (self-ping every 14m, pending orders cleanup every 15m)');
 };

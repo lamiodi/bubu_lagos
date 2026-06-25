@@ -162,7 +162,11 @@ app.use((req, res, next) => {
 // Static uploads (legacy disk-backed images). New uploads go to Cloudinary.
 // ---------------------------------------------------------------------------
 const uploadsPath = process.env.UPLOADS_PATH || path.join(__dirname, 'uploads');
-if (!existsSync(uploadsPath)) mkdirSync(uploadsPath, { recursive: true });
+try {
+  if (!existsSync(uploadsPath)) mkdirSync(uploadsPath, { recursive: true });
+} catch (e) {
+  console.warn(`[bubu] Could not create uploads dir at startup: ${e.message}`);
+}
 app.use('/uploads', express.static(uploadsPath));
 
 // ---------------------------------------------------------------------------
