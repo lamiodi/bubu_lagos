@@ -9,11 +9,13 @@ const __dirname = path.dirname(__filename);
 const uploadsDir = process.env.UPLOADS_PATH || path.join(__dirname, '..', 'uploads');
 const productsDir = path.join(uploadsDir, 'products');
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-if (!fs.existsSync(productsDir)) {
-  fs.mkdirSync(productsDir, { recursive: true });
+// Render mounts the disk at /data/uploads at runtime, but it may not exist
+// at import time. Lazy-create on first upload instead of crashing at startup.
+try {
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  if (!fs.existsSync(productsDir)) fs.mkdirSync(productsDir, { recursive: true });
+} catch (e) {
+  console.warn(`[bubu] Could not create uploads dir at startup: ${e.message}`);
 }
 
 const storage = multer.diskStorage({
