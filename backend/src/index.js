@@ -110,15 +110,28 @@ app.use(helmet({
 // ---------------------------------------------------------------------------
 // CORS
 // ---------------------------------------------------------------------------
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
-    : ['http://localhost:5173', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.warn(`[bubu] CORS blocked origin: ${origin}`);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400, // Cache preflight for 24h
 };
 app.use(cors(corsOptions));
+
+// Explicit OPTIONS handler — ensures preflight even if cors middleware
+// is bypassed by something upstream (proxy, etc).
+app.options('*', cors(corsOptions));
 
 // ---------------------------------------------------------------------------
 // Body parsers
@@ -190,6 +203,7 @@ app.get('/api/health', async (_req, res) => {
   }
   result.cloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
   result.paystack    = Boolean(process.env.PAYSTACK_SECRET_KEY);
+  result.corsOrigin = process.env.CORS_ORIGIN || '(not set — defaults to localhost)';
   res.status(result.status === 'ok' ? 200 : 503).json(result);
 });
 
