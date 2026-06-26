@@ -46,8 +46,6 @@ services:
         value: "10"
       - key: EMAIL_TIMEOUT_MS
         value: "5000"
-      - key: HEALTH_URL
-        value: https://bubu-lagos-backend.onrender.com/api/health
     disk:
       name: uploads
       mountPath: /data/uploads
