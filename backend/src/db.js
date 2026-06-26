@@ -20,7 +20,7 @@ const isProd = process.env.NODE_ENV === 'production';
 // Putting `public` second keeps the door open for ad-hoc admin tools
 // that create temp tables in `public`.
 // ---------------------------------------------------------------------------
-const BUBU_SEARCH_PATH = 'bubu, public';
+const BUBU_SEARCH_PATH = 'bubu,public';
 
 // Pool sizing:
 //   * Render's "Starter" plan caps a single instance at ~0.5 CPU. Keep
@@ -48,15 +48,6 @@ const pool = new Pool({
 pool.on('error', (err) => {
   // pg surfaces idle-client errors here. Don't crash the process; just log.
   console.error('[bubu] unexpected pg pool error on idle client:', err.message);
-});
-
-pool.on('connect', (client) => {
-  // Belt-and-braces: also set the search_path explicitly on each new
-  // connection. If the libpq `options` flag ever gets dropped, this
-  // keeps the namespace in place.
-  client.query(`SET search_path TO ${BUBU_SEARCH_PATH}`).catch((err) => {
-    console.error('[bubu] failed to set search_path on new connection:', err.message);
-  });
 });
 
 export const query = (text, params) => pool.query(text, params);

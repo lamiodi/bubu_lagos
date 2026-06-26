@@ -61,10 +61,10 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://bubu-lagos-backend.onrender.com/api/*  # update if your render service name differs
+        destination: https://bubu-lagos.onrender.com/api/*  # update if your render service name differs
     envVars:
       - key: VITE_API_URL
-        value: https://bubu-lagos-backend.onrender.com/api
+        value: https://bubu-lagos.onrender.com/api
 
 databases:
   - name: bubu-lagos-db
