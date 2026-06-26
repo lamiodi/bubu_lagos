@@ -160,12 +160,16 @@ app.use((req, res, next) => {
 
 // ---------------------------------------------------------------------------
 // Static uploads (legacy disk-backed images). New uploads go to Cloudinary.
+// UPLOADS_PATH env var is optional — only set it when a Render Persistent
+// Disk is attached. The local src/uploads folder is always writable.
 // ---------------------------------------------------------------------------
 const uploadsPath = process.env.UPLOADS_PATH || path.join(__dirname, 'uploads');
-try {
-  if (!existsSync(uploadsPath)) mkdirSync(uploadsPath, { recursive: true });
-} catch (e) {
-  console.warn(`[bubu] Could not create uploads dir at startup: ${e.message}`);
+if (!existsSync(uploadsPath)) {
+  try {
+    mkdirSync(uploadsPath, { recursive: true });
+  } catch (e) {
+    console.warn(`[bubu] Could not create uploads dir (${uploadsPath}): ${e.message}. Legacy local uploads will be unavailable — all new uploads should use Cloudinary.`);
+  }
 }
 app.use('/uploads', express.static(uploadsPath));
 
