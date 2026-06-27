@@ -9,7 +9,7 @@ export const cleanupPendingOrders = async () => {
     const oldPendingOrdersResult = await client.query(
       `SELECT id, reference FROM orders 
        WHERE status = 'Pending' 
-       AND created_at < NOW() - INTERVAL '30 minutes'
+       AND created_at < NOW() - INTERVAL '7 days'
        FOR UPDATE`
     );
 
@@ -49,6 +49,6 @@ export const cleanupPendingOrders = async () => {
 
 export const startCronJobs = () => {
   // Run every 15 minutes
-  setInterval(cleanupPendingOrders, 15 * 60 * 1000);
-  console.log('Cron jobs started (pending orders cleanup every 15m)');
+  setInterval(cleanupPendingOrders, 24 * 60 * 60 * 1000);
+  console.log('Cron jobs started (pending orders cleanup every 24h, expires after 7 days)');
 };
