@@ -8,18 +8,77 @@ import { generateAdminToken } from '../middleware/authMiddleware.js';
 const MAX_FAILED_LOGINS = parseInt(process.env.ADMIN_MAX_FAILED_LOGINS, 10) || 5;
 const LOCKOUT_MS = (parseInt(process.env.ADMIN_LOCKOUT_MINUTES, 10) || 15) * 60 * 1000;
 
+// The admin_users table may live in the `bubu` schema (shared WodiFair
+// install) or `public` (standalone). Some columns (username, is_active,
+// etc.) were added by later migrations that are SKIPPED when the shared
+// schema is present. We detect the actual schema once at boot so all
+// queries can be built dynamically.
+let _adminSchema = null;   // 'bubu' or 'public'
+let _adminHasUsername = false;
+let _adminHasIsActive = false;
+let _adminHasFailedLoginCount = false;
+let _adminHasLockedUntil = false;
+let _adminHasLastLogin = false;
+let _adminColumnsReady = false;
+
+async function ensureAdminColumns() {
+  if (_adminColumnsReady) return;
+  // Find which schema the admin_users table is in
+  const schemaRes = await query(
+    `SELECT table_schema FROM information_schema.tables
+     WHERE table_name = 'admin_users'
+       AND table_schema IN ('bubu', 'public')
+     LIMIT 1`
+  );
+  if (schemaRes.rows.length === 0) {
+    // Table doesn't exist at all — fall back to public
+    _adminSchema = 'public';
+  } else {
+    _adminSchema = schemaRes.rows[0].table_schema;
+  }
+  const schema = _adminSchema;
+  // Check each optional column
+  const colCheck = async (col) => {
+    const r = await query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_schema = $1 AND table_name = 'admin_users' AND column_name = $2`,
+      [schema, col]
+    );
+    return r.rows.length > 0;
+  };
+  _adminHasUsername       = await colCheck('username');
+  _adminHasIsActive       = await colCheck('is_active');
+  _adminHasFailedLoginCount = await colCheck('failed_login_count');
+  _adminHasLockedUntil    = await colCheck('locked_until');
+  _adminHasLastLogin      = await colCheck('last_login');
+  _adminColumnsReady = true;
+}
+
 export const adminLogin = async (req, res) => {
   try {
+    await ensureAdminColumns();
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    // Build SELECT dynamically based on which columns exist
+    const selectCols = ['id', 'email', 'password_hash'];
+    if (_adminHasUsername) selectCols.push('username');
+    else selectCols.push(`email AS username`);
+    if (_adminHasIsActive) selectCols.push('is_active');
+    else selectCols.push(`true AS is_active`);
+    if (_adminHasFailedLoginCount) selectCols.push('failed_login_count');
+    if (_adminHasLockedUntil) selectCols.push('locked_until');
+
+    const whereClause = _adminHasIsActive
+      ? 'is_active = true'
+      : 'true = true';
+
     const result = await query(
-      `SELECT id, email, username, password_hash, is_active,
-              failed_login_count, locked_until
-       FROM admin_users WHERE email = $1 AND is_active = true`,
+      `SELECT ${selectCols.join(', ')}
+       FROM admin_users WHERE email = $1 AND ${whereClause}`,
       [email]
     );
 
@@ -36,7 +95,7 @@ export const adminLogin = async (req, res) => {
     // Lockout check. If locked_until is in the future, refuse. We DO
     // NOT reset the counter here — the timer has to run out from the
     // time of the last failure, not from a probing request.
-    if (adminUser.locked_until && new Date(adminUser.locked_until) > now) {
+    if (_adminHasLockedUntil && adminUser.locked_until && new Date(adminUser.locked_until) > now) {
       return res.status(429).json({
         error: 'Account temporarily locked. Try again later.',
         retryAfterSeconds: Math.ceil((new Date(adminUser.locked_until) - now) / 1000),
@@ -46,41 +105,34 @@ export const adminLogin = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, adminUser.password_hash);
 
     if (!isValidPassword) {
-      // Atomically increment the failure counter and (if this is the
-      // threshold-th failure) set locked_until. RETURNING gives us
-      // the post-update counter without a second roundtrip.
-      const updated = await query(
-        `UPDATE admin_users
-         SET failed_login_count = COALESCE(failed_login_count, 0) + 1,
-             locked_until = CASE
-               WHEN COALESCE(failed_login_count, 0) + 1 >= $2
-                 THEN NOW() + ($3::int * INTERVAL '1 millisecond')
-               ELSE NULL
-             END
-         WHERE id = $1
-         RETURNING failed_login_count, locked_until`,
-        [adminUser.id, MAX_FAILED_LOGINS, LOCKOUT_MS]
-      );
-      const row = updated.rows[0];
-      if (row && row.locked_until) {
-        return res.status(429).json({
-          error: 'Account temporarily locked. Try again later.',
-          retryAfterSeconds: Math.ceil((new Date(row.locked_until) - now) / 1000),
-        });
+      // Increment the failure counter if the column exists
+      if (_adminHasFailedLoginCount) {
+        await query(
+          `UPDATE admin_users
+           SET failed_login_count = COALESCE(failed_login_count, 0) + 1,
+               locked_until = CASE
+                 WHEN COALESCE(failed_login_count, 0) + 1 >= $2
+                   THEN NOW() + ($3::int * INTERVAL '1 millisecond')
+                 ELSE NULL
+               END
+           WHERE id = $1`,
+          [adminUser.id, MAX_FAILED_LOGINS, LOCKOUT_MS]
+        );
       }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Success: reset the counter and clear any past lock, then issue
-    // the token. last_login is updated in the same query.
-    await query(
-      `UPDATE admin_users
-       SET failed_login_count = 0,
-           locked_until = NULL,
-           last_login = NOW()
-       WHERE id = $1`,
-      [adminUser.id]
-    );
+    // Success: reset the counter and update last_login if columns exist
+    if (_adminHasFailedLoginCount || _adminHasLockedUntil || _adminHasLastLogin) {
+      const setClauses = [];
+      if (_adminHasFailedLoginCount) setClauses.push('failed_login_count = 0');
+      if (_adminHasLockedUntil) setClauses.push('locked_until = NULL');
+      if (_adminHasLastLogin) setClauses.push('last_login = NOW()');
+      await query(
+        `UPDATE admin_users SET ${setClauses.join(', ')} WHERE id = $1`,
+        [adminUser.id]
+      );
+    }
 
     const token = generateAdminToken(adminUser.id);
 
@@ -108,11 +160,16 @@ export const adminLogin = async (req, res) => {
  */
 export const getMe = async (req, res) => {
   try {
+    await ensureAdminColumns();
     const id = req.admin?.id;
     if (!id) return res.status(401).json({ error: 'Not authenticated' });
+    const cols = ['id', 'email'];
+    if (_adminHasUsername) cols.push('username'); else cols.push('email AS username');
+    if (_adminHasIsActive) cols.push('is_active'); else cols.push('true AS is_active');
+    cols.push('created_at');
+    if (_adminHasLastLogin) cols.push('last_login');
     const result = await query(
-      `SELECT id, username, email, is_active, created_at, last_login
-       FROM admin_users WHERE id = $1`,
+      `SELECT ${cols.join(', ')} FROM admin_users WHERE id = $1`,
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Admin not found' });
@@ -279,11 +336,16 @@ export const getDashboardStats = async (req, res) => {
 
 export const getAdminUsers = async (req, res) => {
   try {
+    await ensureAdminColumns();
+    const cols = ['id', 'email'];
+    if (_adminHasUsername) cols.push('username'); else cols.push('email AS username');
+    if (_adminHasIsActive) cols.push('is_active'); else cols.push('true AS is_active');
+    cols.push('created_at');
+    if (_adminHasLastLogin) cols.push('last_login');
     const result = await query(
-      `SELECT id, username, email, is_active, created_at, last_login
-       FROM admin_users ORDER BY created_at DESC`
+      `SELECT ${cols.join(', ')} FROM admin_users ORDER BY created_at DESC`
     );
-    const adminUsers = result.rows.map((u) => ({
+    const adminUsers = result.rows.map ({
       id: u.id, username: u.username, email: u.email,
       isActive: u.is_active, createdAt: u.created_at, lastLogin: u.last_login,
     }));
@@ -296,25 +358,39 @@ export const getAdminUsers = async (req, res) => {
 
 export const createAdminUser = async (req, res) => {
   try {
+    await ensureAdminColumns();
     const { username, email, password, isActive = true } = req.body;
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Username, email, and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
     const existing = await query(`SELECT id FROM admin_users WHERE email = $1`, [email]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'Admin user with this email already exists' });
     }
     const passwordHash = await bcrypt.hash(password, 10);
+    const insertCols = ['email', 'password_hash'];
+    const insertVals = ['$1', '$2'];
+    const params = [email, passwordHash];
+    if (_adminHasUsername && username) {
+      insertCols.push('username');
+      insertVals.push(`$${params.length + 1}`);
+      params.push(username);
+    }
+    if (_adminHasIsActive) {
+      insertCols.push('is_active');
+      insertVals.push(`$${params.length + 1}`);
+      params.push(isActive);
+    }
     const result = await query(
-      `INSERT INTO admin_users (username, email, password_hash, is_active)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, username, email, is_active, created_at`,
-      [username, email, passwordHash, isActive]
+      `INSERT INTO admin_users (${insertCols.join(', ')})
+       VALUES (${insertVals.join(', ')})
+       RETURNING id, email, created_at`,
+      params
     );
     const u = result.rows[0];
     res.status(201).json({
       message: 'Admin user created successfully',
-      adminUser: { id: u.id, username: u.username, email: u.email, isActive: u.is_active, createdAt: u.created_at },
+      adminUser: { id: u.id, username: username || u.email, email: u.email, isActive: true, createdAt: u.created_at },
     });
   } catch (error) {
     console.error('Error creating admin user:', error);
@@ -325,6 +401,7 @@ export const createAdminUser = async (req, res) => {
 
 export const updateAdminUser = async (req, res) => {
   try {
+    await ensureAdminColumns();
     const { id } = req.params;
     const { username, email, password, isActive } = req.body;
     const userResult = await query(`SELECT id FROM admin_users WHERE id = $1`, [id]);
@@ -333,13 +410,13 @@ export const updateAdminUser = async (req, res) => {
     const updates = [];
     const params = [];
     let i = 1;
-    if (username !== undefined) { updates.push(`username = $${i++}`); params.push(username); }
+    if (username !== undefined && _adminHasUsername) { updates.push(`username = $${i++}`); params.push(username); }
     if (email !== undefined) { updates.push(`email = $${i++}`); params.push(email); }
     if (password !== undefined) {
       const passwordHash = await bcrypt.hash(password, 10);
       updates.push(`password_hash = $${i++}`); params.push(passwordHash);
     }
-    if (isActive !== undefined) { updates.push(`is_active = $${i++}`); params.push(isActive); }
+    if (isActive !== undefined && _adminHasIsActive) { updates.push(`is_active = $${i++}`); params.push(isActive); }
     if (updates.length === 0) return res.status(400).json({ error: 'No fields to update' });
     updates.push(`updated_at = NOW()`);
     params.push(id);
@@ -352,7 +429,7 @@ export const updateAdminUser = async (req, res) => {
     const u = result.rows[0];
     res.json({
       message: 'Admin user updated successfully',
-      adminUser: { id: u.id, username: u.username, email: u.email, isActive: u.is_active, createdAt: u.created_at, updatedAt: u.updated_at },
+      adminUser: { id: u.id, username: u.email, email: u.email, isActive: true, createdAt: u.created_at, updatedAt: u.updated_at },
     });
   } catch (error) {
     console.error('Error updating admin user:', error);
