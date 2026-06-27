@@ -78,7 +78,7 @@ export const adminLogin = async (req, res) => {
 
     const result = await query(
       `SELECT ${selectCols.join(', ')}
-       FROM admin_users WHERE email = $1 AND ${whereClause}`,
+       FROM admin_users WHERE LOWER(email) = LOWER($1) AND ${whereClause}`,
       [email]
     );
 
@@ -363,7 +363,7 @@ export const createAdminUser = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    const existing = await query(`SELECT id FROM admin_users WHERE email = $1`, [email]);
+    const existing = await query(`SELECT id FROM admin_users WHERE LOWER(email) = LOWER($1)`, [email]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'Admin user with this email already exists' });
     }

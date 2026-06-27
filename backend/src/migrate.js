@@ -114,17 +114,13 @@ const runMigrations = async () => {
 };
 
 // ---------------------------------------------------------------------------
-// Ensure admin user exists with correct credentials from env vars.
-// Safe to run on every deploy — uses ON CONFLICT DO UPDATE.
+// Ensure admin user exists with default credentials.
+// Only creates the admin user if it doesn't exist — does NOT overwrite
+// existing passwords to avoid locking out admins when env vars change.
 // ---------------------------------------------------------------------------
 async function ensureAdminUser(client) {
   const email    = process.env.ADMIN_EMAIL    || 'Wodibenuah@yahoo.com';
   const password = process.env.ADMIN_PASSWORD || 'Admin@Bubu2025';
-
-  if (!email || !password) {
-    console.warn('[bubu] ADMIN_EMAIL or ADMIN_PASSWORD not set — skipping admin upsert.');
-    return;
-  }
 
   // Find which schema admin_users lives in
   const { rows: schemas } = await client.query(`
@@ -140,6 +136,17 @@ async function ensureAdminUser(client) {
   }
 
   const schema = schemas[0].table_schema;
+
+  // Check if admin user already exists (case-insensitive)
+  const { rows: existing } = await client.query(
+    `SELECT id FROM ${schema}.admin_users WHERE LOWER(email) = LOWER($1)`,
+    [email]
+  );
+
+  if (existing.length > 0) {
+    console.log(`[bubu] ℹ️  Admin user already exists: ${email} (schema: ${schema}) — skipping creation`);
+    return;
+  }
 
   // Check which optional columns exist
   const colExists = async (col) => {
@@ -159,31 +166,24 @@ async function ensureAdminUser(client) {
   if (hasUsername && hasIsActive) {
     await client.query(
       `INSERT INTO ${schema}.admin_users (email, password_hash, username, is_active)
-       VALUES ($1, $2, 'Super Admin', true)
-       ON CONFLICT (email) DO UPDATE
-         SET password_hash = EXCLUDED.password_hash,
-             is_active     = true`,
+       VALUES ($1, $2, 'Super Admin', true)`,
       [email, passwordHash]
     );
   } else if (hasUsername) {
     await client.query(
       `INSERT INTO ${schema}.admin_users (email, password_hash, username)
-       VALUES ($1, $2, 'Super Admin')
-       ON CONFLICT (email) DO UPDATE
-         SET password_hash = EXCLUDED.password_hash`,
+       VALUES ($1, $2, 'Super Admin')`,
       [email, passwordHash]
     );
   } else {
     await client.query(
       `INSERT INTO ${schema}.admin_users (email, password_hash)
-       VALUES ($1, $2)
-       ON CONFLICT (email) DO UPDATE
-         SET password_hash = EXCLUDED.password_hash`,
+       VALUES ($1, $2)`,
       [email, passwordHash]
     );
   }
 
-  console.log(`[bubu] ✅ Admin user ensured: ${email} (schema: ${schema})`);
+  console.log(`[bubu] ✅ Admin user created: ${email} (schema: ${schema})`);
 }
 
 runMigrations();
