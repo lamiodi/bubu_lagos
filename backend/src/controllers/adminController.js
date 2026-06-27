@@ -345,7 +345,7 @@ export const getAdminUsers = async (req, res) => {
     const result = await query(
       `SELECT ${cols.join(', ')} FROM admin_users ORDER BY created_at DESC`
     );
-    const adminUsers = result.rows.map ({
+    const adminUsers = result.rows.map((u) => ({
       id: u.id, username: u.username, email: u.email,
       isActive: u.is_active, createdAt: u.created_at, lastLogin: u.last_login,
     }));
