@@ -30,6 +30,32 @@ export const generateAdminToken = (adminUserId) => {
 };
 
 // ---------------------------------------------------------------------------
+// hasColumn — check if a column exists in the admin_users table.
+//   The table may live in `bubu` (shared schema) or `public` (standalone).
+//   Some columns (username, is_active) are added by local migrations that
+//   are skipped when the shared schema is present.
+// ---------------------------------------------------------------------------
+let _authColumnCache = null;
+async function hasColumn(col) {
+  if (_authColumnCache === null) {
+    const schemaRes = await query(
+      `SELECT table_schema FROM information_schema.tables
+       WHERE table_name = 'admin_users'
+         AND table_schema IN ('bubu', 'public')
+       LIMIT 1`
+    );
+    const schema = schemaRes.rows[0]?.table_schema || 'public';
+    const r = await query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = $1 AND table_name = 'admin_users'`,
+      [schema]
+    );
+    _authColumnCache = new Set(r.rows.map((x) => x.column_name));
+  }
+  return _authColumnCache.has(col);
+}
+
+// ---------------------------------------------------------------------------
 // authenticateAdmin
 //   Verifies Bearer token, confirms role === 'admin', and attaches the
 //   active admin_users row to req.adminUser.
@@ -50,8 +76,18 @@ export const authenticateAdmin = async (req, res, next) => {
       return res.status(403).json({ error: 'Forbidden: Admin access required' });
     }
 
+    // Build SELECT dynamically — username/is_active may not exist in the
+    // shared bubu schema.
+    const cols = ['id', 'email'];
+    if (await hasColumn('username')) cols.push('username');
+    if (await hasColumn('is_active')) cols.push('is_active');
+    const selectList = cols.join(', ');
+    const whereActive = (await hasColumn('is_active'))
+      ? 'AND is_active = true'
+      : '';
+
     const result = await query(
-      `SELECT id, email, username, is_active FROM admin_users WHERE id = $1 AND is_active = true`,
+      `SELECT ${selectList} FROM admin_users WHERE id = $1 ${whereActive}`,
       [decoded.userId]
     );
     if (result.rows.length === 0) {
