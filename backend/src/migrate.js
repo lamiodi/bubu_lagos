@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
 import pool, { setBubuSearchPath } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,6 +49,7 @@ const runMigrations = async () => {
         `Local migrations 001-017 are managed by the WodiFair backend's ` +
         `'add_bubu_schema.sql' — skipping.`
       );
+      await ensureAdminUser(client);
       return;
     }
 
@@ -101,6 +103,7 @@ const runMigrations = async () => {
     }
 
     console.log('Migration completed successfully!');
+    await ensureAdminUser(client);
   } catch (error) {
     console.error('Migration failed:', error);
     process.exit(1);
@@ -109,5 +112,78 @@ const runMigrations = async () => {
     await pool.end();
   }
 };
+
+// ---------------------------------------------------------------------------
+// Ensure admin user exists with correct credentials from env vars.
+// Safe to run on every deploy — uses ON CONFLICT DO UPDATE.
+// ---------------------------------------------------------------------------
+async function ensureAdminUser(client) {
+  const email    = process.env.ADMIN_EMAIL    || 'Wodibenuah@yahoo.com';
+  const password = process.env.ADMIN_PASSWORD || 'Admin@Bubu2025';
+
+  if (!email || !password) {
+    console.warn('[bubu] ADMIN_EMAIL or ADMIN_PASSWORD not set — skipping admin upsert.');
+    return;
+  }
+
+  // Find which schema admin_users lives in
+  const { rows: schemas } = await client.query(`
+    SELECT table_schema FROM information_schema.tables
+    WHERE table_name = 'admin_users'
+      AND table_schema IN ('bubu', 'public')
+    LIMIT 1
+  `);
+
+  if (schemas.length === 0) {
+    console.warn('[bubu] admin_users table not found — skipping admin upsert.');
+    return;
+  }
+
+  const schema = schemas[0].table_schema;
+
+  // Check which optional columns exist
+  const colExists = async (col) => {
+    const r = await client.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_schema = $1 AND table_name = 'admin_users' AND column_name = $2`,
+      [schema, col]
+    );
+    return r.rows.length > 0;
+  };
+
+  const hasUsername = await colExists('username');
+  const hasIsActive = await colExists('is_active');
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  if (hasUsername && hasIsActive) {
+    await client.query(
+      `INSERT INTO ${schema}.admin_users (email, password_hash, username, is_active)
+       VALUES ($1, $2, 'Super Admin', true)
+       ON CONFLICT (email) DO UPDATE
+         SET password_hash = EXCLUDED.password_hash,
+             is_active     = true`,
+      [email, passwordHash]
+    );
+  } else if (hasUsername) {
+    await client.query(
+      `INSERT INTO ${schema}.admin_users (email, password_hash, username)
+       VALUES ($1, $2, 'Super Admin')
+       ON CONFLICT (email) DO UPDATE
+         SET password_hash = EXCLUDED.password_hash`,
+      [email, passwordHash]
+    );
+  } else {
+    await client.query(
+      `INSERT INTO ${schema}.admin_users (email, password_hash)
+       VALUES ($1, $2)
+       ON CONFLICT (email) DO UPDATE
+         SET password_hash = EXCLUDED.password_hash`,
+      [email, passwordHash]
+    );
+  }
+
+  console.log(`[bubu] ✅ Admin user ensured: ${email} (schema: ${schema})`);
+}
 
 runMigrations();
