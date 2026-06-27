@@ -1,15 +1,15 @@
-import { query, getClient } from '../db.js';
+import { getClient } from '../db.js';
 
 export const cleanupPendingOrders = async () => {
   const client = await getClient();
   try {
     await client.query('BEGIN');
 
-    // Find orders that have been pending for more than 30 minutes
+    // Find orders that have been pending for more than 14 days
     const oldPendingOrdersResult = await client.query(
       `SELECT id, reference FROM orders 
        WHERE status = 'Pending' 
-       AND created_at < NOW() - INTERVAL '7 days'
+       AND created_at < NOW() - INTERVAL '14 days'
        FOR UPDATE`
     );
 
@@ -48,7 +48,7 @@ export const cleanupPendingOrders = async () => {
 };
 
 export const startCronJobs = () => {
-  // Run every 15 minutes
-  setInterval(cleanupPendingOrders, 24 * 60 * 60 * 1000);
-  console.log('Cron jobs started (pending orders cleanup every 24h, expires after 7 days)');
+  // Run every 2 weeks (14 days)
+  setInterval(cleanupPendingOrders, 14 * 24 * 60 * 60 * 1000);
+  console.log('Cron jobs started (pending orders cleanup every 2 weeks, expires after 14 days)');
 };

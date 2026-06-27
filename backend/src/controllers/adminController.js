@@ -161,7 +161,7 @@ export const adminLogin = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     await ensureAdminColumns();
-    const id = req.admin?.id;
+    const id = req.adminUser?.id;
     if (!id) return res.status(401).json({ error: 'Not authenticated' });
     const cols = ['id', 'email'];
     if (_adminHasUsername) cols.push('username'); else cols.push('email AS username');
