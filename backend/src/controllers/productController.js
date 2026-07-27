@@ -261,7 +261,7 @@ export const createProduct = async (req, res) => {
           await client.query(
             `INSERT INTO product_variants (product_id, name, price, stock_quantity)
              VALUES ($1, $2, $3, $4)`,
-            [productId, variant.name, variant.price, variant.stockQuantity || 0]
+            [productId, variant.name, variant.price || basePrice, variant.stockQuantity || 0]
           );
         }
       }
@@ -369,13 +369,13 @@ export const updateProduct = async (req, res) => {
               `UPDATE product_variants 
                SET name = $1, price = $2, stock_quantity = $3
                WHERE id = $4 AND product_id = $5`,
-              [v.name, v.price, v.stockQuantity || 0, v.id, id]
+              [v.name, v.price || basePrice, v.stockQuantity || 0, v.id, id]
             );
           } else {
             await client.query(
               `INSERT INTO product_variants (product_id, name, price, stock_quantity)
                VALUES ($1, $2, $3, $4)`,
-              [id, v.name, v.price, v.stockQuantity || 0]
+              [id, v.name, v.price || basePrice, v.stockQuantity || 0]
             );
           }
         }
