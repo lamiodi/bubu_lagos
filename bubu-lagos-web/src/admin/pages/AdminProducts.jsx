@@ -1,6 +1,7 @@
 import { AdminLayout } from '../components/AdminLayout';
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, Edit, Trash2, X, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Search, Edit, Trash2, X, Upload, Image as ImageIcon, Loader2, ArrowLeft, Film } from 'lucide-react';
 import api from '../../utils/api';
 import { getImageUrl, formatNGN } from '../../lib/utils';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -146,11 +147,28 @@ export function AdminProducts() {
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const maxVideoSize = 50 * 1024 * 1024; // 50MB
+      if (file.size > maxVideoSize) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        toast.error(`Video "${file.name}" is too large (${sizeMB}MB). Maximum allowed video size is 50MB. Please compress it first.`);
+        e.target.value = '';
+        return;
+      }
       setFormData((prev) => ({
         ...prev,
         videoFile: file
       }));
+      toast.success(`Video attached: ${file.name}`);
     }
+  };
+
+  const removeVideo = () => {
+    setFormData((prev) => ({
+      ...prev,
+      videoFile: null,
+      videoUrl: ''
+    }));
+    toast.info('Video removed');
   };
 
   const removeImage = (index) => {
@@ -238,7 +256,14 @@ export function AdminProducts() {
       fetchProducts();
     } catch (err) {
       logger.error('Failed to save product:', err);
-      toast.error('Failed to save product. Please try again.');
+      const serverMsg = err?.response?.data?.error || err?.message;
+      if (serverMsg?.includes('413') || serverMsg?.toLowerCase().includes('large') || serverMsg?.toLowerCase().includes('entity too large')) {
+        toast.error('Upload Error: File size is too large for the server. Please compress your images or video.');
+      } else if (serverMsg) {
+        toast.error(`Upload Error: ${serverMsg}`);
+      } else {
+        toast.error('Failed to save product. Please check your network connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -291,13 +316,23 @@ export function AdminProducts() {
   return (
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-500">Manage your product inventory</p>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin"
+            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 transition-colors flex items-center justify-center"
+            title="Back to Dashboard"
+            aria-label="Back to Dashboard"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+            <p className="text-gray-500 text-sm">Manage your product inventory</p>
+          </div>
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
         >
           <Plus size={18} />
           Add Product
@@ -479,25 +514,39 @@ export function AdminProducts() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Video (optional)
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Video (Optional - Max 50MB)
+                  </label>
+                  {(formData.videoFile || formData.videoUrl) && (
+                    <button
+                      type="button"
+                      onClick={removeVideo}
+                      className="text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                    >
+                      <Trash2 size={12} /> Remove Video
+                    </button>
+                  )}
+                </div>
                 <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
                   <input
                     type="file"
-                    accept="video/*"
+                    accept="video/mp4,video/quicktime,video/webm"
                     onChange={handleVideoUpload}
                     className="hidden"
                     id="video-upload"
                   />
                   <label
                     htmlFor="video-upload"
-                    className="w-full py-4 flex flex-col items-center justify-center text-gray-500 hover:text-gray-700 cursor-pointer"
+                    className="w-full py-3 flex flex-col items-center justify-center text-gray-500 hover:text-gray-700 cursor-pointer"
                   >
-                    <Upload size={24} className="mb-2" />
-                    <span className="text-sm">
-                      {formData.videoFile ? formData.videoFile.name : (formData.videoUrl ? 'Re-upload Video' : 'Add Product Video')}
+                    <Film size={24} className="mb-2 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {formData.videoFile
+                        ? formData.videoFile.name
+                        : (formData.videoUrl ? 'Re-upload Video' : 'Add Product Video')}
                     </span>
+                    <span className="text-xs text-gray-400 mt-1">Supports .MP4, .MOV, .WEBM (Max 50MB)</span>
                   </label>
                 </div>
                 {formData.videoUrl && !formData.videoFile && (

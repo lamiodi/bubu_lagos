@@ -1,6 +1,7 @@
 import { AdminLayout } from '../components/AdminLayout';
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Eye, Mail, Phone, MapPin, ShoppingBag, Users as UsersIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Eye, Mail, Phone, MapPin, ShoppingBag, Users as UsersIcon, ArrowLeft } from 'lucide-react';
 import api from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { logger } from '../../lib/logger';
@@ -81,13 +82,23 @@ export function AdminCustomers() {
   return (
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <p className="text-gray-500">
-            {filteredCustomers.length !== customers.length
-              ? `${filteredCustomers.length} of ${customers.length} matching`
-              : `${customers.length} customer${customers.length === 1 ? '' : 's'}`}
-          </p>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin"
+            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 transition-colors flex items-center justify-center"
+            title="Back to Dashboard"
+            aria-label="Back to Dashboard"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
+            <p className="text-gray-500 text-sm">
+              {filteredCustomers.length !== customers.length
+                ? `${filteredCustomers.length} of ${customers.length} matching`
+                : `${customers.length} customer${customers.length === 1 ? '' : 's'}`}
+            </p>
+          </div>
         </div>
       </div>
 

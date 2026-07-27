@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../components/AdminLayout';
+import { Link } from 'react-router-dom';
 import {
   Plus,
   CheckCircle2,
   XCircle,
   History,
   Copy,
-  Inbox
+  Inbox,
+  ArrowLeft
 } from 'lucide-react';
 import { cn, formatNGN, formatDate } from '../../lib/utils';
 import api from '../../utils/api';
@@ -151,9 +153,19 @@ export function AdminMarketing() {
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {activeTab === 'coupons' ? 'Coupons' : 'Gift Cards'}
-        </h1>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin"
+            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 transition-colors flex items-center justify-center"
+            title="Back to Dashboard"
+            aria-label="Back to Dashboard"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {activeTab === 'coupons' ? 'Coupons' : 'Gift Cards'}
+          </h1>
+        </div>
         <button
           onClick={() => (activeTab === 'coupons' ? setShowCouponModal(true) : setShowGiftCardModal(true))}
           className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"

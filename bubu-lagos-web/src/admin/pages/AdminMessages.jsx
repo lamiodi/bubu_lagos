@@ -1,6 +1,7 @@
 import { AdminLayout } from '../components/AdminLayout';
 import { useState, useEffect, useMemo } from 'react';
-import { Clock, ChevronLeft, ChevronRight, Search, Inbox } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Clock, ChevronLeft, ChevronRight, Search, Inbox, ArrowLeft } from 'lucide-react';
 import api from '../../utils/api';
 import { logger } from '../../lib/logger';
 import { Modal } from '../../components/Modal';
@@ -68,9 +69,19 @@ export function AdminMessages() {
   return (
     <AdminLayout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-          <p className="text-gray-500">{messages.filter((m) => !m.readAt).length} unread</p>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin"
+            className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:text-black hover:bg-gray-100 transition-colors flex items-center justify-center"
+            title="Back to Dashboard"
+            aria-label="Back to Dashboard"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+            <p className="text-gray-500 text-sm">{messages.filter((m) => !m.readAt).length} unread</p>
+          </div>
         </div>
       </div>
 
