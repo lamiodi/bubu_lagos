@@ -330,13 +330,38 @@ export function AdminProducts() {
             <p className="text-gray-500 text-sm">Manage your product inventory</p>
           </div>
         </div>
-        <button
-          onClick={openAddModal}
-          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
-        >
-          <Plus size={18} />
-          Add Product
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const rows = [
+                ['Name', 'Category', 'Base Price', 'Total Stock', 'Variants'],
+                ...filteredProducts.map(p => {
+                  const stock = p.variants ? p.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0) : 0;
+                  const variantCount = p.variants ? p.variants.length : 0;
+                  return [p.name, p.categoryName || '—', p.basePrice, stock, variantCount];
+                })
+              ];
+              const csv = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
+          >
+            <Plus size={18} />
+            Add Product
+          </button>
+        </div>
       </div>
 
       {error && (

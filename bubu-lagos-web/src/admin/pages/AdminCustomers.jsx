@@ -100,6 +100,30 @@ export function AdminCustomers() {
             </p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const rows = [
+                ['Name', 'Email', 'Phone', 'Orders', 'Total Spent', 'Status', 'Date'],
+                ...filteredCustomers.map(c => [
+                  `${c.firstName || ''} ${c.lastName || ''}`, c.email, c.phone,
+                  c.orderCount, c.totalSpent, c.isActive ? 'Active' : 'Suspended', c.createdAt
+                ])
+              ];
+              const csv = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-black transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -126,13 +150,14 @@ export function AdminCustomers() {
                 <th className="px-6 py-4 font-semibold text-gray-900">Email</th>
                 <th className="px-6 py-4 font-semibold text-gray-900">Phone</th>
                 <th className="px-6 py-4 font-semibold text-gray-900">Orders</th>
+                <th className="px-6 py-4 font-semibold text-gray-900">Total Spent</th>
                 <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
                 <th className="px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {Array.from({ length: 6 }).map((_, i) => (
-                <TableRowSkeleton key={i} columns={6} />
+                <TableRowSkeleton key={i} columns={7} />
               ))}
             </tbody>
           </table>
@@ -150,6 +175,7 @@ export function AdminCustomers() {
                 <th className="px-6 py-4 font-semibold text-gray-900">Email</th>
                 <th className="px-6 py-4 font-semibold text-gray-900">Phone</th>
                 <th className="px-6 py-4 font-semibold text-gray-900">Orders</th>
+                <th className="px-6 py-4 font-semibold text-gray-900">Total Spent</th>
                 <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
                 <th className="px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
               </tr>
@@ -172,7 +198,8 @@ export function AdminCustomers() {
                   </td>
                   <td className="px-6 py-4 text-gray-600">{customer.email}</td>
                   <td className="px-6 py-4 text-gray-600">{customer.phone || '—'}</td>
-                  <td className="px-6 py-4 text-gray-600">{customer.ordersCount || 0}</td>
+                  <td className="px-6 py-4 text-gray-600 font-medium">{customer.orderCount || 0}</td>
+                  <td className="px-6 py-4 text-gray-900 font-medium">{formatNGN(customer.totalSpent || 0)}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {customer.isActive ? 'Active' : 'Suspended'}

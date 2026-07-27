@@ -30,6 +30,8 @@ export function AdminOrders() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [pendingCancel, setPendingCancel] = useState(null);
   const [pageInput, setPageInput] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [shippingCarrier, setShippingCarrier] = useState('');
 
   const controllerRef = useRef(null);
 
@@ -73,6 +75,8 @@ export function AdminOrders() {
     try {
       const response = await api.get(`/orders/${order.id}`);
       setSelectedOrder(response);
+      setTrackingNumber(response.order?.trackingNumber || '');
+      setShippingCarrier(response.order?.shippingCarrier || '');
       setShowModal(true);
     } catch (err) {
       logger.error('Failed to fetch order details:', err);
@@ -90,7 +94,11 @@ export function AdminOrders() {
     }
     setUpdatingStatus(true);
     try {
-      await api.put(`/orders/${orderId}/status`, { status: newStatus });
+      await api.put(`/orders/${orderId}/status`, { 
+        status: newStatus,
+        trackingNumber: newStatus === 'Shipped' ? trackingNumber : undefined,
+        shippingCarrier: newStatus === 'Shipped' ? shippingCarrier : undefined
+      });
       toast.success(`Order marked as ${newStatus}`);
     } catch (err) {
       logger.error('Failed to update order status:', err);
@@ -154,6 +162,58 @@ export function AdminOrders() {
     link.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const printPackingSlip = (orderObj) => {
+    if (!orderObj || !orderObj.order) return;
+    const printContent = `
+      <html>
+        <head>
+          <title>Packing Slip - ${orderObj.order.reference}</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #000; }
+            h1 { font-size: 24px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .header { margin-bottom: 30px; display: flex; justify-content: space-between; }
+            .items { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .items th, .items td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1>Packing Slip</h1>
+              <p><strong>Order:</strong> ${orderObj.order.reference}</p>
+              <p><strong>Date:</strong> ${new Date(orderObj.order.createdAt).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <p><strong>Ship To:</strong></p>
+              <p>${orderObj.order.customerName}</p>
+              <p>${orderObj.order.shippingAddress?.address || ''}</p>
+              <p>${orderObj.order.shippingAddress?.city || ''}, ${orderObj.order.shippingAddress?.state || ''}</p>
+            </div>
+          </div>
+          <table class="items">
+            <thead>
+              <tr><th>Item</th><th>Variant</th><th>Qty</th></tr>
+            </thead>
+            <tbody>
+              ${orderObj.items.map(item => \`
+                <tr>
+                  <td>\${item.productName}</td>
+                  <td>\${item.variantName}</td>
+                  <td>\${item.quantity}</td>
+                </tr>
+              \`).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
   };
 
   return (
@@ -450,7 +510,7 @@ export function AdminOrders() {
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Order Items</p>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
                     <tr>
@@ -473,10 +533,44 @@ export function AdminOrders() {
                   </tbody>
                 </table>
               </div>
+              <button
+                onClick={() => printPackingSlip(selectedOrder)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-black/5"
+              >
+                Print Packing Slip
+              </button>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Update Status</p>
+              
+              <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tracking Information (Optional)</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Carrier (e.g. DHL)</label>
+                    <input 
+                      type="text" 
+                      value={shippingCarrier}
+                      onChange={(e) => setShippingCarrier(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+                      placeholder="DHL, FedEx, etc."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Tracking Number</label>
+                    <input 
+                      type="text" 
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+                      placeholder="1234567890"
+                    />
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400">Tracking info will be emailed to the customer if you mark the order as 'Shipped'.</p>
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 {['Paid', 'Shipped', 'Cancelled'].map((status) => (
                   <button

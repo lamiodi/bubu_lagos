@@ -646,6 +646,8 @@ export const getOrderById = async (req, res) => {
         status: order.status,
         paymentReference: order.payment_reference,
         paymentVerifiedAt: order.payment_verified_at,
+        trackingNumber: order.tracking_number,
+        shippingCarrier: order.shipping_carrier,
         createdAt: order.created_at
       },
       items
@@ -731,7 +733,7 @@ export const getOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, trackingNumber, shippingCarrier } = req.body;
 
     if (!status || !['Pending', 'Paid', 'Shipped', 'Cancelled'].includes(status)) {
       return res.status(400).json({ error: 'Valid status is required (Pending, Paid, Shipped, or Cancelled)' });
@@ -740,10 +742,12 @@ export const updateOrderStatus = async (req, res) => {
     const result = await query(
       `UPDATE orders 
        SET status = $1,
+           tracking_number = COALESCE($2, tracking_number),
+           shipping_carrier = COALESCE($3, shipping_carrier),
            updated_at = NOW()
-       WHERE id = $2
+       WHERE id = $4
        RETURNING *`,
-      [status, id]
+      [status, trackingNumber || null, shippingCarrier || null, id]
     );
 
     if (result.rows.length === 0) {
@@ -755,7 +759,8 @@ export const updateOrderStatus = async (req, res) => {
     // If status changed to Shipped, send email
     if (status === 'Shipped' && order.customer_email) {
       try {
-        await sendShippingUpdateEmail(order.customer_email, order, null, order.customer_name);
+        const trackingInfo = trackingNumber ? { trackingNumber, shippingCarrier } : null;
+        await sendShippingUpdateEmail(order.customer_email, order, trackingInfo, order.customer_name);
       } catch (emailErr) {
         console.error('Failed to send shipping update email:', emailErr);
       }
