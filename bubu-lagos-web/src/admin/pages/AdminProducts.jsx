@@ -102,13 +102,13 @@ export function AdminProducts() {
     setEditingProduct(null);
     setFormData({
       name: '',
-      description: '',
+      description: "This piece is designed with a free-flowing silhouette. It is a universal 'One Size Fits All' that comfortably fits UK/US sizes 8 through 20.",
       basePrice: '',
       categoryId: '',
       images: [],
       videoUrl: '',
       videoFile: null,
-      variants: []
+      variants: [{ name: 'One Size (Fits 8 - 20)', sku: '', price: '', stockQuantity: 50 }]
     });
     setShowModal(true);
   };

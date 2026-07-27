@@ -19,6 +19,8 @@ export function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [otherColors, setOtherColors] = useState([]);
+  const [turbanProducts, setTurbanProducts] = useState([]);
   // [MOTION ADDED] Local "added" success state for the Add to Cart button
   const [justAdded, setJustAdded] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -35,7 +37,7 @@ export function ProductDetail() {
       setProduct(data);
 
       if (data.category?.id) {
-        fetchRelatedProducts(data.category.id, data.id);
+        fetchRecommendations(data);
       }
     } catch (err) {
       logger.error('Failed to fetch product:', err);
@@ -45,13 +47,33 @@ export function ProductDetail() {
     }
   };
 
-  const fetchRelatedProducts = async (categoryId, currentProductId) => {
+  const fetchRecommendations = async (productData) => {
     try {
-      const data = await api.get(`/products/recommendations?productId=${currentProductId}&categoryId=${categoryId}&limit=3`);
-      const list = data.products || [];
-      if (list.length > 0) setRelatedProducts(list);
+      // 1. Fetch other colors (same category, similar name)
+      if (productData.category?.name) {
+        const catRes = await api.get(`/products?category=${encodeURIComponent(productData.category.name)}&limit=15`);
+        let sameCat = catRes.products || [];
+        sameCat = sameCat.filter(p => p.id !== productData.id);
+        
+        // Basic match: if the name is "Silk Bubu - Red", baseName is "Silk Bubu"
+        const baseName = productData.name.split('-')[0].trim().split(' ')[0]; // E.g., just the first word to be safe
+        
+        const colors = sameCat.filter(p => p.name.includes(baseName));
+        setOtherColors(colors.slice(0, 4));
+        
+        const related = sameCat.filter(p => !colors.includes(p));
+        setRelatedProducts(related.slice(0, 3));
+      }
+
+      // 2. Fetch Turbans for "Complete the Look"
+      if (productData.category?.name !== 'Turban') {
+        const turbanRes = await api.get(`/products?category=Turban&limit=3`);
+        if (turbanRes.products && turbanRes.products.length > 0) {
+          setTurbanProducts(turbanRes.products);
+        }
+      }
     } catch (err) {
-      logger.error('Failed to fetch recommendations:', err);
+      logger.error('Failed to fetch smart recommendations:', err);
     }
   };
 
@@ -287,6 +309,29 @@ export function ProductDetail() {
               )}
             </div>
 
+            {/* OTHER COLORS SUGGESTION */}
+            {otherColors.length > 0 && (
+              <div className="mb-8">
+                <span className="text-xs font-bold uppercase tracking-wider block mb-4">Other Colors</span>
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                  {otherColors.map(colorProd => (
+                    <Link key={colorProd.id} to={`/product/${colorProd.id}`} className="group flex-shrink-0">
+                      <div className="w-16 h-20 bg-gray-100 overflow-hidden border border-gray-200 group-hover:border-black transition-colors">
+                        <img 
+                          src={getImageUrl(colorProd.images?.[0]) || FALLBACK_IMAGE} 
+                          alt={colorProd.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <span className="text-[9px] uppercase tracking-wide mt-1 block truncate w-16 text-gray-500 group-hover:text-black">
+                        {colorProd.name.split('-').pop().trim() || 'View'}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {product.description && (
               <div className="space-y-4 text-sm leading-relaxed text-gray-600 mb-8">
                 <p>{product.description}</p>
@@ -300,6 +345,26 @@ export function ProductDetail() {
         </div>
       </div>
 
+      {turbanProducts.length > 0 && (
+        <motion.section
+          className="px-4 py-8 lg:py-16 border-t border-gray-100 bg-gray-50/50"
+          initial={reduceMotion ? false : { opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-xl lg:text-2xl font-heading font-black uppercase tracking-widest mb-2">Complete the Look</h2>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-8">Pair with our signature turbans</p>
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
+              {turbanProducts.map((turban, i) => (
+                <ProductCard key={turban.id} product={turban} delay={i * 0.08} inView={false} />
+              ))}
+            </div>
+          </div>
+        </motion.section>
+      )}
+
       {relatedProducts.length > 0 && (
         <motion.section
           className="px-4 py-8 lg:py-16 border-t border-gray-100"
@@ -308,11 +373,13 @@ export function ProductDetail() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h2 className="text-xl lg:text-2xl font-heading font-black uppercase tracking-widest mb-4 lg:mb-8">Complete the Look</h2>
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
-            {relatedProducts.map((relProduct, i) => (
-              <ProductCard key={relProduct.id} product={relProduct} delay={i * 0.08} inView={false} />
-            ))}
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-xl lg:text-2xl font-heading font-black uppercase tracking-widest mb-4 lg:mb-8">You May Also Like</h2>
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
+              {relatedProducts.map((relProduct, i) => (
+                <ProductCard key={relProduct.id} product={relProduct} delay={i * 0.08} inView={false} />
+              ))}
+            </div>
           </div>
         </motion.section>
       )}
