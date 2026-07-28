@@ -291,20 +291,27 @@ export const updateProduct = async (req, res) => {
     const { id } = req.params;
     let { name, description, basePrice, images, videoUrl, categoryId, variants } = req.body;
     
+    // Normalize images array to fix bug where a single kept existing image gets passed as a string,
+    // which caused Array.isArray(images) to fail and COALESCE to fallback to the existing DB array (ignoring deletions).
+    let existingImages = [];
+    if (images !== undefined) {
+      if (typeof images === 'string') {
+        try {
+          const parsed = JSON.parse(images);
+          existingImages = Array.isArray(parsed) ? parsed : [images];
+        } catch (e) {
+          existingImages = [images];
+        }
+      } else if (Array.isArray(images)) {
+        existingImages = images;
+      }
+    }
+    
     // Handle Cloudinary uploads
     if (req.files) {
       if (req.files['images']) {
         const uploadedImages = req.files['images'].map(file => file.path);
-        // images might be a single string or an array depending on how it's sent
-        let existingImages = images;
-        if (typeof images === 'string') {
-          try {
-            existingImages = JSON.parse(images);
-          } catch (e) {
-            existingImages = [images];
-          }
-        }
-        images = existingImages ? [...(Array.isArray(existingImages) ? existingImages : [existingImages]), ...uploadedImages] : uploadedImages;
+        existingImages = [...existingImages, ...uploadedImages];
       }
       if (req.files['video']) {
         videoUrl = req.files['video'][0].path;
@@ -320,22 +327,31 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    // Explicitly handle empty videoUrl string meaning "delete video"
+    let finalVideoUrl = videoUrl;
+    if (videoUrl === '') {
+      finalVideoUrl = null;
+    }
+
     const client = await getClient();
     
     try {
       await client.query('BEGIN');
       
+      // We pass the resolved existingImages array, and we check if videoUrl was explicitly cleared.
+      // If finalVideoUrl is strictly null (because it was explicitly cleared to ''), it gets updated.
+      // If it is undefined, COALESCE will keep the existing value.
       const result = await client.query(
         `UPDATE products 
          SET name = COALESCE($1, name),
              description = COALESCE($2, description),
              base_price = COALESCE($3, base_price),
-             images = COALESCE($4, images),
-             video_url = COALESCE($5, video_url),
+             images = $4,
+             video_url = CASE WHEN $5::text = '' THEN NULL ELSE COALESCE($5, video_url) END,
              category_id = COALESCE($6, category_id)
          WHERE id = $7
          RETURNING *`,
-        [name, description, basePrice, Array.isArray(images) ? images : null, videoUrl, categoryId, id]
+        [name, description, basePrice, existingImages, videoUrl === '' ? '' : finalVideoUrl, categoryId, id]
       );
       
       if (result.rows.length === 0) {

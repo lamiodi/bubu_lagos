@@ -14,7 +14,8 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const isVideo = file.mimetype.startsWith('video');
+    const ext = file.originalname.split('.').pop().toLowerCase();
+    const isVideo = file.mimetype.startsWith('video') || ['mp4', 'mov', 'webm'].includes(ext);
     return {
       // Shared Cloudinary account with the WodiFair + Retail services.
       // Folder convention:  wodifair/  retail/  bubu/

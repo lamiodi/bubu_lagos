@@ -241,6 +241,8 @@ export function AdminProducts() {
         form.append('video', formData.videoFile);
       } else if (formData.videoUrl) {
         form.append('videoUrl', formData.videoUrl);
+      } else {
+        form.append('videoUrl', '');
       }
 
       form.append('variants', JSON.stringify(formData.variants));
