@@ -6,7 +6,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  updateVariantStock
+  updateVariantStock,
+  createProductsBulk
 } from '../controllers/productController.js';
 import { upload } from '../config/cloudinary.js';
 import { authenticateAdmin } from '../middleware/authMiddleware.js';
@@ -19,6 +20,8 @@ router.get('/recommendations', getRecommendations);
 router.get('/:id', getProductById);
 
 // Admin protected routes
+router.post('/bulk', authenticateAdmin, createProductsBulk);
+
 router.post('/', authenticateAdmin, upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'video', maxCount: 1 }

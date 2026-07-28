@@ -17,7 +17,9 @@ export function AdminProducts() {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);
+  const importCsvRef = useRef(null);
   const toast = useToast();
 
   const [formData, setFormData] = useState({
@@ -312,6 +314,86 @@ export function AdminProducts() {
     }
   };
 
+  const handleImportCsv = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      // Simple CSV parser supporting quotes (naive)
+      const rows = text.split('\n').map(row => row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim()));
+      
+      if (rows.length < 2) {
+        toast.error('CSV file is empty or missing headers');
+        return;
+      }
+
+      const headers = rows[0].map(h => h.toLowerCase());
+      const nameIdx = headers.findIndex(h => h.includes('name'));
+      const catIdx = headers.findIndex(h => h.includes('category'));
+      const priceIdx = headers.findIndex(h => h.includes('price'));
+      const stockIdx = headers.findIndex(h => h.includes('stock'));
+
+      if (nameIdx === -1 || priceIdx === -1) {
+        toast.error('CSV must contain at least "Name" and "Base Price" columns');
+        setImporting(false);
+        e.target.value = '';
+        return;
+      }
+
+      const productsToImport = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        if (!rows[i] || rows[i].length < 2) continue;
+        
+        const name = rows[i][nameIdx];
+        const categoryName = catIdx !== -1 ? rows[i][catIdx] : '';
+        const basePrice = parseFloat(rows[i][priceIdx]);
+        const stock = stockIdx !== -1 ? parseInt(rows[i][stockIdx], 10) : 0;
+
+        if (!name || isNaN(basePrice)) continue;
+
+        // Try to find category id by name, or use first category
+        let categoryId = categories.length > 0 ? categories[0].id : null;
+        if (categoryName) {
+          const found = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+          if (found) categoryId = found.id;
+        }
+
+        productsToImport.push({
+          name,
+          basePrice,
+          categoryId,
+          variants: [
+            {
+              name: 'One Size',
+              price: basePrice,
+              stockQuantity: isNaN(stock) ? 0 : stock
+            }
+          ]
+        });
+      }
+
+      if (productsToImport.length === 0) {
+        toast.error('No valid products found in CSV');
+        setImporting(false);
+        e.target.value = '';
+        return;
+      }
+
+      const res = await api.post('/products/bulk', { products: productsToImport });
+      toast.success(`Successfully imported ${res.count || productsToImport.length} products`);
+      fetchProducts();
+    } catch (err) {
+      logger.error('Failed to import CSV:', err);
+      toast.error('Failed to import products');
+    } finally {
+      setImporting(false);
+      e.target.value = ''; // reset
+    }
+  };
+
 
   return (
     <AdminLayout>
@@ -354,6 +436,23 @@ export function AdminProducts() {
           >
             Export CSV
           </button>
+          
+          <input
+            type="file"
+            accept=".csv"
+            ref={importCsvRef}
+            onChange={handleImportCsv}
+            className="hidden"
+          />
+          <button
+            onClick={() => importCsvRef.current?.click()}
+            disabled={importing}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-black/5 flex items-center gap-2 disabled:opacity-50"
+          >
+            {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            Import CSV
+          </button>
+
           <button
             onClick={openAddModal}
             className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"

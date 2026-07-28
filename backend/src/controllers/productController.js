@@ -502,3 +502,67 @@ async function getProductByIdInternal(productId, client = null) {
     createdAt: product.created_at
   };
 }
+
+export const createProductsBulk = async (req, res) => {
+  try {
+    const { products } = req.body;
+    
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ error: 'Valid products array is required' });
+    }
+    
+    const client = await getClient();
+    
+    try {
+      await client.query('BEGIN');
+      
+      const createdProducts = [];
+      
+      for (const p of products) {
+        let { name, description, basePrice, images, videoUrl, categoryId, variants } = p;
+        
+        if (!name || !basePrice || !categoryId) {
+          console.warn('Skipping product due to missing required fields:', p);
+          continue;
+        }
+        
+        const productResult = await client.query(
+          `INSERT INTO products (name, description, base_price, images, video_url, category_id)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING *`,
+          [name, description || '', basePrice, Array.isArray(images) ? images : [], videoUrl || null, categoryId]
+        );
+        
+        const productId = productResult.rows[0].id;
+        
+        if (variants && variants.length > 0) {
+          for (const variant of variants) {
+            await client.query(
+              `INSERT INTO product_variants (product_id, name, price, stock_quantity)
+               VALUES ($1, $2, $3, $4)`,
+              [productId, variant.name || 'Default', variant.price || basePrice, variant.stockQuantity || 0]
+            );
+          }
+        }
+        createdProducts.push(productId);
+      }
+      
+      await client.query('COMMIT');
+      
+      res.status(201).json({ 
+        message: `Successfully imported ${createdProducts.length} products`, 
+        count: createdProducts.length 
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error in bulk import:', error);
+    res.status(500).json({ error: 'Failed to import products in bulk' });
+  }
+};
