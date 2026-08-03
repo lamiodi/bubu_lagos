@@ -1,6 +1,6 @@
 // [SOURCE OF TRUTH] Categories + Collections Architecture for Bubu Lagos.
 // Categories = What a product IS (Bubus, Turbans, Accessories).
-// Collections = How products are PRESENTED (New Arrivals, Signature Collection, Occasion Wear, Hand-Beaded Collection, Best Sellers).
+// Collections = How products are PRESENTED (New Arrivals, Signature Bubu, Hand-Beaded Collection, Best Sellers).
 
 const IMG = (id, w = 800) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&h=${(w * 4) / 3}&fit=crop&q=80`;
@@ -30,17 +30,16 @@ const P = {
 // Core Categories (What products ARE)
 export const SAMPLE_CATEGORIES = [
   { id: 'cat-bubus', name: 'Bubus', slug: 'bubus', description: 'Classic and statement Bubu dresses, flowing caftans, and draped silhouettes.' },
-  { id: 'cat-turbans', name: 'Turbans', slug: 'turbans', description: 'Handcrafted royal silk velvet crown turbans, gelè headwraps, and bespoke headwear.' },
-  { id: 'cat-accessories', name: 'Accessories', slug: 'accessories', description: 'Artisan leather totes, brass waist cinchers, embroidered belts, and boutique jewelry.' },
+  { id: 'cat-turbans', name: 'Turbans & Gelès', slug: 'turbans-geles', description: 'Handcrafted royal silk velvet crown turbans, gelè headwraps, and bespoke headwear.' },
+  { id: 'cat-accessories', name: 'Artisan Accessories', slug: 'artisan-accessories', description: 'Artisan leather totes, brass waist cinchers, embroidered belts, and boutique jewelry.' },
 ];
 
 // Merchandising Collections (How products are PRESENTED)
 export const SAMPLE_COLLECTIONS = [
   { id: 'col-new', name: 'New Arrivals', slug: 'new-arrivals', description: 'Fresh seasonal releases handcrafted in our Lagos atelier.', bannerUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&h=600&fit=crop', accentColor: '#0F3D2E', displayOrder: 1 },
-  { id: 'col-signature', name: 'Signature Collection', slug: 'signature-collection', description: 'Iconic, effortless luxury pieces defining the Bubu Lagos brand.', bannerUrl: 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=1600&h=600&fit=crop', accentColor: '#0A291E', displayOrder: 2 },
-  { id: 'col-occasion', name: 'Occasion Wear', slug: 'occasion-wear', description: 'Gala and ceremonial grandeur designed for high-society events.', bannerUrl: 'https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=1600&h=600&fit=crop', accentColor: '#1A1A1A', displayOrder: 3 },
-  { id: 'col-beaded', name: 'Hand-Beaded Collection', slug: 'hand-beaded-collection', description: 'Bespoke crystal and glass embellishment crafted over 40+ hours.', bannerUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=1600&h=600&fit=crop', accentColor: '#8C6D3B', displayOrder: 4 },
-  { id: 'col-bestsellers', name: 'Best Sellers', slug: 'best-sellers', description: 'Our most sought-after silhouettes loved by clients worldwide.', bannerUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&h=600&fit=crop', accentColor: '#0F3D2E', displayOrder: 5 },
+  { id: 'col-signature', name: 'Signature Bubu', slug: 'signature-bubu', description: 'Iconic, effortless luxury pieces defining the Bubu Lagos brand.', bannerUrl: 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=1600&h=600&fit=crop', accentColor: '#0A291E', displayOrder: 2 },
+  { id: 'col-beaded', name: 'Hand-Beaded Collection', slug: 'hand-beaded-collection', description: 'Bespoke crystal and glass embellishment crafted over 40+ hours.', bannerUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=1600&h=600&fit=crop', accentColor: '#8C6D3B', displayOrder: 3 },
+  { id: 'col-bestsellers', name: 'Best Sellers', slug: 'best-sellers', description: 'Our most sought-after silhouettes loved by clients worldwide.', bannerUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&h=600&fit=crop', accentColor: '#0F3D2E', displayOrder: 4 },
 ];
 
 const CAT = {
@@ -52,9 +51,8 @@ const CAT = {
 const COL = {
   new: SAMPLE_COLLECTIONS[0],
   signature: SAMPLE_COLLECTIONS[1],
-  occasion: SAMPLE_COLLECTIONS[2],
-  beaded: SAMPLE_COLLECTIONS[3],
-  bestsellers: SAMPLE_COLLECTIONS[4],
+  beaded: SAMPLE_COLLECTIONS[2],
+  bestsellers: SAMPLE_COLLECTIONS[3],
 };
 
 const v = (id, name, price, stock = 12) => ({ id, name, price, stockQuantity: stock });
@@ -94,7 +92,7 @@ export const SAMPLE_PRODUCTS = [
     'Royal Indigo Silk Bubu',
     320000,
     CAT.bubus,
-    [COL.signature, COL.occasion, COL.bestsellers],
+    [COL.signature, COL.bestsellers],
     [P.bubuB, P.bubuC],
     [v('p-002-s', 'S', 320000), v('p-002-m', 'M', 320000), v('p-002-l', 'L', 320000)],
     'Woven from heavy silk crepe with deep indigo hue and metallic embroidery around the V-neckline.'
@@ -104,7 +102,7 @@ export const SAMPLE_PRODUCTS = [
     'Aso-Oke Heritage Bubu',
     410000,
     CAT.bubus,
-    [COL.signature, COL.occasion],
+    [COL.signature],
     [P.bubuC, P.heroB],
     [v('p-003-xs', 'XS', 410000), v('p-003-s', 'S', 410000), v('p-003-m', 'M', 410000)],
     'Featuring hand-woven Aso-Oke paneling along the sleeves and hemline, honoring traditional Yoruba weaving technique.'
@@ -124,7 +122,7 @@ export const SAMPLE_PRODUCTS = [
     'Lagos Velvet Evening Bubu',
     395000,
     CAT.bubus,
-    [COL.occasion, COL.signature],
+    [COL.signature],
     [P.bubuB, P.edit3],
     [v('p-005-xs', 'XS', 395000), v('p-005-s', 'S', 395000), v('p-005-m', 'M', 395000), v('p-005-l', 'L', 395000)],
     'Rich midnight velvet floor-length Bubu gown accented with gold thread embroidery for regal evening presence.'
@@ -134,7 +132,7 @@ export const SAMPLE_PRODUCTS = [
     'Royal Beaded Coral Bubu',
     485000,
     CAT.bubus,
-    [COL.beaded, COL.occasion, COL.bestsellers],
+    [COL.beaded, COL.bestsellers],
     [P.beadedA, P.beadedB],
     [v('p-006-s', 'S', 485000), v('p-006-m', 'M', 485000), v('p-006-l', 'L', 485000)],
     'Adorned with over 2,000 hand-stitched glass coral beads across the bodice. Over 40 hours of artisanal handwork.'
@@ -144,7 +142,7 @@ export const SAMPLE_PRODUCTS = [
     'Eko Gold Embroidered Bubu',
     345000,
     CAT.bubus,
-    [COL.beaded, COL.occasion],
+    [COL.beaded],
     [P.beadedB, P.beadedA],
     [v('p-007-s', 'S', 345000), v('p-007-m', 'M', 345000), v('p-007-l', 'L', 345000)],
     'Pure silk organza Bubu gown embroidered with intricate Lagos floral filigree and hand-finished hems.'
@@ -174,7 +172,7 @@ export const SAMPLE_PRODUCTS = [
     'Hand-Embroidered Gelè Turban',
     125000,
     CAT.turbans,
-    [COL.occasion, COL.signature],
+    [COL.signature],
     [P.accA, P.accB],
     [v('p-010-os', 'One Size', 125000, 20)],
     'Pre-pleated silk organza gelè turban with metallic gold thread embroidery.'

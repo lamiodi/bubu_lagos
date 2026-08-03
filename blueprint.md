@@ -69,7 +69,7 @@ Deployment orchestration is configured for Render via `render.yaml` (Static Site
 - [x] **Home:** 2x2 hero product mosaic with staggered reveal, category eyebrows, and price/caption details
 - [x] **Home:** Horizontal snap product carousel for mobile, responsive 2/4-col grid for desktop
 - [x] **Home:** "Atelier" brand heritage CTA section
-- [x] **Shop:** Category filter chips with animated `layoutId` underline (New Arrivals, Signature Bubus, Occasion Bubus, Hand-Beaded Pieces, Adire & Heritage Textiles, Evening, Resort & Lounge, Accessories, Gift Cards)
+- [x] **Shop:** Category filter chips with animated `layoutId` underline (New Arrivals, Signature Bubu, Hand-Beaded Collection, Best Sellers, Bubus, Turbans & Gelès, Artisan Accessories)
 - [x] **Shop:** Real-time search, price range filtering, mobile filters drawer, and pagination
 - [x] **Shop:** Editorial lookbook row integrating campaign imagery
 - [x] **Product Detail:** Multi-image gallery, size/color variant picker, related products recommendation
@@ -108,13 +108,12 @@ The platform decouples product physical type definitions (**Categories**) from m
 #### 1. Core Principles & Relationships
 - **Categories (What a product IS):** Represents the physical product classification in the database. Each product belongs to **ONE** category (1-to-many).
   - **Bubus** (`bubus`) — Classic, signature, and occasion Bubu gowns & silhouettes
-  - **Turbans** (`turbans`) — Handcrafted crown headwraps, gelès, and hairwear
-  - **Accessories** (`accessories`) — Artisan coral jewelry, leather totes, belts, and boutique accessories
+  - **Turbans & Gelès** (`turbans`) — Handcrafted crown headwraps, gelès, and hairwear
+  - **Artisan Accessories** (`accessories`) — Artisan coral jewelry, leather totes, belts, and boutique accessories
 
 - **Collections (How products are PRESENTED / Merchandised):** Dynamic marketing groupings. A product can belong to **MULTIPLE** collections via a many-to-many junction table (`product_collections`).
   - **New Arrivals** (`new-arrivals`) — Fresh atelier releases & new drapes
-  - **Signature Collection** (`signature-collection`) — Core iconic Bubu silhouettes
-  - **Occasion Wear** (`occasion-wear`) — Statement gala & ceremonial gowns
+  - **Signature Bubu** (`signature-bubu`) — Core iconic Bubu silhouettes
   - **Hand-Beaded Collection** (`hand-beaded-collection`) — Intricate crystal & glass embellished pieces
   - **Best Sellers** (`best-sellers`) — Top customer favorites & atelier classics
 
@@ -122,6 +121,16 @@ The platform decouples product physical type definitions (**Categories**) from m
 - `categories`: `id`, `name`, `slug`, `description`, `created_at`
 - `collections`: `id`, `name`, `slug`, `description`, `banner_url`, `accent_color`, `display_order`, `created_at`
 - `product_collections`: `product_id`, `collection_id` (Primary Key: `(product_id, collection_id)`)
+
+#### 3. Full-Stack Implementation Mechanics
+- **Backend API (`productController.js`):** 
+  - **Fetching:** `GET /api/products` performs a `LEFT JOIN` on `product_collections` and `collections`, using PostgreSQL's `json_agg()` to embed an array of collection objects (with `id`, `name`, `slug`) directly into each product.
+  - **Creating/Updating:** The endpoint accepts an array of `collectionIds`. It saves the product, clears any old mappings in `product_collections`, and bulk-inserts the new mappings.
+  - **Filtering:** Accepts `?collection=slug` query parameter to filter the product catalog dynamically via a SQL `WHERE` clause joining the collections table.
+- **Frontend Admin Dashboard (`AdminProducts.jsx`):** 
+  - **Upload Form:** Renders collections as a checklist (multi-select), converting selections into an array of IDs attached to the `FormData` payload.
+  - **CSV Bulk Import/Export:** Dedicated `Collections` column handles semicolon-separated collection names (e.g., `New Arrivals; Best Sellers`). The parser matches strings against active database records to resolve the correct `collectionIds` for bulk API submission.
+- **Storefront Merchandising (`Shop.jsx`):** Collections function purely as merchandising filters (e.g., routing to `/shop?collection=signature-bubu`), keeping core inventory categories stable while allowing flexible marketing campaigns.
 
 ---
 

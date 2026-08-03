@@ -7,13 +7,12 @@ import { useToast } from '../context/ToastContext';
 const FOOTER_LINKS = {
   categories: [
     { to: '/shop?category=bubus', label: 'Bubus' },
-    { to: '/shop?category=turbans', label: 'Turbans & Gelès' },
-    { to: '/shop?category=accessories', label: 'Artisan Accessories' },
+    { to: '/shop?category=turbans-geles', label: 'Turbans & Gelès' },
+    { to: '/shop?category=artisan-accessories', label: 'Artisan Accessories' },
   ],
   collections: [
     { to: '/shop?collection=new-arrivals', label: 'New Arrivals' },
-    { to: '/shop?collection=signature-collection', label: 'Signature Collection' },
-    { to: '/shop?collection=occasion-wear', label: 'Occasion Wear' },
+    { to: '/shop?collection=signature-bubu', label: 'Signature Bubu' },
     { to: '/shop?collection=hand-beaded-collection', label: 'Hand-Beaded Collection' },
     { to: '/shop?collection=best-sellers', label: 'Best Sellers' },
   ],

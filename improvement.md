@@ -221,7 +221,7 @@ These can't be verified in this repo but the front-end behavior depends on them:
 ### 9.1 Overview & Core Architecture
 Completed the migration of the Bubu Lagos platform to a decoupled **Categories vs. Collections** architecture:
 - **Categories (What a product IS):** One-to-many relationship (Bubus, Turbans, Accessories).
-- **Collections (How products are PRESENTED / Merchandised):** Many-to-many relationship via `product_collections` junction table (New Arrivals, Signature Collection, Occasion Wear, Hand-Beaded Collection, Best Sellers).
+- **Collections (How products are PRESENTED / Merchandised):** Many-to-many relationship via `product_collections` junction table (New Arrivals, Signature Bubu, Hand-Beaded Collection, Best Sellers).
 
 ### 9.2 Completed Changes Across Stack
 - **Database (`backend/migrations/019_categories_and_collections_architecture.sql` & `seed.js`):**

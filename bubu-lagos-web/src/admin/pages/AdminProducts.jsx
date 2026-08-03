@@ -350,6 +350,7 @@ export function AdminProducts() {
       const headers = rows[0].map(h => h.toLowerCase());
       const nameIdx = headers.findIndex(h => h.includes('name'));
       const catIdx = headers.findIndex(h => h.includes('category'));
+      const colIdx = headers.findIndex(h => h.includes('collection'));
       const priceIdx = headers.findIndex(h => h.includes('price'));
       const stockIdx = headers.findIndex(h => h.includes('stock'));
 
@@ -379,10 +380,18 @@ export function AdminProducts() {
           if (found) categoryId = found.id;
         }
 
+        const collectionNames = colIdx !== -1 && rows[i][colIdx] ? rows[i][colIdx].split(';').map(n => n.trim()).filter(Boolean) : [];
+        let collectionIds = [];
+        for (const cName of collectionNames) {
+          const found = collections.find(c => c.name.toLowerCase() === cName.toLowerCase());
+          if (found) collectionIds.push(found.id);
+        }
+
         productsToImport.push({
           name,
           basePrice,
           categoryId,
+          collectionIds,
           variants: [
             {
               name: 'One Size',
@@ -434,11 +443,12 @@ export function AdminProducts() {
           <button
             onClick={() => {
               const rows = [
-                ['Name', 'Category', 'Base Price', 'Total Stock', 'Variants'],
+                ['Name', 'Category', 'Collections', 'Base Price', 'Total Stock', 'Variants'],
                 ...filteredProducts.map(p => {
                   const stock = p.variants ? p.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0) : 0;
                   const variantCount = p.variants ? p.variants.length : 0;
-                  return [p.name, p.categoryName || '—', p.basePrice, stock, variantCount];
+                  const colls = p.collections ? p.collections.map(c => c.name).join(';') : '';
+                  return [p.name, p.categoryName || '—', colls, p.basePrice, stock, variantCount];
                 })
               ];
               const csv = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');

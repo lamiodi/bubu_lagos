@@ -85,10 +85,10 @@ export function Home() {
           </motion.div>
           <motion.div whileHover={reduceMotion ? undefined : { y: -2 }} whileTap={reduceMotion ? undefined : { scale: 0.96 }}>
             <Link
-              to="/shop?category=Signature%20Bubus"
+              to="/shop?collection=signature-bubu"
               className="inline-block px-8 py-3.5 border border-black text-black text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-colors"
             >
-              Explore Signature Bubus
+              Explore Signature Bubu
             </Link>
           </motion.div>
         </motion.div>

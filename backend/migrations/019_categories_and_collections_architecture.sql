@@ -32,7 +32,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES catego
 
 -- 4. Create Product-Collections Many-to-Many Junction Table
 CREATE TABLE IF NOT EXISTS product_collections (
-  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  product_id VARCHAR(255) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   collection_id UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
   PRIMARY KEY (product_id, collection_id)
 );
@@ -47,18 +47,17 @@ CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 -- 5. Seed Core Categories (What products ARE)
 INSERT INTO categories (name, slug, description) VALUES
   ('Bubus', 'bubus', 'Classic and statement Bubu dresses, flowing caftans, and draped silhouettes.'),
-  ('Turbans', 'turbans', 'Handcrafted royal silk velvet crown turbans, gelè headwraps, and bespoke headwear.'),
-  ('Accessories', 'accessories', 'Artisan leather totes, brass waist cinchers, embroidered belts, and boutique jewelry.')
+  ('Turbans & Gelès', 'turbans-geles', 'Handcrafted royal silk velvet crown turbans, gelè headwraps, and bespoke headwear.'),
+  ('Artisan Accessories', 'artisan-accessories', 'Artisan leather totes, brass waist cinchers, embroidered belts, and boutique jewelry.')
 ON CONFLICT (name) DO UPDATE SET
   description = EXCLUDED.description;
 
 -- 6. Seed Core Collections (Merchandising & Storytelling)
 INSERT INTO collections (name, slug, description, display_order) VALUES
   ('New Arrivals', 'new-arrivals', 'Fresh seasonal releases handcrafted in our Lagos atelier.', 1),
-  ('Signature Collection', 'signature-collection', 'Iconic, effortless luxury pieces defining the Bubu Lagos brand.', 2),
-  ('Occasion Wear', 'occasion-wear', 'Gala and ceremonial grandeur designed for high-society events.', 3),
-  ('Hand-Beaded Collection', 'hand-beaded-collection', 'Bespoke crystal and glass embellishment crafted over 40+ hours.', 4),
-  ('Best Sellers', 'best-sellers', 'Our most sought-after silhouettes loved by clients worldwide.', 5)
+  ('Signature Bubu', 'signature-bubu', 'Iconic, effortless luxury pieces defining the Bubu Lagos brand.', 2),
+  ('Hand-Beaded Collection', 'hand-beaded-collection', 'Bespoke crystal and glass embellishment crafted over 40+ hours.', 3),
+  ('Best Sellers', 'best-sellers', 'Our most sought-after silhouettes loved by clients worldwide.', 4)
 ON CONFLICT (name) DO UPDATE SET
   description = EXCLUDED.description,
   display_order = EXCLUDED.display_order;

@@ -13,13 +13,10 @@ const RECENT_KEY = 'bubu_recent_searches';
 const MAX_RECENT = 6;
 
 const QUICK_LINKS = [
-  { label: 'Signature Bubus', to: '/shop?category=Signature+Bubus' },
-  { label: 'Classic Bubu', to: '/shop?category=Bubu' },
-  { label: 'Luxury Denim', to: '/shop?category=Denim' },
-  { label: 'Crown Turbans', to: '/shop?category=Turban' },
-  { label: 'Occasion Bubus', to: '/shop?category=Occasion+Bubus' },
-  { label: 'Hand-Beaded Pieces', to: '/shop?category=Hand-Beaded+Pieces' },
-  { label: 'Adire & Heritage', to: '/shop?category=Adire+%26+Heritage+Textiles' },
+  { label: 'Signature Bubu', to: '/shop?collection=signature-bubu' },
+  { label: 'Crown Turbans & Gelès', to: '/shop?category=turbans-geles' },
+  { label: 'Hand-Beaded Pieces', to: '/shop?collection=hand-beaded-collection' },
+  { label: 'Artisan Accessories', to: '/shop?category=artisan-accessories' },
   { label: 'Bubu Gift Cards', to: '/gift-card' },
 ];
 
