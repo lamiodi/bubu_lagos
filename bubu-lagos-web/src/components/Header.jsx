@@ -8,35 +8,22 @@ import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } fr
 import { EASE_OUT } from '../lib/motion';
 
 const PRIMARY_NAV = [
-  { to: '/shop?category=bubus', label: 'Bubus' },
-  { to: '/shop?category=turbans', label: 'Turbans' },
-  { to: '/shop?category=accessories', label: 'Accessories' },
-  { to: '/shop?collection=new-arrivals', label: 'New Arrivals' },
-  { to: '/shop?collection=signature-collection', label: 'Signature' },
-  { to: '/shop?collection=occasion-wear', label: 'Occasion Wear' },
-  { to: '/shop?collection=hand-beaded-collection', label: 'Hand-Beaded' },
-  { to: '/gift-card', label: 'Gift Cards' },
+  { to: '/shop', label: 'New In' },
+  { to: '/shop', label: 'E-Shop' },
+  { to: '/gift-card', label: 'Gift' },
 ];
 
 const MOBILE_NAV = [
-  { section: 'Product Categories', items: [
-    { to: '/shop?category=bubus', label: 'Bubus' },
-    { to: '/shop?category=turbans', label: 'Turbans & Gelès' },
-    { to: '/shop?category=accessories', label: 'Artisan Accessories' },
+  { section: 'Atelier', items: [
+    { to: '/shop', label: 'New In' },
+    { to: '/shop', label: 'E-Shop' },
   ]},
-  { section: 'Curated Collections', items: [
-    { to: '/shop?collection=new-arrivals', label: 'New Arrivals' },
-    { to: '/shop?collection=signature-collection', label: 'Signature Collection' },
-    { to: '/shop?collection=occasion-wear', label: 'Occasion Wear' },
-    { to: '/shop?collection=hand-beaded-collection', label: 'Hand-Beaded Collection' },
-    { to: '/shop?collection=best-sellers', label: 'Best Sellers' },
+  { section: 'Give', items: [
+    { to: '/gift-card', label: 'Gift Card' },
   ]},
-  { section: 'The Gifting Experience', items: [
-    { to: '/gift-card', label: 'Bubu Lagos Gift Cards' },
-  ]},
-  { section: 'Concierge & Atelier', items: [
-    { to: '/contact', label: 'Book Atelier Appointment' },
-    { to: '/search', label: 'Search Catalog' },
+  { section: 'Discover', items: [
+    { to: '/contact', label: 'Contact Us' },
+    { to: '/search', label: 'Search' },
   ]},
 ];
 
