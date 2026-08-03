@@ -8,7 +8,7 @@ import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Spa
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
-import { SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS, SAMPLE_PRODUCTS } from '../lib/sampleProducts';
+
 import { useUI } from '../context/UIContext';
 
 function CategoryTab({ label, isActive, onClick }) {
@@ -168,12 +168,12 @@ export function Shop() {
         if (data?.products) {
           setProducts(data.products);
         } else {
-          setProducts(filterSampleProducts());
+          setProducts([]);
         }
       } catch (err) {
         if (err.name === 'AbortError') return;
-        logger.error('API product fetch failed, utilizing sample data:', err);
-        setProducts(filterSampleProducts());
+        logger.error('API product fetch failed:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -182,32 +182,6 @@ export function Shop() {
     fetchProducts();
     return () => controller.abort();
   }, [activeCategory, selectedCollections, sort, minPrice, maxPrice]);
-
-  const filterSampleProducts = () => {
-    return SAMPLE_PRODUCTS.filter(p => {
-      // Category filter (Exact match)
-      if (activeCategory !== 'all') {
-        const pCatSlug = p.category?.slug || p.category?.name?.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const targetCatSlug = activeCategory.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (pCatSlug !== targetCatSlug && !p.category?.name?.toLowerCase().includes(activeCategory.toLowerCase())) {
-          return false;
-        }
-      }
-      // Collections filter (Matches any selected collection)
-      if (selectedCollections.length > 0) {
-        const productCollectionSlugs = (p.collections || []).map(c => c.slug || c.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
-        const hasMatch = selectedCollections.some(colSlug => 
-          productCollectionSlugs.includes(colSlug) || 
-          p.collection?.toLowerCase().replace(/[^a-z0-9]+/g, '-') === colSlug
-        );
-        if (!hasMatch) return false;
-      }
-      // Price filters
-      if (minPrice && p.basePrice < parseFloat(minPrice)) return false;
-      if (maxPrice && p.basePrice > parseFloat(maxPrice)) return false;
-      return true;
-    });
-  };
 
   const handleCategorySelect = (catSlug) => {
     const params = new URLSearchParams(searchParams);
