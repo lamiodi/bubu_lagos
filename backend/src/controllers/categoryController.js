@@ -9,6 +9,7 @@ export const getCategories = async (req, res) => {
     const categories = result.rows.map(row => ({
       id: row.id,
       name: row.name,
+      slug: row.slug,
       description: row.description,
       imageUrl: row.image_url,
       createdAt: row.created_at
@@ -40,6 +41,7 @@ export const getCategoryById = async (req, res) => {
     res.json({
       id: category.id,
       name: category.name,
+      slug: category.slug,
       description: category.description,
       imageUrl: category.image_url,
       createdAt: category.created_at
@@ -53,17 +55,19 @@ export const getCategoryById = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, imageUrl } = req.body;
+    const { name, slug, description, imageUrl } = req.body;
     
     if (!name) {
       return res.status(400).json({ error: 'Category name is required' });
     }
     
+    const generatedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    
     const result = await query(
-      `INSERT INTO categories (name, description, image_url)
-       VALUES ($1, $2, $3)
+      `INSERT INTO categories (name, slug, description, image_url)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [name, description, imageUrl]
+      [name, generatedSlug, description, imageUrl]
     );
     
     const category = result.rows[0];
@@ -71,6 +75,7 @@ export const createCategory = async (req, res) => {
     res.status(201).json({
       id: category.id,
       name: category.name,
+      slug: category.slug,
       description: category.description,
       imageUrl: category.image_url,
       createdAt: category.created_at
@@ -91,16 +96,17 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, imageUrl } = req.body;
+    const { name, slug, description, imageUrl } = req.body;
     
     const result = await query(
       `UPDATE categories 
        SET name = COALESCE($1, name),
-           description = COALESCE($2, description),
-           image_url = COALESCE($3, image_url)
-       WHERE id = $4
+           slug = COALESCE($2, slug),
+           description = COALESCE($3, description),
+           image_url = COALESCE($4, image_url)
+       WHERE id = $5
        RETURNING *`,
-      [name, description, imageUrl, id]
+      [name, slug, description, imageUrl, id]
     );
     
     if (result.rows.length === 0) {
@@ -112,6 +118,7 @@ export const updateCategory = async (req, res) => {
     res.json({
       id: category.id,
       name: category.name,
+      slug: category.slug,
       description: category.description,
       imageUrl: category.image_url,
       createdAt: category.created_at

@@ -1,6 +1,6 @@
 import { query } from './db.js';
 import bcrypt from 'bcrypt';
-import { SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS } from '../../bubu-lagos-web/src/lib/sampleProducts.js';
+import { SEED_CATEGORIES, SEED_COLLECTIONS } from './data/taxonomy.js';
 import { logger } from './utils/logger.js';
 
 async function seed() {
@@ -26,7 +26,7 @@ async function seed() {
 
         // 2. Seed Categories (What products ARE)
         logger.info('Seeding categories...');
-        for (const cat of SAMPLE_CATEGORIES) {
+        for (const cat of SEED_CATEGORIES) {
             await query(
                 `INSERT INTO categories (name, slug, description)
                  VALUES ($1, $2, $3)
@@ -37,12 +37,12 @@ async function seed() {
 
         // 3. Seed Collections (Merchandising groups)
         logger.info('Seeding collections...');
-        for (const col of SAMPLE_COLLECTIONS) {
+        for (const col of SEED_COLLECTIONS) {
             await query(
-                `INSERT INTO collections (name, slug, description, banner_url, accent_color, display_order)
-                 VALUES ($1, $2, $3, $4, $5, $6)
+                `INSERT INTO collections (name, slug, description, display_order)
+                 VALUES ($1, $2, $3, $4)
                  ON CONFLICT (name) DO UPDATE SET slug = EXCLUDED.slug, description = EXCLUDED.description, display_order = EXCLUDED.display_order`,
-                [col.name, col.slug, col.description, col.bannerUrl, col.accentColor, col.displayOrder]
+                [col.name, col.slug, col.description, col.displayOrder]
             );
         }
 

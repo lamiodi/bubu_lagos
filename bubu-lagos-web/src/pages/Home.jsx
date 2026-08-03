@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { Layout } from '../components/Layout';
-import { getImageUrl, formatProductPrice } from '../lib/utils';
+import { getImageUrl, formatProductPrice, FALLBACK_IMAGE } from '../lib/utils';
 import { logger } from '../lib/logger';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
-import { FALLBACK_IMAGE } from '../lib/sampleProducts';
 import { EASE_OUT } from '../lib/motion';
 
 export function Home() {

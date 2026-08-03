@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Heart } from 'lucide-react';
-import { getImageUrl } from '../lib/utils';
-import { FALLBACK_IMAGE } from '../lib/sampleProducts';
+import { getImageUrl, FALLBACK_IMAGE } from '../lib/utils';
 import { EASE_OUT } from '../lib/motion';
 
 // Hoisted: avoid re-creating these on every render of the card list.

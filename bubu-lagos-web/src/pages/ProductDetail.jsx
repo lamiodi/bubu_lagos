@@ -1,14 +1,13 @@
 import { Layout } from '../components/Layout';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { cn, getImageUrl, formatProductPrice } from '../lib/utils';
+import { cn, getImageUrl, formatProductPrice, FALLBACK_IMAGE } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import api from '../utils/api';
 import { logger } from '../lib/logger';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
-import { FALLBACK_IMAGE } from '../lib/sampleProducts';
 
 export function ProductDetail() {
   const { id } = useParams();

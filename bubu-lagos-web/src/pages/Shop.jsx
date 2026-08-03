@@ -8,7 +8,6 @@ import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Spa
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
-import { SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS } from '../lib/sampleProducts';
 import { useUI } from '../context/UIContext';
 
 function CategoryTab({ label, isActive, onClick }) {
@@ -117,8 +116,10 @@ export function Shop() {
     return raw;
   }, [searchParams]);
 
-  const [categories, setCategories] = useState(SAMPLE_CATEGORIES);
-  const [collections, setCollections] = useState(SAMPLE_COLLECTIONS);
+  // Source of truth = API. We start with empty arrays so the UI only ever
+  // shows data that has been fetched from the database.
+  const [categories, setCategories] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -130,18 +131,27 @@ export function Shop() {
   const [maxPrice, setMaxPrice] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Fetch Categories & Collections from Backend API
+  // Fetch Categories & Collections from Backend API (only source of truth)
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
         const [catRes, colRes] = await Promise.all([
-          api.get('/categories').catch(() => null),
-          api.get('/collections').catch(() => null)
+          api.get('/categories').catch((err) => {
+            logger.error('Failed to load categories:', err);
+            return null;
+          }),
+          api.get('/collections').catch((err) => {
+            logger.error('Failed to load collections:', err);
+            return null;
+          })
         ]);
-        if (catRes?.categories?.length > 0) setCategories(catRes.categories);
-        if (colRes?.collections?.length > 0) setCollections(colRes.collections);
+        // Only overwrite with API data; never fall back to hardcoded data.
+        setCategories(catRes?.categories || []);
+        setCollections(colRes?.collections || []);
       } catch (err) {
         logger.error('Failed to load categories/collections:', err);
+        setCategories([]);
+        setCollections([]);
       }
     };
     fetchMetadata();
