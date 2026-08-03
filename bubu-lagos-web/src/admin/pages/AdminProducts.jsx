@@ -448,7 +448,7 @@ export function AdminProducts() {
                   const stock = p.variants ? p.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0) : 0;
                   const variantCount = p.variants ? p.variants.length : 0;
                   const colls = p.collections ? p.collections.map(c => c.name).join(';') : '';
-                  return [p.name, p.categoryName || '—', colls, p.basePrice, stock, variantCount];
+                  return [p.name, p.category?.name || '—', colls, p.basePrice, stock, variantCount];
                 })
               ];
               const csv = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');

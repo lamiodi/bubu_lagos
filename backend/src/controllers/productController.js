@@ -46,17 +46,35 @@ export const getProducts = async (req, res) => {
     const conditions = [];
     
     if (category) {
-      params.push(category);
-      conditions.push(`(c.slug = $${params.length} OR c.name ILIKE $${params.length} OR c.id::text = $${params.length})`);
+      if (Array.isArray(category)) {
+        params.push(category);
+        conditions.push(`(c.slug = ANY($${params.length}) OR c.name = ANY($${params.length}) OR c.id::text = ANY($${params.length}))`);
+      } else {
+        params.push(category);
+        conditions.push(`(c.slug = $${params.length} OR c.name ILIKE $${params.length} OR c.id::text = $${params.length})`);
+      }
     }
 
     if (collection) {
-      params.push(collection);
-      conditions.push(`EXISTS (
-        SELECT 1 FROM product_collections pc_filter
-        JOIN collections col_filter ON pc_filter.collection_id = col_filter.id
-        WHERE pc_filter.product_id = p.id AND (col_filter.slug = $${params.length} OR col_filter.name ILIKE $${params.length} OR col_filter.id::text = $${params.length})
-      )`);
+      let collectionList = Array.isArray(collection)
+        ? collection
+        : (typeof collection === 'string' && collection.includes(','))
+        ? collection.split(',')
+        : [collection];
+      collectionList = collectionList.filter(Boolean);
+
+      if (collectionList.length > 0) {
+        params.push(collectionList);
+        conditions.push(`EXISTS (
+          SELECT 1 FROM product_collections pc_filter
+          JOIN collections col_filter ON pc_filter.collection_id = col_filter.id
+          WHERE pc_filter.product_id = p.id AND (
+            col_filter.slug = ANY($${params.length}) OR 
+            col_filter.name = ANY($${params.length}) OR 
+            col_filter.id::text = ANY($${params.length})
+          )
+        )`);
+      }
     }
 
     if (search) {
@@ -203,7 +221,7 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, variants } = req.body;
+    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants } = req.body;
     
     if (req.files) {
       if (req.files['images']) {
@@ -215,11 +233,13 @@ export const createProduct = async (req, res) => {
       }
     }
 
+    let targetCollectionIds = collectionIds !== undefined ? collectionIds : collections;
+
     if (typeof variants === 'string') {
       try { variants = JSON.parse(variants); } catch (e) {}
     }
-    if (typeof collectionIds === 'string') {
-      try { collectionIds = JSON.parse(collectionIds); } catch (e) { collectionIds = [collectionIds]; }
+    if (typeof targetCollectionIds === 'string') {
+      try { targetCollectionIds = JSON.parse(targetCollectionIds); } catch (e) { targetCollectionIds = [targetCollectionIds]; }
     }
     
     if (!name || !basePrice || !categoryId) {
@@ -242,8 +262,8 @@ export const createProduct = async (req, res) => {
       const productId = product.id;
       
       // Insert product collections mapping
-      if (Array.isArray(collectionIds) && collectionIds.length > 0) {
-        for (const colId of collectionIds) {
+      if (Array.isArray(targetCollectionIds) && targetCollectionIds.length > 0) {
+        for (const colId of targetCollectionIds) {
           await client.query(
             `INSERT INTO product_collections (product_id, collection_id)
              VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -284,7 +304,7 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, variants } = req.body;
+    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants } = req.body;
     
     let existingImages = [];
     if (images !== undefined) {
@@ -310,11 +330,13 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    let targetCollectionIds = collectionIds !== undefined ? collectionIds : collections;
+
     if (typeof variants === 'string') {
       try { variants = JSON.parse(variants); } catch (e) {}
     }
-    if (typeof collectionIds === 'string') {
-      try { collectionIds = JSON.parse(collectionIds); } catch (e) { collectionIds = [collectionIds]; }
+    if (typeof targetCollectionIds === 'string') {
+      try { targetCollectionIds = JSON.parse(targetCollectionIds); } catch (e) { targetCollectionIds = [targetCollectionIds]; }
     }
 
     let finalVideoUrl = videoUrl;
@@ -344,9 +366,9 @@ export const updateProduct = async (req, res) => {
       }
 
       // Update product_collections mapping
-      if (Array.isArray(collectionIds)) {
+      if (Array.isArray(targetCollectionIds)) {
         await client.query('DELETE FROM product_collections WHERE product_id = $1', [id]);
-        for (const colId of collectionIds) {
+        for (const colId of targetCollectionIds) {
           await client.query(
             `INSERT INTO product_collections (product_id, collection_id)
              VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -534,8 +556,13 @@ export const createProductsBulk = async (req, res) => {
       const createdProducts = [];
       
       for (const p of products) {
-        let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, variants } = p;
+        let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants } = p;
         if (!name || !basePrice || !categoryId) continue;
+
+        let targetCollectionIds = collectionIds !== undefined ? collectionIds : collections;
+        if (typeof targetCollectionIds === 'string') {
+          try { targetCollectionIds = JSON.parse(targetCollectionIds); } catch (e) { targetCollectionIds = [targetCollectionIds]; }
+        }
         
         const productResult = await client.query(
           `INSERT INTO products (name, description, base_price, images, video_url, category_id)
@@ -545,8 +572,8 @@ export const createProductsBulk = async (req, res) => {
         
         const productId = productResult.rows[0].id;
         
-        if (Array.isArray(collectionIds)) {
-          for (const colId of collectionIds) {
+        if (Array.isArray(targetCollectionIds)) {
+          for (const colId of targetCollectionIds) {
             await client.query(
               `INSERT INTO product_collections (product_id, collection_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
               [productId, colId]
