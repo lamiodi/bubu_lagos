@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Package, Truck, CheckCircle, Clock, XCircle, AlertCircle, Mail } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, XCircle, AlertCircle, Mail, HelpCircle, FileText, MessageSquare } from 'lucide-react';
 import { API_BASE } from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { EASE_OUT } from '../lib/motion';
@@ -80,30 +80,36 @@ export function TrackOrder() {
           <h1 className="font-heading text-3xl sm:text-4xl font-black tracking-tight mb-3">
             Track Your Order
           </h1>
-          <p className="text-text-light text-sm">
-            Enter the order reference and the email you used at checkout.
+          <p className="text-text-light text-sm max-w-md mx-auto">
+            Enter the order reference code and the email address used during your checkout.
           </p>
         </div>
 
         <form onSubmit={handleTrack} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-8">
           <div className="space-y-4">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-text-light mb-2">
-                Order Reference
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-text-light">
+                  Order Reference
+                </label>
+                <span className="text-[10px] text-gray-400">Found in confirmation email</span>
+              </div>
               <input
                 type="text"
                 value={ref}
                 onChange={(e) => setRef(e.target.value)}
                 placeholder="e.g. BUBU-1700000000-A1B2"
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors text-sm font-mono uppercase"
                 required
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-text-light mb-2">
-                Email Used At Checkout
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-text-light">
+                  Email Used At Checkout
+                </label>
+                <span className="text-[10px] text-gray-400">Where receipt was sent</span>
+              </div>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
                 <input
@@ -111,7 +117,7 @@ export function TrackOrder() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors text-sm"
                   required
                 />
               </div>
@@ -125,7 +131,7 @@ export function TrackOrder() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-black text-white py-3 rounded-lg font-medium text-sm hover:bg-black/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              className="w-full bg-black text-white py-3.5 rounded-lg font-medium text-sm hover:bg-black/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -136,6 +142,48 @@ export function TrackOrder() {
             </button>
           </div>
         </form>
+
+        {/* Guidance Card: Where to find this information */}
+        {!result && (
+          <div className="bg-gray-50/80 rounded-2xl border border-gray-200/60 p-6 sm:p-7 mb-8">
+            <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-wider text-black">
+              <HelpCircle size={16} className="text-accent" />
+              <span>Where to find your order details?</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600">
+              <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-2xs">
+                <FileText size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-gray-900 block mb-1">Order Confirmation Email</span>
+                  <p className="leading-relaxed text-[11px]">
+                    Check your email inbox for an email subject <strong>&quot;Order Confirmed - Bubu Lagos&quot;</strong> or <strong>&quot;Payment Received&quot;</strong>. Your reference code (e.g. <code>BUBU-...</code>) is listed at the top.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-2xs">
+                <Mail size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-gray-900 block mb-1">Checkout Email Address</span>
+                  <p className="leading-relaxed text-[11px]">
+                    Use the exact email address specified during checkout. If you used Apple Pay or Express Checkout, check the email connected to that account.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-gray-200/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-gray-500">
+              <span>Still having trouble finding your order?</span>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-black hover:text-accent transition-colors"
+              >
+                <MessageSquare size={13} />
+                Contact Client Concierge
+              </Link>
+            </div>
+          </div>
+        )}
 
         {result && (
           <motion.div
