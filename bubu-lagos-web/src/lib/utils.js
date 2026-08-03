@@ -7,9 +7,16 @@ export function cn(...inputs) {
 
 export function getImageUrl(imagePath) {
   if (!imagePath) return null;
-  if (imagePath.startsWith('http')) return imagePath;
+  let url = imagePath;
+  if (url.startsWith('http://res.cloudinary.com')) {
+    url = url.replace('http://res.cloudinary.com', 'https://res.cloudinary.com');
+  }
+  if (url.includes('cloudinary.com') && url.includes('/video/upload/') && url.toLowerCase().endsWith('.mov')) {
+    url = url.replace(/\.mov$/i, '.mp4');
+  }
+  if (url.startsWith('http')) return url;
   const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-  return `${baseUrl}${imagePath}`;
+  return `${baseUrl}${url}`;
 }
 
 /**

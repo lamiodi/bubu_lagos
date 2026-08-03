@@ -1,10 +1,10 @@
 import { query } from './db.js';
 import bcrypt from 'bcrypt';
-import { SAMPLE_PRODUCTS } from '../../bubu-lagos-web/src/lib/sampleProducts.js';
+import { SAMPLE_PRODUCTS, SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS } from '../../bubu-lagos-web/src/lib/sampleProducts.js';
 import { logger } from './utils/logger.js';
 
 async function seed() {
-    logger.info('Starting seed process...');
+    logger.info('Starting seed process for Categories + Collections architecture...');
 
     try {
         // 1. Create First Admin User
@@ -20,54 +20,80 @@ async function seed() {
                 [adminEmail, hashedPassword, 'Super Admin']
             );
             logger.info(`✅ Admin user created: ${adminEmail}`);
-            logger.info(`🔑 Temporary Password: ${adminPassword}`);
         } else {
             logger.info('ℹ️ Admin user already exists.');
         }
 
-        // 2. Seed Products from frontend library
-        logger.info('Seeding products from frontend data...');
+        // 2. Seed Categories (What products ARE)
+        logger.info('Seeding categories...');
+        for (const cat of SAMPLE_CATEGORIES) {
+            await query(
+                `INSERT INTO categories (name, slug, description)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (name) DO UPDATE SET slug = EXCLUDED.slug, description = EXCLUDED.description`,
+                [cat.name, cat.slug, cat.description]
+            );
+        }
+
+        // 3. Seed Collections (Merchandising groups)
+        logger.info('Seeding collections...');
+        for (const col of SAMPLE_COLLECTIONS) {
+            await query(
+                `INSERT INTO collections (name, slug, description, banner_url, accent_color, display_order)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 ON CONFLICT (name) DO UPDATE SET slug = EXCLUDED.slug, description = EXCLUDED.description, display_order = EXCLUDED.display_order`,
+                [col.name, col.slug, col.description, col.bannerUrl, col.accentColor, col.displayOrder]
+            );
+        }
+
+        // 4. Seed Products and Product-Collection Mappings
+        logger.info('Seeding products and collection mappings...');
 
         for (const p of SAMPLE_PRODUCTS) {
-            // Skip gift card product as it's handled separately
-            if (p.isGiftCard) continue;
-            
-            // Get category name from the category object
             const categoryName = p.category?.name || p.category;
-            
-            // Find category ID
             const catResult = await query('SELECT id FROM categories WHERE name = $1', [categoryName]);
-            if (catResult.rows.length === 0) {
-                logger.info(`⚠️ Category not found for product ${p.name}: ${categoryName}`);
-                continue;
-            }
+            if (catResult.rows.length === 0) continue;
             const categoryId = catResult.rows[0].id;
 
-            // Insert product
             const productResult = await query(
                 `INSERT INTO products (name, description, base_price, images, category_id)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT DO NOTHING
-         RETURNING id`,
-                [p.name, p.description || `${p.name} from the ${p.collection || 'Atelier'} collection.`, p.basePrice, p.images || [], categoryId]
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT DO NOTHING
+                 RETURNING id`,
+                [p.name, p.description, p.basePrice, p.images || [], categoryId]
             );
 
+            let productId;
             if (productResult.rows.length > 0) {
-                const productId = productResult.rows[0].id;
-                // Insert variants if they exist
+                productId = productResult.rows[0].id;
+            } else {
+                const existingProd = await query('SELECT id FROM products WHERE name = $1', [p.name]);
+                if (existingProd.rows.length > 0) productId = existingProd.rows[0].id;
+            }
+
+            if (productId) {
+                // Link variants
                 if (p.variants && p.variants.length > 0) {
                     for (const variant of p.variants) {
                         await query(
-                            'INSERT INTO product_variants (product_id, name, price, stock_quantity) VALUES ($1, $2, $3, $4)',
+                            'INSERT INTO product_variants (product_id, name, price, stock_quantity) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',
                             [productId, variant.name, variant.price, variant.stockQuantity || 50]
                         );
                     }
-                } else {
-                    // Add a default variant (One Size)
-                    await query(
-                        'INSERT INTO product_variants (product_id, name, price, stock_quantity) VALUES ($1, $2, $3, $4)',
-                        [productId, 'Universal', p.basePrice, 50]
-                    );
+                }
+
+                // Link Collections
+                if (p.collections && Array.isArray(p.collections)) {
+                    for (const col of p.collections) {
+                        const colResult = await query('SELECT id FROM collections WHERE name = $1', [col.name]);
+                        if (colResult.rows.length > 0) {
+                            await query(
+                                `INSERT INTO product_collections (product_id, collection_id)
+                                 VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+                                [productId, colResult.rows[0].id]
+                            );
+                        }
+                    }
                 }
             }
         }

@@ -197,13 +197,13 @@ export function AdminOrders() {
               <tr><th>Item</th><th>Variant</th><th>Qty</th></tr>
             </thead>
             <tbody>
-              ${orderObj.items.map(item => \`
+              ${orderObj.items.map(item => `
                 <tr>
-                  <td>\${item.productName}</td>
-                  <td>\${item.variantName}</td>
-                  <td>\${item.quantity}</td>
+                  <td>${item.productName}</td>
+                  <td>${item.variantName}</td>
+                  <td>${item.quantity}</td>
                 </tr>
-              \`).join('')}
+              `).join('')}
             </tbody>
           </table>
         </body>

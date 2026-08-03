@@ -5,37 +5,42 @@ import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
 
 const FOOTER_LINKS = {
+  categories: [
+    { to: '/shop?category=bubus', label: 'Bubus' },
+    { to: '/shop?category=turbans', label: 'Turbans & Gelès' },
+    { to: '/shop?category=accessories', label: 'Artisan Accessories' },
+  ],
+  collections: [
+    { to: '/shop?collection=new-arrivals', label: 'New Arrivals' },
+    { to: '/shop?collection=signature-collection', label: 'Signature Collection' },
+    { to: '/shop?collection=occasion-wear', label: 'Occasion Wear' },
+    { to: '/shop?collection=hand-beaded-collection', label: 'Hand-Beaded Collection' },
+    { to: '/shop?collection=best-sellers', label: 'Best Sellers' },
+  ],
   contact: [
-    { href: 'mailto:info@bubulagos.com', label: 'E-mail: info@bubulagos.com' },
+    { href: 'mailto:concierge@bubulagos.com', label: 'Email: concierge@bubulagos.com' },
     { href: 'https://instagram.com/bubulagos', label: 'Instagram: @bubulagos', external: true },
-    { to: '/contact', label: 'Visit our Atelier' },
+    { to: '/contact', label: 'Book Atelier Appointment' },
   ],
   help: [
     { to: '/account', label: 'My Account' },
-    { to: '/contact', label: 'Contact Concierge' },
-    { to: '/contact', label: 'Shipping and Returns' },
-    { to: '/contact', label: 'Terms and Conditions of Sales' },
-    { to: '/contact', label: 'Terms and Conditions of Use' },
+    { to: '/track-order', label: 'Track Your Order' },
+    { to: '/contact', label: 'Client Concierge' },
+    { to: '/contact', label: 'Shipping & Returns' },
+    { to: '/contact', label: 'Terms of Service' },
     { to: '/contact', label: 'Privacy Policy' },
-    { to: '/contact', label: 'Edit Cookies' },
   ],
-  about: [
-    { to: '/contact', label: 'Cookies' },
-    { to: '/contact', label: 'Accessibility' },
-    { to: '/contact', label: 'Our Engagements' },
-  ],
-  // [NEW] Quick link to the Gift Card purchase page.
   gift: [
-    { to: '/gift-card', label: 'Send a Gift Card' },
-    { to: '/contact', label: 'Redeem a Gift Card' },
+    { to: '/gift-card', label: 'Send Digital Gift Card' },
+    { to: '/gift-card', label: 'Redeem Gift Card' },
   ],
 };
 
 const SOCIAL_LINKS = [
-  { href: '#', label: 'Facebook' },
-  { href: '#', label: 'Instagram' },
-  { href: '#', label: 'Youtube' },
-  { href: '#', label: 'Tik Tok' },
+  { href: 'https://facebook.com/bubulagos', label: 'Facebook' },
+  { href: 'https://instagram.com/bubulagos', label: 'Instagram' },
+  { href: 'https://youtube.com/@bubulagos', label: 'Youtube' },
+  { href: 'https://tiktok.com/@bubulagos', label: 'Tik Tok' },
 ];
 
 // [MOTION ADDED] Footer is now black-on-white. All text is white; links get
@@ -74,7 +79,7 @@ export function Footer() {
     <footer className="bg-black text-white">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 pt-16 pb-6">
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-16"
+          className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-16"
           initial={reduceMotion ? false : 'hidden'}
           animate="show"
           variants={{
@@ -115,7 +120,40 @@ export function Footer() {
           </motion.div>
 
           <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
-            <h4 className={headingClass}>Contact Us</h4>
+            <h4 className={headingClass}>Product Categories</h4>
+            <div className="flex flex-col gap-2">
+              {FOOTER_LINKS.categories.map((link) => (
+                <Link key={link.label} to={link.to} className={linkClass}>
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
+            <h4 className={headingClass}>Collections</h4>
+            <div className="flex flex-col gap-2">
+              {FOOTER_LINKS.collections.map((link) => (
+                <Link key={link.label} to={link.to} className={linkClass}>
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
+            <h4 className={headingClass}>Client Services</h4>
+            <div className="flex flex-col gap-2">
+              {FOOTER_LINKS.help.map((link) => (
+                <Link key={link.label} to={link.to} className={linkClass}>
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
+            <h4 className={headingClass}>Concierge</h4>
             <div className="flex flex-col gap-2">
               {FOOTER_LINKS.contact.map((link) => {
                 if (link.to) {
@@ -140,29 +178,7 @@ export function Footer() {
           </motion.div>
 
           <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
-            <h4 className={headingClass}>Client Services</h4>
-            <div className="flex flex-col gap-2">
-              {FOOTER_LINKS.help.map((link) => (
-                <Link key={link.label} to={link.to} className={linkClass}>
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
-            <h4 className={headingClass}>The House</h4>
-            <div className="flex flex-col gap-2">
-              {FOOTER_LINKS.about.map((link) => (
-                <Link key={link.label} to={link.to} className={linkClass}>
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
-            <h4 className={headingClass}>Gifting</h4>
+            <h4 className={headingClass}>The Gift Card</h4>
             <div className="flex flex-col gap-2">
               {FOOTER_LINKS.gift.map((link) => (
                 <Link key={link.label} to={link.to} className={linkClass}>

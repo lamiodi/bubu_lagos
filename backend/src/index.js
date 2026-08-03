@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import { apiLimiter } from './middleware/rateLimiters.js';
 import productRoutes from './routes/productRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import collectionRoutes from './routes/collectionRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -209,6 +210,7 @@ app.get('/api/health', async (_req, res) => {
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/collections', collectionRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);

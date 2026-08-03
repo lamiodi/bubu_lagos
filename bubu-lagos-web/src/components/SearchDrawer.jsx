@@ -13,10 +13,14 @@ const RECENT_KEY = 'bubu_recent_searches';
 const MAX_RECENT = 6;
 
 const QUICK_LINKS = [
-  { label: 'Dresses', to: '/shop', category: 'Dresses' },
-  { label: 'Knitwear', to: '/shop', category: 'Knitwear' },
-  { label: 'Outerwear', to: '/shop', category: 'Outerwear' },
-  { label: 'Gift Card', to: '/gift-card' },
+  { label: 'Signature Bubus', to: '/shop?category=Signature+Bubus' },
+  { label: 'Classic Bubu', to: '/shop?category=Bubu' },
+  { label: 'Luxury Denim', to: '/shop?category=Denim' },
+  { label: 'Crown Turbans', to: '/shop?category=Turban' },
+  { label: 'Occasion Bubus', to: '/shop?category=Occasion+Bubus' },
+  { label: 'Hand-Beaded Pieces', to: '/shop?category=Hand-Beaded+Pieces' },
+  { label: 'Adire & Heritage', to: '/shop?category=Adire+%26+Heritage+Textiles' },
+  { label: 'Bubu Gift Cards', to: '/gift-card' },
 ];
 
 export function SearchDrawer() {

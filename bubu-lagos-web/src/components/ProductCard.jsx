@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Heart } from 'lucide-react';
 import { getImageUrl } from '../lib/utils';
 import { FALLBACK_IMAGE } from '../lib/sampleProducts';
 import { EASE_OUT } from '../lib/motion';
@@ -56,6 +56,7 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
   const motionValue = useMotionValue(0);
   const rounded = useTransform(motionValue, (v) => Math.round(v).toLocaleString());
   const [displayCount, setDisplayCount] = useState(hasPriceLabel ? priceText : '0');
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const inViewCard = useInView(cardRef, { once: true, margin: '-80px' });
 
   useEffect(() => {
@@ -148,14 +149,29 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
             </motion.span>
           )}
 
-          {product.isGiftCard && (
-            <span
-              className="absolute top-3 right-3 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-text bg-accent/90 text-white px-2 py-1 font-bold"
-              aria-hidden="true"
-            >
-              Give the gift
-            </span>
-          )}
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+            {product.isGiftCard ? (
+              <span
+                className="inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-white bg-accent px-2 py-1 font-bold shadow-sm"
+                aria-hidden="true"
+              >
+                Give the gift
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsWishlisted((prev) => !prev);
+                }}
+                aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+                className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-text hover:bg-white hover:text-accent transition-colors shadow-sm"
+              >
+                <Heart size={13} fill={isWishlisted ? "currentColor" : "none"} className={isWishlisted ? "text-red-500" : ""} />
+              </button>
+            )}
+          </div>
 
           <motion.span
             aria-hidden="true"

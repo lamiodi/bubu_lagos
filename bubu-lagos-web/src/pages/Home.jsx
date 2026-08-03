@@ -186,6 +186,86 @@ export function Home() {
         </div>
       </section>
 
+      {/* [SOURCE OF TRUTH] Category Showcase Grid */}
+      <section className="px-4 sm:px-5 md:px-8 py-12 md:py-16 bg-[#faf9f6]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-border">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-accent block mb-1">Curated Taxonomy</span>
+              <h2 className="font-heading text-2xl md:text-4xl font-bold uppercase tracking-wider">Explore Collections</h2>
+            </div>
+            <Link to="/shop" className="mt-3 md:mt-0 text-[10px] font-bold uppercase tracking-[0.2em] text-text hover:text-accent transition-colors flex items-center gap-1">
+              View All Categories &rarr;
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {[
+              {
+                title: 'Signature Collection',
+                subtitle: 'Iconic, effortless Bubu silhouettes',
+                img: 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=800&h=1000&fit=crop',
+                link: '/shop?collection=signature-collection',
+              },
+              {
+                title: 'Occasion Wear',
+                subtitle: 'Gala & ceremonial grandeur',
+                img: 'https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=800&h=1000&fit=crop',
+                link: '/shop?collection=occasion-wear',
+              },
+              {
+                title: 'Hand-Beaded Collection',
+                subtitle: 'Bespoke crystal & glass embellishment',
+                img: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&h=1000&fit=crop',
+                link: '/shop?collection=hand-beaded-collection',
+              },
+              {
+                title: 'Crown Turbans & Headwraps',
+                subtitle: 'Hand-pleated Aso-Oke & dupioni silk',
+                img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&h=1000&fit=crop',
+                link: '/shop?category=turbans',
+              },
+              {
+                title: 'Artisan Accessories',
+                subtitle: 'Hand-crafted coral & brass statement jewelry',
+                img: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&h=1000&fit=crop',
+                link: '/shop?category=accessories',
+              },
+              {
+                title: 'New Arrivals',
+                subtitle: 'Latest atelier releases & fresh drapes',
+                img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&h=1000&fit=crop',
+                link: '/shop?collection=new-arrivals',
+              },
+            ].map((cat, i) => (
+              <motion.div
+                key={cat.title}
+                initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: i * 0.06 }}
+              >
+                <Link to={cat.link} className="group relative block aspect-[4/5] overflow-hidden bg-gray-100">
+                  <img
+                    src={cat.img}
+                    alt={cat.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 className="font-heading text-lg font-bold uppercase tracking-wider mb-1">{cat.title}</h3>
+                    <p className="text-[11px] text-white/80 uppercase tracking-[0.16em] mb-4">{cat.subtitle}</p>
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-[0.24em] bg-white/20 backdrop-blur-md text-white px-3 py-1.5 border border-white/30 group-hover:bg-accent group-hover:border-accent transition-colors">
+                      Discover Collection &rarr;
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* [MOTION ADDED] Scroll-triggered featured products section */}
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 40 }}

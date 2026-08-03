@@ -11,6 +11,7 @@ import { logger } from '../../lib/logger';
 export function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +28,7 @@ export function AdminProducts() {
     description: '',
     basePrice: '',
     categoryId: '',
+    collections: [], // Selected collection IDs or slugs
     images: [], // Can be URLs (existing) or File objects
     videoUrl: '', // Existing URL
     videoFile: null, // New file
@@ -40,6 +42,7 @@ export function AdminProducts() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchCollections();
   }, []);
 
   // 300ms debounce on search.
@@ -101,6 +104,15 @@ export function AdminProducts() {
     }
   };
 
+  const fetchCollections = async () => {
+    try {
+      const data = await api.get('/collections');
+      setCollections(data.collections || []);
+    } catch (err) {
+      logger.error('Failed to fetch collections:', err);
+    }
+  };
+
   const openAddModal = () => {
     setEditingProduct(null);
     setFormData({
@@ -108,6 +120,7 @@ export function AdminProducts() {
       description: "This piece is designed with a free-flowing silhouette. It is a universal 'One Size Fits All' that comfortably fits UK/US sizes 8 through 20.",
       basePrice: '',
       categoryId: '',
+      collections: [],
       images: [],
       videoUrl: '',
       videoFile: null,
@@ -118,11 +131,13 @@ export function AdminProducts() {
 
   const openEditModal = (product) => {
     setEditingProduct(product);
+    const prodColIds = (product.collections || []).map(c => c.id || c);
     setFormData({
       name: product.name,
       description: product.description || '',
       basePrice: product.basePrice,
       categoryId: product.categoryId || '',
+      collections: prodColIds,
       images: product.images || [],
       videoUrl: product.videoUrl || '',
       videoFile: null,
@@ -229,6 +244,7 @@ export function AdminProducts() {
       form.append('description', formData.description);
       form.append('basePrice', formData.basePrice);
       form.append('categoryId', formData.categoryId);
+      form.append('collections', JSON.stringify(formData.collections));
 
       // Separate existing URLs from new files
       const existingImages = formData.images.filter((img) => typeof img === 'string');
@@ -623,7 +639,7 @@ export function AdminProducts() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category *
+                    Category (What Product IS) *
                   </label>
                   <select
                     value={formData.categoryId}
@@ -636,6 +652,34 @@ export function AdminProducts() {
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Merchandising Collections (Belongs to multiple)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  {collections.map(col => {
+                    const isChecked = formData.collections.includes(col.id);
+                    return (
+                      <label key={col.id} className="flex items-center gap-2 text-xs font-medium text-gray-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData(prev => ({ ...prev, collections: [...prev.collections, col.id] }));
+                            } else {
+                              setFormData(prev => ({ ...prev, collections: prev.collections.filter(id => id !== col.id) }));
+                            }
+                          }}
+                          className="rounded text-black focus:ring-black"
+                        />
+                        <span>{col.name}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 

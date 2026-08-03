@@ -65,11 +65,11 @@ export function ProductDetail() {
         setRelatedProducts(related.slice(0, 3));
       }
 
-      // 2. Fetch Turbans for "Complete the Look"
-      if (productData.category?.name !== 'Turban') {
-        const turbanRes = await api.get(`/products?category=Turban&limit=3`);
-        if (turbanRes.products && turbanRes.products.length > 0) {
-          setTurbanProducts(turbanRes.products);
+      // 2. Fetch Accessories for "Complete the Look"
+      if (productData.category?.name !== 'Accessories') {
+        const accRes = await api.get(`/products?category=Accessories&limit=3`);
+        if (accRes.products && accRes.products.length > 0) {
+          setTurbanProducts(accRes.products);
         }
       }
     } catch (err) {
@@ -187,6 +187,8 @@ export function ProductDetail() {
                 <video
                   src={getImageUrl(product.videoUrl)}
                   controls
+                  playsInline
+                  preload="metadata"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -216,6 +218,8 @@ export function ProductDetail() {
                 <video
                   src={getImageUrl(product.videoUrl)}
                   controls
+                  playsInline
+                  preload="metadata"
                   className="w-full h-full object-cover"
                 />
               </div>

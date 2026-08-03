@@ -216,13 +216,29 @@ These can't be verified in this repo but the front-end behavior depends on them:
 
 ---
 
-## 8. Notes for the next sprint
+## 9. Completed Sprint Refactor: Categories vs. Collections Architecture (August 2026)
 
-- 
-- The e2e test suite is missing; add Playwright for at minimum: add-to-cart, checkout, admin CRUD, login flow.
-- The image upload pipeline is currently a passthrough to the backend; consider client-side resizing to avoid uploading multi-MB phone photos.
-- The wishlist and product reviews features are the most-requested next additions — design the data model with these in mind.
+### 9.1 Overview & Core Architecture
+Completed the migration of the Bubu Lagos platform to a decoupled **Categories vs. Collections** architecture:
+- **Categories (What a product IS):** One-to-many relationship (Bubus, Turbans, Accessories).
+- **Collections (How products are PRESENTED / Merchandised):** Many-to-many relationship via `product_collections` junction table (New Arrivals, Signature Collection, Occasion Wear, Hand-Beaded Collection, Best Sellers).
+
+### 9.2 Completed Changes Across Stack
+- **Database (`backend/migrations/019_categories_and_collections_architecture.sql` & `seed.js`):**
+  - Created `categories`, `collections`, and `product_collections` tables with slug indexes.
+  - Updated seed script to populate official categories & collections and link products to multiple collections.
+- **Backend API (`backend/src/routes/collectionRoutes.js` & `productRoutes.js`):**
+  - Registered `/api/collections` endpoint.
+  - Refactored `GET /api/products` to accept `?category=slug` and `?collection=slug` query parameters.
+- **Storefront UI (`Header.jsx`, `Footer.jsx`, `Shop.jsx`, `Home.jsx`):**
+  - **Header & Footer:** Explicitly separated "Categories" and "Curated Collections" navigation.
+  - **Shop:** Added category tabs, collection chip multi-filters, and dynamic editorial banner switching.
+  - **Home:** Updated grid links to query `/shop?collection=...` or `/shop?category=...`.
+- **Admin Panel (`AdminProducts.jsx`):**
+  - Integrated multi-select checkbox grid for collection assignment in product create/edit modal.
+  - Updated form payload serialization for `collections` array.
 
 ---
 
-*End of audit.*
+*End of audit & implementation log.*
+

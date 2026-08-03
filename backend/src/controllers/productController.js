@@ -2,21 +2,41 @@ import { query, getClient } from '../db.js';
 
 export const getProducts = async (req, res) => {
   try {
-    const { category, search, minPrice, maxPrice, sort, limit = 50 } = req.query;
+    const { category, collection, search, minPrice, maxPrice, sort, limit = 50 } = req.query;
     
     let sql = `
       SELECT 
         p.*,
+        c.id as category_id,
         c.name as category_name,
+        c.slug as category_slug,
         c.description as category_description,
-        json_agg(
-          json_build_object(
-            'id', pv.id,
-            'name', pv.name,
-            'price', pv.price,
-            'stockQuantity', pv.stock_quantity
-          )
-        ) as variants
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pv.id,
+              'name', pv.name,
+              'price', pv.price,
+              'stockQuantity', pv.stock_quantity
+            )
+          ) FILTER (WHERE pv.id IS NOT NULL), '[]'
+        ) as variants,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', col.id,
+                'name', col.name,
+                'slug', col.slug,
+                'description', col.description,
+                'accentColor', col.accent_color
+              )
+            )
+            FROM product_collections pc
+            JOIN collections col ON pc.collection_id = col.id
+            WHERE pc.product_id = p.id
+          ), '[]'
+        ) as collections
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN product_variants pv ON p.id = pv.product_id
@@ -27,7 +47,16 @@ export const getProducts = async (req, res) => {
     
     if (category) {
       params.push(category);
-      conditions.push(`c.name = $${params.length}`);
+      conditions.push(`(c.slug = $${params.length} OR c.name ILIKE $${params.length} OR c.id::text = $${params.length})`);
+    }
+
+    if (collection) {
+      params.push(collection);
+      conditions.push(`EXISTS (
+        SELECT 1 FROM product_collections pc_filter
+        JOIN collections col_filter ON pc_filter.collection_id = col_filter.id
+        WHERE pc_filter.product_id = p.id AND (col_filter.slug = $${params.length} OR col_filter.name ILIKE $${params.length} OR col_filter.id::text = $${params.length})
+      )`);
     }
 
     if (search) {
@@ -73,17 +102,25 @@ export const getProducts = async (req, res) => {
     const products = result.rows.map(row => ({
       id: row.id,
       name: row.name,
+      sku: row.sku || `BL-${row.category_slug ? row.category_slug.toUpperCase() : 'GEN'}-${row.id.slice(0, 4)}`,
       description: row.description,
       basePrice: parseFloat(row.base_price),
       images: row.images || [],
       videoUrl: row.video_url,
       categoryId: row.category_id,
-      category: {
+      category: row.category_id ? {
         id: row.category_id,
         name: row.category_name,
+        slug: row.category_slug,
         description: row.category_description
-      },
-      variants: row.variants.filter(v => v.id !== null),
+      } : null,
+      collections: row.collections || [],
+      variants: Array.isArray(row.variants) ? row.variants.map(v => ({
+        id: v.id,
+        name: v.name,
+        price: parseFloat(v.price),
+        stockQuantity: v.stockQuantity
+      })) : [],
       createdAt: row.created_at
     }));
     
@@ -91,6 +128,7 @@ export const getProducts = async (req, res) => {
       products,
       categoryInfo: category && result.rows.length > 0 ? {
         name: result.rows[0].category_name,
+        slug: result.rows[0].category_slug,
         description: result.rows[0].category_description
       } : null
     });
@@ -101,10 +139,6 @@ export const getProducts = async (req, res) => {
   }
 };
 
-/**
- * Smart Product Recommendations
- * Returns related products (same category) and trending/new products.
- */
 export const getRecommendations = async (req, res) => {
   try {
     const { productId, categoryId, limit = 4 } = req.query;
@@ -112,11 +146,10 @@ export const getRecommendations = async (req, res) => {
     let products = [];
 
     if (productId && categoryId) {
-      // 1. Related Products (Same category, excluding current)
       const relatedResult = await query(
-        `SELECT p.*, c.name as category_name
+        `SELECT p.*, c.name as category_name, c.slug as category_slug
          FROM products p
-         JOIN categories c ON p.category_id = c.id
+         LEFT JOIN categories c ON p.category_id = c.id
          WHERE p.category_id = $1 AND p.id != $2
          LIMIT $3`,
         [categoryId, productId, limit]
@@ -124,13 +157,12 @@ export const getRecommendations = async (req, res) => {
       products = relatedResult.rows;
     }
 
-    // if we don't have enough related products, fill with latest
     if (products.length < limit) {
       const remainingLimit = limit - products.length;
       const latestResult = await query(
-        `SELECT p.*, c.name as category_name
+        `SELECT p.*, c.name as category_name, c.slug as category_slug
          FROM products p
-         JOIN categories c ON p.category_id = c.id
+         LEFT JOIN categories c ON p.category_id = c.id
          WHERE p.id NOT IN (${products.length > 0 ? products.map((_, i) => `$${i + 1}`).join(',') : "''"})
          ORDER BY p.created_at DESC
          LIMIT $${products.length + 1}`,
@@ -156,53 +188,13 @@ export const getRecommendations = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
+    const product = await getProductByIdInternal(id);
     
-    const productResult = await query(
-      `SELECT 
-        p.*,
-        c.name as category_name,
-        c.description as category_description
-       FROM products p
-       LEFT JOIN categories c ON p.category_id = c.id
-       WHERE p.id = $1`,
-      [id]
-    );
-    
-    if (productResult.rows.length === 0) {
+    if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    const variantsResult = await query(
-      `SELECT * FROM product_variants WHERE product_id = $1 ORDER BY created_at`,
-      [id]
-    );
-    
-    const product = productResult.rows[0];
-    
-    const response = {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      basePrice: parseFloat(product.base_price),
-      images: product.images || [],
-      videoUrl: product.video_url,
-      categoryId: product.category_id,
-      category: {
-        id: product.category_id,
-        name: product.category_name,
-        description: product.category_description
-      },
-      variants: variantsResult.rows.map(v => ({
-        id: v.id,
-        name: v.name,
-        price: parseFloat(v.price),
-        stockQuantity: v.stock_quantity
-      })),
-      createdAt: product.created_at
-    };
-    
-    res.json(response);
-    
+    res.json(product);
   } catch (error) {
     console.error('Error fetching product:', error);
     res.status(500).json({ error: 'Failed to fetch product' });
@@ -211,9 +203,8 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    let { name, description, basePrice, images, videoUrl, categoryId, variants } = req.body;
+    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, variants } = req.body;
     
-    // Handle Cloudinary uploads
     if (req.files) {
       if (req.files['images']) {
         const uploadedImages = req.files['images'].map(file => file.path);
@@ -224,27 +215,22 @@ export const createProduct = async (req, res) => {
       }
     }
 
-    // Parse variants if they come as a string (happens with multipart/form-data)
     if (typeof variants === 'string') {
-      try {
-        variants = JSON.parse(variants);
-      } catch (e) {
-        console.warn('Failed to parse variants JSON', e);
-      }
+      try { variants = JSON.parse(variants); } catch (e) {}
+    }
+    if (typeof collectionIds === 'string') {
+      try { collectionIds = JSON.parse(collectionIds); } catch (e) { collectionIds = [collectionIds]; }
     }
     
-    // Validate required fields
     if (!name || !basePrice || !categoryId) {
       return res.status(400).json({ error: 'Name, basePrice, and categoryId are required' });
     }
     
-    // Start transaction
     const client = await getClient();
     
     try {
       await client.query('BEGIN');
       
-      // Insert product
       const productResult = await client.query(
         `INSERT INTO products (name, description, base_price, images, video_url, category_id)
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -255,7 +241,18 @@ export const createProduct = async (req, res) => {
       const product = productResult.rows[0];
       const productId = product.id;
       
-      // Insert variants if provided
+      // Insert product collections mapping
+      if (Array.isArray(collectionIds) && collectionIds.length > 0) {
+        for (const colId of collectionIds) {
+          await client.query(
+            `INSERT INTO product_collections (product_id, collection_id)
+             VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [productId, colId]
+          );
+        }
+      }
+      
+      // Insert variants
       if (variants && variants.length > 0) {
         for (const variant of variants) {
           await client.query(
@@ -268,9 +265,7 @@ export const createProduct = async (req, res) => {
       
       await client.query('COMMIT');
       
-      // Fetch the complete product with variants
       const completeProduct = await getProductByIdInternal(productId, client);
-      
       res.status(201).json(completeProduct);
       
     } catch (error) {
@@ -289,10 +284,8 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    let { name, description, basePrice, images, videoUrl, categoryId, variants } = req.body;
+    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, variants } = req.body;
     
-    // Normalize images array to fix bug where a single kept existing image gets passed as a string,
-    // which caused Array.isArray(images) to fail and COALESCE to fallback to the existing DB array (ignoring deletions).
     let existingImages = [];
     if (images !== undefined) {
       if (typeof images === 'string') {
@@ -307,7 +300,6 @@ export const updateProduct = async (req, res) => {
       }
     }
     
-    // Handle Cloudinary uploads
     if (req.files) {
       if (req.files['images']) {
         const uploadedImages = req.files['images'].map(file => file.path);
@@ -318,29 +310,21 @@ export const updateProduct = async (req, res) => {
       }
     }
 
-    // Parse variants if they come as a string
     if (typeof variants === 'string') {
-      try {
-        variants = JSON.parse(variants);
-      } catch (e) {
-        console.warn('Failed to parse variants JSON', e);
-      }
+      try { variants = JSON.parse(variants); } catch (e) {}
+    }
+    if (typeof collectionIds === 'string') {
+      try { collectionIds = JSON.parse(collectionIds); } catch (e) { collectionIds = [collectionIds]; }
     }
 
-    // Explicitly handle empty videoUrl string meaning "delete video"
     let finalVideoUrl = videoUrl;
-    if (videoUrl === '') {
-      finalVideoUrl = null;
-    }
+    if (videoUrl === '') { finalVideoUrl = null; }
 
     const client = await getClient();
     
     try {
       await client.query('BEGIN');
       
-      // We pass the resolved existingImages array, and we check if videoUrl was explicitly cleared.
-      // If finalVideoUrl is strictly null (because it was explicitly cleared to ''), it gets updated.
-      // If it is undefined, COALESCE will keep the existing value.
       const result = await client.query(
         `UPDATE products 
          SET name = COALESCE($1, name),
@@ -359,9 +343,20 @@ export const updateProduct = async (req, res) => {
         return res.status(404).json({ error: 'Product not found' });
       }
 
-      // Sync variants if provided
+      // Update product_collections mapping
+      if (Array.isArray(collectionIds)) {
+        await client.query('DELETE FROM product_collections WHERE product_id = $1', [id]);
+        for (const colId of collectionIds) {
+          await client.query(
+            `INSERT INTO product_collections (product_id, collection_id)
+             VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [id, colId]
+          );
+        }
+      }
+
+      // Sync variants
       if (variants) {
-        // Get existing variants
         const existingVariantsResult = await client.query(
           'SELECT id FROM product_variants WHERE product_id = $1',
           [id]
@@ -369,16 +364,11 @@ export const updateProduct = async (req, res) => {
         const existingIds = existingVariantsResult.rows.map(v => v.id);
         const providedIds = variants.filter(v => v.id).map(v => v.id);
 
-        // Delete variants not in provided list
         const toDelete = existingIds.filter(id => !providedIds.includes(id));
         if (toDelete.length > 0) {
-          await client.query(
-            'DELETE FROM product_variants WHERE id = ANY($1)',
-            [toDelete]
-          );
+          await client.query('DELETE FROM product_variants WHERE id = ANY($1)', [toDelete]);
         }
 
-        // Update or create variants
         for (const v of variants) {
           if (v.id) {
             await client.query(
@@ -418,15 +408,11 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    
     const result = await query('DELETE FROM products WHERE id = $1 RETURNING id', [id]);
-    
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    
     res.json({ message: 'Product deleted successfully' });
-    
   } catch (error) {
     console.error('Error deleting product:', error);
     res.status(500).json({ error: 'Failed to delete product' });
@@ -455,7 +441,6 @@ export const updateVariantStock = async (req, res) => {
     }
     
     const variant = result.rows[0];
-    
     res.json({
       id: variant.id,
       name: variant.name,
@@ -463,14 +448,12 @@ export const updateVariantStock = async (req, res) => {
       stockQuantity: variant.stock_quantity,
       productId: variant.product_id
     });
-    
   } catch (error) {
     console.error('Error updating variant stock:', error);
     res.status(500).json({ error: 'Failed to update variant stock' });
   }
 };
 
-// Helper function to get product by ID (internal use)
 async function getProductByIdInternal(productId, client = null) {
   const queryFunc = client ? client.query.bind(client) : query;
   
@@ -478,6 +461,7 @@ async function getProductByIdInternal(productId, client = null) {
     `SELECT 
       p.*,
       c.name as category_name,
+      c.slug as category_slug,
       c.description as category_description
      FROM products p
      LEFT JOIN categories c ON p.category_id = c.id
@@ -493,22 +477,39 @@ async function getProductByIdInternal(productId, client = null) {
     `SELECT * FROM product_variants WHERE product_id = $1 ORDER BY created_at`,
     [productId]
   );
+
+  const collectionsResult = await queryFunc(
+    `SELECT col.id, col.name, col.slug, col.description, col.accent_color
+     FROM product_collections pc
+     JOIN collections col ON pc.collection_id = col.id
+     WHERE pc.product_id = $1`,
+    [productId]
+  );
   
   const product = productResult.rows[0];
   
   return {
     id: product.id,
     name: product.name,
+    sku: product.sku || `BL-${product.category_slug ? product.category_slug.toUpperCase() : 'GEN'}-${product.id.slice(0, 4)}`,
     description: product.description,
     basePrice: parseFloat(product.base_price),
     images: product.images || [],
     videoUrl: product.video_url,
     categoryId: product.category_id,
-    category: {
+    category: product.category_id ? {
       id: product.category_id,
       name: product.category_name,
+      slug: product.category_slug,
       description: product.category_description
-    },
+    } : null,
+    collections: collectionsResult.rows.map(col => ({
+      id: col.id,
+      name: col.name,
+      slug: col.slug,
+      description: col.description,
+      accentColor: col.accent_color
+    })),
     variants: variantsResult.rows.map(v => ({
       id: v.id,
       name: v.name,
@@ -522,7 +523,6 @@ async function getProductByIdInternal(productId, client = null) {
 export const createProductsBulk = async (req, res) => {
   try {
     const { products } = req.body;
-    
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: 'Valid products array is required' });
     }
@@ -531,31 +531,33 @@ export const createProductsBulk = async (req, res) => {
     
     try {
       await client.query('BEGIN');
-      
       const createdProducts = [];
       
       for (const p of products) {
-        let { name, description, basePrice, images, videoUrl, categoryId, variants } = p;
-        
-        if (!name || !basePrice || !categoryId) {
-          console.warn('Skipping product due to missing required fields:', p);
-          continue;
-        }
+        let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, variants } = p;
+        if (!name || !basePrice || !categoryId) continue;
         
         const productResult = await client.query(
           `INSERT INTO products (name, description, base_price, images, video_url, category_id)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING *`,
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
           [name, description || '', basePrice, Array.isArray(images) ? images : [], videoUrl || null, categoryId]
         );
         
         const productId = productResult.rows[0].id;
         
+        if (Array.isArray(collectionIds)) {
+          for (const colId of collectionIds) {
+            await client.query(
+              `INSERT INTO product_collections (product_id, collection_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+              [productId, colId]
+            );
+          }
+        }
+
         if (variants && variants.length > 0) {
           for (const variant of variants) {
             await client.query(
-              `INSERT INTO product_variants (product_id, name, price, stock_quantity)
-               VALUES ($1, $2, $3, $4)`,
+              `INSERT INTO product_variants (product_id, name, price, stock_quantity) VALUES ($1, $2, $3, $4)`,
               [productId, variant.name || 'Default', variant.price || basePrice, variant.stockQuantity || 0]
             );
           }
@@ -564,19 +566,13 @@ export const createProductsBulk = async (req, res) => {
       }
       
       await client.query('COMMIT');
-      
-      res.status(201).json({ 
-        message: `Successfully imported ${createdProducts.length} products`, 
-        count: createdProducts.length 
-      });
-      
+      res.status(201).json({ message: `Successfully imported ${createdProducts.length} products`, count: createdProducts.length });
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
-    
   } catch (error) {
     console.error('Error in bulk import:', error);
     res.status(500).json({ error: 'Failed to import products in bulk' });
