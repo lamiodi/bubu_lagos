@@ -8,7 +8,7 @@ import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Spa
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
-
+import { SAMPLE_CATEGORIES, SAMPLE_COLLECTIONS } from '../lib/sampleProducts';
 import { useUI } from '../context/UIContext';
 
 function CategoryTab({ label, isActive, onClick }) {

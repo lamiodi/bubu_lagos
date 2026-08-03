@@ -14,10 +14,10 @@ const MAX_RECENT = 6;
 
 const QUICK_LINKS = [
   { label: 'Signature Bubu', to: '/shop?collection=signature-bubu' },
-  { label: 'Crown Turbans & Gelès', to: '/shop?category=turbans-geles' },
-  { label: 'Hand-Beaded Pieces', to: '/shop?collection=hand-beaded-collection' },
+  { label: 'Turbans & Gelès', to: '/shop?category=turbans-geles' },
+  { label: 'Hand-Beaded Collection', to: '/shop?collection=hand-beaded-collection' },
   { label: 'Artisan Accessories', to: '/shop?category=artisan-accessories' },
-  { label: 'Bubu Gift Cards', to: '/gift-card' },
+  { label: 'Gift Cards', to: '/gift-card' },
 ];
 
 export function SearchDrawer() {

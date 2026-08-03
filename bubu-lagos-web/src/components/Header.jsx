@@ -8,14 +8,14 @@ import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } fr
 import { EASE_OUT } from '../lib/motion';
 
 const PRIMARY_NAV = [
-  { to: '/shop', label: 'New In' },
+  { to: '/shop?collection=new-arrivals', label: 'New In' },
   { to: '/shop', label: 'E-Shop' },
   { to: '/gift-card', label: 'Gift' },
 ];
 
 const MOBILE_NAV = [
   { section: 'Atelier', items: [
-    { to: '/shop', label: 'New In' },
+    { to: '/shop?collection=new-arrivals', label: 'New In' },
     { to: '/shop', label: 'E-Shop' },
   ]},
   { section: 'Give', items: [
