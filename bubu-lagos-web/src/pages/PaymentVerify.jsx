@@ -70,7 +70,7 @@ export function PaymentVerify() {
       <div className="container mx-auto px-4 py-20 max-w-2xl text-center">
         {status === 'verifying' && (
           <div className="flex flex-col items-center gap-6">
-            <div className="w-12 h-12 border-3 border-black border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-12 h-12 rounded-full shimmer-light"></div>
             <div className="space-y-2">
               <h1 className="text-2xl md:text-3xl font-heading font-black uppercase tracking-tight italic">Confirming Your Order…</h1>
               <p className="text-gray-500 text-sm">One moment while we verify your atelier payment.</p>

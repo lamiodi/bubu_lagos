@@ -53,8 +53,24 @@ export function AdminRoute({ children }) {
 
   if (status === 'checking') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" aria-label="Checking session" />
+      <div className="min-h-screen flex bg-gray-50" aria-label="Checking session">
+        {/* Sidebar skeleton */}
+        <div className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 p-4 gap-3">
+          <div className="h-10 w-32 shimmer-light rounded mb-4" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-8 shimmer-light rounded-lg" />
+          ))}
+        </div>
+        {/* Main content skeleton */}
+        <div className="flex-1 p-8 space-y-6">
+          <div className="h-8 w-48 shimmer-light rounded" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-28 shimmer-light rounded-xl" />
+            ))}
+          </div>
+          <div className="h-64 shimmer-light rounded-xl" />
+        </div>
       </div>
     );
   }

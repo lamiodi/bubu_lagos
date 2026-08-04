@@ -37,8 +37,25 @@ const AdminLogin = lazyWithRetry(() => import('./admin/pages/AdminLogin').then((
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background" aria-label="Loading page">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
+    <div className="min-h-screen bg-background" aria-label="Loading page">
+      {/* Skeleton header bar */}
+      <div className="h-[60px] bg-white border-b border-gray-100 px-6 flex items-center justify-between">
+        <div className="h-3 w-20 shimmer-light rounded" />
+        <div className="h-8 w-24 shimmer-light rounded" />
+        <div className="h-3 w-20 shimmer-light rounded" />
+      </div>
+      {/* Skeleton hero */}
+      <div className="h-[40vh] shimmer-light" />
+      {/* Skeleton content grid */}
+      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="space-y-3">
+            <div className="aspect-[3/4] shimmer-light rounded-lg" />
+            <div className="h-3 w-3/4 shimmer-light rounded" />
+            <div className="h-3 w-1/2 shimmer-light rounded" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

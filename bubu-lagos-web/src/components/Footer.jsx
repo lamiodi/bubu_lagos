@@ -199,7 +199,7 @@ export function Footer() {
 
         <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t border-white/15 gap-4">
           <Link to="/" className="flex-shrink-0">
-            <img src="/logo.png" alt="Bubu Lagos" className="h-10 w-auto object-contain brightness-0 invert opacity-80 hover:opacity-100 transition-opacity" />
+            <img src="/logo.png" alt="Bubu Lagos" className="h-10 w-auto object-contain rounded-md" />
           </Link>
 
           <div className="flex gap-5">

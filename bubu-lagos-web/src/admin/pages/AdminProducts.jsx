@@ -520,7 +520,7 @@ export function AdminProducts() {
             disabled={importing}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-black/5 flex items-center gap-2 disabled:opacity-50"
           >
-            {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            {importing ? <div className="h-4 w-4 rounded shimmer-light" /> : <Upload size={16} />}
             Import CSV
           </button>
 
@@ -910,7 +910,7 @@ export function AdminProducts() {
                     className="w-full py-4 flex flex-col items-center justify-center text-gray-500 hover:text-gray-700"
                   >
                     {loading ? (
-                      <Loader2 className="animate-spin mb-2" size={24} />
+                      <div className="h-6 w-6 rounded shimmer-light mb-2" />
                     ) : (
                       <Upload size={24} className="mb-2" />
                     )}

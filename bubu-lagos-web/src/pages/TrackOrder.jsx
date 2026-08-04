@@ -135,7 +135,7 @@ export function TrackOrder() {
               className="w-full bg-black text-white py-3.5 rounded-lg font-medium text-sm hover:bg-black/90 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                <div className="h-4 w-4 rounded shimmer-light" />
               ) : (
                 <Search size={16} />
               )}

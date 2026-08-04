@@ -153,7 +153,7 @@ export function AdminLayout({ children }) {
       >
         <div className={cn("h-16 flex items-center border-b border-gray-100", isCollapsed ? "lg:justify-center lg:px-2" : "px-6", "px-6")}>
           <Link to="/admin" className="flex items-center">
-            <img src="/logo.png" alt="Bubu Lagos" className={cn("w-auto object-contain", isCollapsed ? "lg:h-8" : "h-10")} />
+            <img src="/logo.png" alt="Bubu Lagos" className={cn("w-auto object-contain", isCollapsed ? "lg:h-7" : "h-9")} />
           </Link>
         </div>
 
