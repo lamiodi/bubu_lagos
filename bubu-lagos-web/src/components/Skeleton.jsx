@@ -56,50 +56,81 @@ export function ProductDetailSkeleton() {
 
   return (
     <motion.div
-      className="flex flex-col lg:flex-row mt-[60px] min-h-[70vh]"
+      className="flex flex-col lg:flex-row mt-[60px]"
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
       aria-hidden="true"
     >
       {/* Left Gallery Placeholder */}
-      <div className="w-full lg:w-1/2 flex flex-col gap-4 lg:pr-4 p-4 lg:p-0">
-        <div className="aspect-[3/4] w-full shimmer-light" style={{ transform: 'skewX(-4deg) scale(1.02)' }} />
-        <div className="hidden lg:grid grid-cols-2 gap-4">
-          <div className="aspect-[3/4] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-          <div className="aspect-[3/4] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+      <div className="w-full lg:w-1/2 flex flex-col lg:gap-4 lg:pr-4">
+        {/* DESKTOP STACKED IMAGE GALLERY SKELETON */}
+        <div className="hidden lg:flex flex-col gap-4">
+          <div className="aspect-[3/4] w-full shimmer-light" style={{ transform: 'skewX(-4deg) scale(1.02)' }} />
+          <div className="aspect-[3/4] w-full shimmer-light" style={{ transform: 'skewX(-4deg) scale(1.02)' }} />
         </div>
+        
+        {/* MOBILE VERTICAL SCROLL IMAGE GALLERY SKELETON */}
+        <div className="lg:hidden w-full h-[70vh] max-h-[560px] shimmer-light" />
       </div>
 
       {/* Right Details Placeholder */}
-      <div className="w-full lg:w-1/2 relative p-4 lg:p-12">
-        <div className="lg:max-w-xl mx-auto space-y-8">
-          <div className="h-3 w-1/3 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-
-          <div className="flex justify-between items-start gap-4">
-            <div className="space-y-3 flex-1">
-              <div className="h-7 w-[80%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-              <div className="h-7 w-[50%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-            </div>
-            <div className="h-7 w-28 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+      <div className="w-full lg:w-1/2 relative">
+        <div className="sticky top-[80px] px-4 py-8 lg:p-12 lg:max-w-xl mx-auto">
+          
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-2.5 w-8 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="h-2.5 w-2 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="h-2.5 w-16 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
           </div>
 
-          <div className="space-y-3 pt-4">
-            <div className="h-3 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-            <div className="flex gap-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-12 w-14 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          {/* Title and Price */}
+          <div className="flex justify-between items-start gap-4 mb-8">
+            <div className="space-y-3 flex-1">
+              <div className="h-6 md:h-8 w-[80%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-6 md:h-8 w-[50%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="h-6 md:h-8 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          </div>
+
+          {/* Add to selection button */}
+          <div className="h-14 w-full shimmer-light mb-8" style={{ transform: 'skewX(-4deg)' }} />
+
+          {/* Size picker */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <div className="h-3 w-16 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-3 w-14 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-10 w-full rounded-xs shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
               ))}
             </div>
           </div>
 
-          <div className="h-14 w-full shimmer-light mt-8" style={{ transform: 'skewX(-4deg)' }} />
+          {/* Description Block */}
+          <div className="mb-8 p-5 bg-background-light/60 border border-black/5 rounded-xl space-y-4 shadow-xs">
+            <div className="h-3.5 w-2/3 shimmer-light border-b border-black/5 pb-3" style={{ transform: 'skewX(-4deg)' }} />
+            
+            <div className="space-y-3 pt-2">
+              <div className="h-2.5 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-2.5 w-[90%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-2.5 w-[75%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-2.5 w-[85%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
 
-          <div className="space-y-3 pt-6 border-t border-gray-100">
-            <div className="h-3.5 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-            <div className="h-3.5 w-[90%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-            <div className="h-3.5 w-[75%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="grid grid-cols-2 gap-2.5 pt-4 border-t border-black/5">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full shimmer-light" />
+                  <div className="h-2.5 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+                </div>
+              ))}
+            </div>
           </div>
+
         </div>
       </div>
     </motion.div>
