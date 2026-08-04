@@ -31,11 +31,12 @@ const runMigrations = async () => {
     // -----------------------------------------------------------------------
     await setBubuSearchPath(client);
 
-    const { rows: [{ bubuSchemaExists }] } = await client.query(`
+    const { rows } = await client.query(`
       SELECT EXISTS (
         SELECT 1 FROM information_schema.schemata WHERE schema_name = 'bubu'
-      ) AS bubuSchemaExists
+      ) AS "bubuSchemaExists"
     `);
+    const bubuSchemaExists = rows[0].bubuSchemaExists;
 
     let skipUntil = null;
     if (bubuSchemaExists) {
