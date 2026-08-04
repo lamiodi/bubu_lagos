@@ -525,7 +525,7 @@ export function AdminProducts() {
           </button>
 
           <button
-            onClick={openAddModal}
+            onClick={openModal}
             className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
           >
             <Plus size={18} />
