@@ -1,5 +1,5 @@
 import { Layout } from '../components/Layout';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { cn, getImageUrl, formatProductPrice, FALLBACK_IMAGE } from '../lib/utils';
 import { useCart } from '../context/CartContext';
@@ -8,36 +8,70 @@ import api from '../utils/api';
 import { logger } from '../lib/logger';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
+import { ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
+
+import { ProductDetailSkeleton } from '../components/Skeleton';
+import { SizeGuideModal } from '../components/SizeGuideModal';
+import GarmentCare from '../components/GarmentCare';
 
 export function ProductDetail() {
   const { id } = useParams();
   const { addToCart } = useCart();
   const toast = useToast();
+  const reduceMotion = useReducedMotion();
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [product, setProduct] = useState(null);
+  const [activeImage, setActiveImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [otherColors, setOtherColors] = useState([]);
   const [turbanProducts, setTurbanProducts] = useState([]);
-  // [MOTION ADDED] Local "added" success state for the Add to Cart button
   const [justAdded, setJustAdded] = useState(false);
-  const reduceMotion = useReducedMotion();
+  const [activeTab, setActiveTab] = useState('photos'); // 'photos' | 'video'
+  const [mobileActiveImage, setMobileActiveImage] = useState(0);
+  const mobileGalleryRef = useRef(null);
+
+  const handleMobileScroll = () => {
+    if (!mobileGalleryRef.current) return;
+    const container = mobileGalleryRef.current;
+    const scrollTop = container.scrollTop;
+    const height = container.clientHeight;
+    if (height > 0) {
+      const index = Math.round(scrollTop / height);
+      if (index !== mobileActiveImage && index >= 0) {
+        setMobileActiveImage(index);
+      }
+    }
+  };
+
+  const scrollToMobileImage = (index) => {
+    if (!mobileGalleryRef.current) return;
+    const container = mobileGalleryRef.current;
+    const height = container.clientHeight;
+    container.scrollTo({
+      top: index * height,
+      behavior: 'smooth'
+    });
+    setMobileActiveImage(index);
+  };
 
   useEffect(() => {
-    fetchProduct();
+    fetchProductDetails();
+    window.scrollTo(0, 0);
   }, [id]);
 
-  const fetchProduct = async () => {
+  const fetchProductDetails = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await api.get(`/products/${id}`);
       setProduct(data);
-
-      if (data.category?.id) {
-        fetchRecommendations(data);
+      if (data.variants && data.variants.length > 0) {
+        setSelectedVariant(data.variants[0]);
       }
+      fetchRecommendations(data);
     } catch (err) {
       logger.error('Failed to fetch product:', err);
       setError('Product not found or unavailable.');
@@ -48,28 +82,24 @@ export function ProductDetail() {
 
   const fetchRecommendations = async (productData) => {
     try {
-      // 1. Fetch other colors (same category, similar name)
+      // 1. Fetch smart color-matched or admin-suggested matching Turbans & Gelès for "Complete the Look"
+      const turbanRes = await api.get(`/products/recommendations?productId=${productData.id}&targetCategory=turbans-geles&limit=3`);
+      if (turbanRes.products && turbanRes.products.length > 0) {
+        setTurbanProducts(turbanRes.products);
+      }
+
+      // 2. Fetch general related pieces
       if (productData.category?.name) {
         const catRes = await api.get(`/products?category=${encodeURIComponent(productData.category.name)}&limit=15`);
         let sameCat = catRes.products || [];
         sameCat = sameCat.filter(p => p.id !== productData.id);
         
-        // Basic match: if the name is "Silk Bubu - Red", baseName is "Silk Bubu"
-        const baseName = productData.name.split('-')[0].trim().split(' ')[0]; // E.g., just the first word to be safe
-        
+        const baseName = productData.name.split('-')[0].trim().split(' ')[0];
         const colors = sameCat.filter(p => p.name.includes(baseName));
         setOtherColors(colors.slice(0, 4));
         
         const related = sameCat.filter(p => !colors.includes(p));
         setRelatedProducts(related.slice(0, 3));
-      }
-
-      // 2. Fetch Accessories for "Complete the Look"
-      if (productData.category?.name !== 'Accessories') {
-        const accRes = await api.get(`/products?category=Accessories&limit=3`);
-        if (accRes.products && accRes.products.length > 0) {
-          setTurbanProducts(accRes.products);
-        }
       }
     } catch (err) {
       logger.error('Failed to fetch smart recommendations:', err);
@@ -130,18 +160,7 @@ export function ProductDetail() {
   if (loading) {
     return (
       <Layout headerVariant="solid">
-        <div className="min-h-[60vh] flex items-center justify-center mt-[60px]">
-          {/* [MOTION ADDED] Loading now uses a 2-up skewed skeleton grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl px-4">
-            <div className="aspect-[3/4] shimmer-light" style={{ transform: 'skewX(-4deg) scale(1.06)' }} />
-            <div className="space-y-4">
-              <div className="h-4 w-1/3 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-              <div className="h-8 w-2/3 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-              <div className="h-12 w-1/2 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-              <div className="h-14 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
-            </div>
-          </div>
-        </div>
+        <ProductDetailSkeleton />
       </Layout>
     );
   }
@@ -159,10 +178,17 @@ export function ProductDetail() {
     );
   }
 
+  const allMedia = product
+    ? (product.images && product.images.length > 0 ? product.images : [displayImage]).concat(
+        product.videoUrl ? [{ isVideo: true, url: product.videoUrl }] : []
+      )
+    : [];
+
   return (
     <Layout headerVariant="solid">
       <div className="flex flex-col lg:flex-row mt-[60px]">
         <div className="w-full lg:w-1/2 flex flex-col lg:gap-4 lg:pr-4">
+          {/* DESKTOP STACKED IMAGE GALLERY */}
           <div className="hidden lg:flex flex-col gap-4">
             {(product.images && product.images.length > 0 ? product.images : [displayImage]).map((img, index) => (
               <motion.div
@@ -194,34 +220,92 @@ export function ProductDetail() {
             )}
           </div>
 
-          <div className="lg:hidden w-full overflow-x-auto snap-x snap-mandatory flex scrollbar-hide">
-            {(product.images && product.images.length > 0 ? product.images : [displayImage]).map((img, index) => (
-              <motion.div
-                key={index}
-                className="w-full flex-shrink-0 snap-center"
-                initial={reduceMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
-              >
-                <img
-                  src={getImageUrl(img) || FALLBACK_IMAGE}
-                  alt={`${product.name} View ${index + 1}`}
-                  className="w-full h-auto object-cover"
-                  onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
-                />
-              </motion.div>
-            ))}
+          {/* MOBILE VERTICAL SCROLL IMAGE GALLERY & THEME-MATCHED CONTROL ICONS */}
+          <div className="lg:hidden w-full relative">
+            <div
+              ref={mobileGalleryRef}
+              onScroll={handleMobileScroll}
+              className="w-full h-[70vh] max-h-[560px] overflow-y-auto snap-y snap-mandatory scrollbar-hide relative bg-background-light border-b border-black/5"
+            >
+              {allMedia.map((media, index) => (
+                <div
+                  key={index}
+                  className="w-full h-full flex-shrink-0 snap-center relative flex items-center justify-center bg-background-light overflow-hidden"
+                >
+                  {typeof media === 'object' && media.isVideo ? (
+                    <div className="w-full h-full bg-black">
+                      <video
+                        src={getImageUrl(media.url)}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src={getImageUrl(media) || FALLBACK_IMAGE}
+                      alt={`${product.name} View ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
 
-            {product.videoUrl && (
-              <div className="w-full flex-shrink-0 snap-center aspect-[9/16] bg-black">
-                <video
-                  src={getImageUrl(product.videoUrl)}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            {/* THEME-MATCHED CONTROL ICONS & COUNTER (MOBILE) */}
+            {allMedia.length > 1 && (
+              <>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2.5 z-20">
+                  {/* Previous Image Chevron Icon */}
+                  <button
+                    type="button"
+                    onClick={() => scrollToMobileImage(Math.max(0, mobileActiveImage - 1))}
+                    disabled={mobileActiveImage === 0}
+                    aria-label="Previous image"
+                    className="w-8 h-8 rounded-full bg-black/75 backdrop-blur-md text-white flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black transition-all shadow-md border border-white/20"
+                  >
+                    <ChevronUp size={16} />
+                  </button>
+
+                  {/* Vertical Indicator Dots */}
+                  <div className="flex flex-col items-center gap-1.5 bg-black/60 backdrop-blur-md px-1.5 py-2.5 rounded-full border border-white/20 shadow-md">
+                    {allMedia.map((_, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => scrollToMobileImage(idx)}
+                        aria-label={`Go to image ${idx + 1}`}
+                        className={`w-2 rounded-full transition-all duration-300 ${
+                          mobileActiveImage === idx
+                            ? 'h-4 bg-accent ring-1 ring-accent-strong'
+                            : 'h-2 bg-white/50 hover:bg-white'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Next Image Chevron Icon */}
+                  <button
+                    type="button"
+                    onClick={() => scrollToMobileImage(Math.min(allMedia.length - 1, mobileActiveImage + 1))}
+                    disabled={mobileActiveImage === allMedia.length - 1}
+                    aria-label="Next image"
+                    className="w-8 h-8 rounded-full bg-black/75 backdrop-blur-md text-white flex items-center justify-center disabled:opacity-25 disabled:cursor-not-allowed hover:bg-black transition-all shadow-md border border-white/20"
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                </div>
+
+                {/* Floating Counter Badge */}
+                <div className="absolute left-3 bottom-3 z-20">
+                  <div className="bg-black/75 backdrop-blur-md text-white text-[10px] font-mono px-3 py-1.5 rounded-full border border-white/20 shadow-md flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    <span>{mobileActiveImage + 1} / {allMedia.length}</span>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -282,7 +366,13 @@ export function ProductDetail() {
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs font-bold uppercase tracking-wider">Size: {selectedVariant?.name || 'Select'}</span>
-                <button className="text-xs underline text-gray-500 hover:text-black">Size Guide</button>
+                <button
+                  type="button"
+                  onClick={() => setShowSizeGuide(true)}
+                  className="text-xs underline text-gray-500 hover:text-black transition-colors"
+                >
+                  Size Guide
+                </button>
               </div>
               <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                 {product.variants && product.variants.map((variant) => (
@@ -312,6 +402,28 @@ export function ProductDetail() {
               )}
             </div>
 
+            {/* CLOTH COLOR PALETTE (1-3 Colors) */}
+            {Array.isArray(product.colorPalette || product.color_palette) && (product.colorPalette || product.color_palette).length > 0 && (
+              <div className="mb-8 p-4 bg-background-light/50 border border-black/5 rounded-lg">
+                <span className="text-xs font-bold uppercase tracking-[0.2em] block mb-2.5 text-black">
+                  Cloth Color Palette
+                </span>
+                <div className="flex items-center gap-2.5">
+                  {(product.colorPalette || product.color_palette).slice(0, 3).map((hex, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-black/10 shadow-xs">
+                      <span
+                        className="w-4 h-4 rounded-full border border-black/20 shadow-inner"
+                        style={{ backgroundColor: hex }}
+                      />
+                      <span className="text-[10px] font-mono font-medium tracking-wider text-black/80 uppercase">
+                        {hex}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* OTHER COLORS SUGGESTION */}
             {otherColors.length > 0 && (
               <div className="mb-8">
@@ -335,11 +447,49 @@ export function ProductDetail() {
               </div>
             )}
 
+            {/* ORGANIZED & ENHANCED PRODUCT DESCRIPTION */}
             {product.description && (
-              <div className="space-y-4 text-sm leading-relaxed text-gray-600 mb-8">
-                <p>{product.description}</p>
+              <div className="mb-8 p-5 bg-background-light/60 border border-black/5 rounded-xl space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-black/5 pb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-black flex items-center gap-2 font-serif">
+                    <Sparkles size={14} className="text-accent" />
+                    Product Description & Silhouette Details
+                  </h3>
+                </div>
+
+                {/* Paragraph Formatting */}
+                <div className="text-xs leading-[1.85] text-gray-700 font-sans space-y-3">
+                  {product.description.split('\n').filter(Boolean).map((paragraph, pIdx) => (
+                    <p key={pIdx}>
+                      {paragraph.trim()}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Craftsmanship Highlights Grid */}
+                <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-black/5">
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+                    <span>Artisanal Lagos Tailoring</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+                    <span>Flowing Bubu Cut</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+                    <span>Hand-Finished Detailing</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+                    <span>Atelier Heritage Piece</span>
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* GARMENT CARE & FABRIC MAINTENANCE */}
+            <GarmentCare className="mb-8" />
 
             <div className="text-[10px] text-gray-400 font-mono">
               Ref. {product.id?.slice(0, 8).toUpperCase() || 'N/A'}
@@ -386,6 +536,8 @@ export function ProductDetail() {
           </div>
         </motion.section>
       )}
+
+      <SizeGuideModal open={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
     </Layout>
   );
 }

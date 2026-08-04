@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
+import { SizeGuideModal } from './SizeGuideModal';
 
 const FOOTER_LINKS = {
   categories: [
@@ -17,14 +18,15 @@ const FOOTER_LINKS = {
     { to: '/shop?collection=best-sellers', label: 'Best Sellers' },
   ],
   help: [
-    { to: '/account', label: 'My Account' },
+    { to: '/track-order', label: 'My Account' },
     { to: '/track-order', label: 'Track Your Order' },
+    { action: 'sizeGuide', label: 'Atelier Size Guide' },
     { to: '/gift-card', label: 'Digital Gift Cards' },
     { to: '/contact', label: 'Shipping & Returns' },
     { to: '/contact', label: 'Privacy Policy' },
   ],
   contact: [
-    { href: 'mailto:concierge@bubulagos.com', label: 'Email Concierge' },
+    { href: 'mailto:Wodibenuah@yahoo.com', label: 'Email Concierge' },
     { href: 'https://instagram.com/bubulagos', label: 'Instagram: @bubulagos', external: true },
     { to: '/contact', label: 'Atelier Appointment' },
   ],
@@ -34,15 +36,14 @@ const SOCIAL_LINKS = [
   { href: 'https://instagram.com/bubulagos', label: 'Instagram', external: true },
 ];
 
-// [MOTION ADDED] Footer is now black-on-white. All text is white; links get
-// the accent color on hover so the brand accent is visible site-wide.
 const headingClass = "text-[12px] font-semibold uppercase tracking-[0.12em] mb-4 text-white/90";
-const linkClass = "text-[12px] text-white/70 hover:text-accent transition-colors duration-200";
+const linkClass = "text-[12px] text-white/70 hover:text-accent transition-colors duration-200 text-left";
 
 export function Footer() {
   const [email, setEmail] = useState('');
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
   const toast = useToast();
   const reduceMotion = useReducedMotion();
 
@@ -142,11 +143,25 @@ export function Footer() {
           <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}>
             <h4 className={headingClass}>Client Services</h4>
             <div className="flex flex-col gap-2">
-              {FOOTER_LINKS.help.map((link) => (
-                <Link key={link.label} to={link.to} className={linkClass}>
-                  {link.label}
-                </Link>
-              ))}
+              {FOOTER_LINKS.help.map((link) => {
+                if (link.action === 'sizeGuide') {
+                  return (
+                    <button
+                      key={link.label}
+                      type="button"
+                      onClick={() => setShowSizeGuide(true)}
+                      className={linkClass}
+                    >
+                      {link.label}
+                    </button>
+                  );
+                }
+                return (
+                  <Link key={link.label} to={link.to} className={linkClass}>
+                    {link.label}
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
 
@@ -204,6 +219,8 @@ export function Footer() {
           © {new Date().getFullYear()} Bubu Lagos — All rights reserved.
         </div>
       </div>
+
+      <SizeGuideModal open={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
     </footer>
   );
 }

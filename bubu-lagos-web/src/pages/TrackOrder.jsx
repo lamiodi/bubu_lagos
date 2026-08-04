@@ -13,6 +13,7 @@ import { Search, Package, Truck, CheckCircle, Clock, XCircle, AlertCircle, Mail,
 import { API_BASE } from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { EASE_OUT } from '../lib/motion';
+import { OrderDetailSkeleton } from '../components/Skeleton';
 
 const STATUS_STEPS = [
   { value: 'pending',   label: 'Order Placed',   icon: Clock },
@@ -143,8 +144,15 @@ export function TrackOrder() {
           </div>
         </form>
 
+        {/* Loading Skeleton state */}
+        {loading && (
+          <div className="mb-8">
+            <OrderDetailSkeleton />
+          </div>
+        )}
+
         {/* Guidance Card: Where to find this information */}
-        {!result && (
+        {!result && !loading && (
           <div className="bg-gray-50/80 rounded-2xl border border-gray-200/60 p-6 sm:p-7 mb-8">
             <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-wider text-black">
               <HelpCircle size={16} className="text-accent" />

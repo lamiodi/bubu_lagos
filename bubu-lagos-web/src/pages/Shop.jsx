@@ -1,7 +1,7 @@
 import { Layout } from '../components/Layout';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { cn } from '../lib/utils';
+import { cn, getImageUrl, FALLBACK_IMAGE } from '../lib/utils';
 import { logger } from '../lib/logger';
 import api from '../utils/api';
 import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Sparkles } from 'lucide-react';
@@ -43,7 +43,7 @@ function CollectionChip({ collection, isSelected, onToggle }) {
   );
 }
 
-function EditorialBanner({ category, activeCollections, collectionsList }) {
+function EditorialBanner({ category, activeCollections, collectionsList, categoriesList, productsList, onSelectCategory }) {
   const reduceMotion = useReducedMotion();
   
   // Find current collection banner if single collection filter active
@@ -53,6 +53,60 @@ function EditorialBanner({ category, activeCollections, collectionsList }) {
     }
     return null;
   }, [activeCollections, collectionsList]);
+
+  // Pick dynamic banner background image from random DB products in category or database
+  const dynamicBannerImage = useMemo(() => {
+    if (activeCol?.bannerUrl) return activeCol.bannerUrl;
+
+    if (category !== 'all' && productsList && productsList.length > 0) {
+      const matchingProds = productsList.filter(p => 
+        (p.category?.slug || '').toLowerCase() === category.toLowerCase() ||
+        (p.category?.name || '').toLowerCase().includes(category.toLowerCase())
+      );
+      if (matchingProds.length > 0) {
+        const randProd = matchingProds[Math.floor(Math.random() * matchingProds.length)];
+        const img = getImageUrl(randProd.images?.[0] || randProd.imageUrl);
+        if (img) return img;
+      }
+    }
+
+    if (productsList && productsList.length > 0) {
+      const validProds = productsList.filter(p => (p.images && p.images.length > 0) || p.imageUrl);
+      if (validProds.length > 0) {
+        const randProd = validProds[Math.floor(Math.random() * validProds.length)];
+        const img = getImageUrl(randProd.images?.[0] || randProd.imageUrl);
+        if (img) return img;
+      }
+    }
+
+    return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&h=600&fit=crop&q=80';
+  }, [activeCol, category, productsList]);
+
+  // Build category cards featuring real images from DB (Bubus, Turbans & Gelès, Artisan Accessories)
+  const categoryCards = useMemo(() => {
+    if (!categoriesList || categoriesList.length === 0) return [];
+
+    return categoriesList.map(cat => {
+      const catSlug = cat.slug || cat.name.toLowerCase();
+      const catProds = (productsList || []).filter(p => 
+        (p.category?.slug || '').toLowerCase() === catSlug ||
+        (p.category?.name || '').toLowerCase() === cat.name.toLowerCase()
+      );
+
+      let image = getImageUrl(cat.image_url || cat.imageUrl);
+      if (!image && catProds.length > 0) {
+        const randProd = catProds[Math.floor(Math.random() * catProds.length)];
+        image = getImageUrl(randProd.images?.[0] || randProd.imageUrl);
+      }
+
+      return {
+        ...cat,
+        slug: catSlug,
+        image: image || FALLBACK_IMAGE,
+        count: catProds.length
+      };
+    });
+  }, [categoriesList, productsList]);
 
   const title = activeCol 
     ? activeCol.name 
@@ -66,36 +120,75 @@ function EditorialBanner({ category, activeCollections, collectionsList }) {
     ? `Explore our signature ${category} silhouettes handcrafted in our Lagos atelier.`
     : 'Modern African luxury womenswear, handcrafted Bubu gowns, crown turbans, and artisan accessories.';
 
-  const bannerUrl = activeCol?.bannerUrl || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&h=600&fit=crop&q=80';
-
   return (
     <motion.header
-      className="relative mb-10 md:mb-14 overflow-hidden bg-black text-white min-h-[220px] md:min-h-[300px] flex items-center"
+      className="relative mb-10 md:mb-14 overflow-hidden bg-black text-white min-h-[300px] md:min-h-[360px] flex items-center"
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
+      {/* Background Image Overlay with Random Category Product from DB */}
       <div className="absolute inset-0 z-0 opacity-40">
         <img
-          src={bannerUrl}
+          src={dynamicBannerImage}
           alt={title}
-          className="w-full h-full object-cover object-center scale-105"
+          className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent" />
       </div>
 
-      <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-10 w-full flex flex-col justify-center">
-        <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-accent-light mb-2">
-          <Sparkles size={12} className="text-accent-light" />
-          Bubu Lagos Atelier
-        </span>
-        <h1 className="font-heading text-[32px] md:text-[48px] lg:text-[60px] font-bold uppercase tracking-[0.01em] leading-[0.95] text-white mb-3">
-          {title}
-        </h1>
-        {description && (
-          <p className="text-[12px] md:text-[14px] leading-[1.7] text-white/80 max-w-[620px]">
-            {description}
-          </p>
+      <div className="relative z-10 max-w-[1400px] mx-auto px-6 py-10 w-full flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+        {/* Left Copy Block */}
+        <div className="max-w-[620px]">
+          <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-accent-light mb-2">
+            <Sparkles size={12} className="text-accent-light" />
+            Bubu Lagos Atelier
+          </span>
+          <h1 className="font-heading text-[32px] md:text-[48px] lg:text-[56px] font-bold uppercase tracking-[0.01em] leading-[0.95] text-white mb-3">
+            {title}
+          </h1>
+          {description && (
+            <p className="text-[12px] md:text-[14px] leading-[1.7] text-white/80">
+              {description}
+            </p>
+          )}
+        </div>
+
+        {/* Right Side: Category Preview Cards featuring real images from DB (Bubus, Turbans & Gelès, Artisan Accessories) */}
+        {categoryCards.length > 0 && (
+          <div className="w-full lg:w-auto flex items-center gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+            {categoryCards.map(catCard => {
+              const isSelected = category.toLowerCase() === catCard.slug;
+              return (
+                <button
+                  key={catCard.id || catCard.slug}
+                  onClick={() => onSelectCategory(catCard.slug)}
+                  className={cn(
+                    "group relative flex-shrink-0 w-28 md:w-32 h-36 md:h-40 rounded-xl overflow-hidden border transition-all duration-300 text-left shadow-xl",
+                    isSelected
+                      ? "border-accent ring-2 ring-accent scale-105"
+                      : "border-white/20 hover:border-white/60 hover:scale-102"
+                  )}
+                >
+                  <img
+                    src={catCard.image}
+                    alt={catCard.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                  <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white line-clamp-1">
+                      {catCard.name}
+                    </span>
+                    <span className="text-[9px] font-mono text-accent-light">
+                      {catCard.count} {catCard.count === 1 ? 'Piece' : 'Pieces'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     </motion.header>
@@ -233,6 +326,9 @@ export function Shop() {
           category={activeCategory}
           activeCollections={selectedCollections}
           collectionsList={collections}
+          categoriesList={categories}
+          productsList={products}
+          onSelectCategory={handleCategorySelect}
         />
 
         <div className="max-w-[1400px] mx-auto px-4 md:px-6">
@@ -425,30 +521,84 @@ export function Shop() {
           <div className="mt-20">
             <Link
               to="/gift-card"
-              className="group block relative overflow-hidden bg-accent text-white"
+              className="group block relative overflow-hidden rounded-2xl bg-black text-white border border-white/10 shadow-2xl transition-all duration-500 hover:border-accent/50"
               aria-label="Send a Bubu Lagos gift card"
             >
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-8 items-center px-6 py-8 md:px-10 md:py-10">
-                <div className="md:col-span-7 flex flex-col gap-3">
-                  <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-white/80">
-                    <Gift size={14} strokeWidth={2} className="text-white" aria-hidden="true" />
-                    The Gift Card
-                  </span>
-                  <h3 className="font-heading text-[26px] md:text-[34px] lg:text-[40px] font-bold uppercase leading-[0.95] tracking-[0.01em]">
-                    Give the perfect gift
+              {/* Background Image & Overlay Gradient */}
+              <div className="absolute inset-0 z-0 opacity-35">
+                <img
+                  src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1600&fit=crop&q=80"
+                  alt="Luxury Gift Wrapping"
+                  className="w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-emerald-950/80" />
+              </div>
+
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 md:p-12">
+                {/* Left Column: Copy & Call To Action */}
+                <div className="lg:col-span-7 flex flex-col gap-4">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/20 border border-accent/40 text-accent-light w-fit backdrop-blur-md">
+                    <Gift size={13} className="text-accent" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.22em]">
+                      Bubu Lagos Digital Voucher
+                    </span>
+                  </div>
+
+                  <h3 className="font-heading text-[28px] md:text-[38px] lg:text-[46px] font-bold uppercase leading-[1.0] tracking-[0.01em] text-white">
+                    Give the Gift of <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">Uncompromising Luxury</span>
                   </h3>
-                  <p className="text-[12px] md:text-[13px] leading-[1.7] text-white/85 max-w-md">
-                    Send a Bubu Lagos gift card instantly via email — the ultimate gift of choice. Choose any amount from ₦100,000 to ₦1,000,000.
+
+                  <p className="text-[12px] md:text-[14px] leading-[1.7] text-white/80 max-w-xl font-sans">
+                    Send an instant digital gift card delivered directly via email, or scheduled for a memorable date. Valid site-wide for all handcrafted gowns, turbans, and atelier pieces.
                   </p>
-                  <span className="mt-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]">
-                    Send a Gift Card
-                    <ArrowRight
-                      size={14}
-                      strokeWidth={2}
-                      className="transition-transform duration-300 group-hover:translate-x-1.5"
-                      aria-hidden="true"
-                    />
-                  </span>
+
+                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                    <span className="inline-flex items-center gap-2.5 px-5 py-3.5 bg-accent text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded-sm group-hover:bg-accent-strong transition-all duration-300 shadow-md">
+                      <span>Send a Gift Card</span>
+                      <ArrowRight
+                        size={15}
+                        className="transition-transform duration-300 group-hover:translate-x-1.5"
+                      />
+                    </span>
+                    <span className="text-[11px] font-mono text-white/60 tracking-wider">
+                      Available from ₦50,000 – ₦1,000,000
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Column: 3D Luxury Gift Card Graphic Mockup */}
+                <div className="lg:col-span-5 flex justify-center lg:justify-end">
+                  <div className="w-full max-w-[340px] aspect-[1.58/1] rounded-xl bg-gradient-to-br from-neutral-900 via-black to-emerald-950 p-6 flex flex-col justify-between border border-amber-400/30 shadow-2xl relative overflow-hidden group-hover:rotate-1 group-hover:scale-105 transition-all duration-500">
+                    {/* Metallic Glow Orbs */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="flex items-center justify-between z-10">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={16} className="text-amber-400" />
+                        <span className="text-[11px] font-heading font-bold uppercase tracking-[0.25em] text-white">
+                          BUBU LAGOS
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold tracking-widest text-amber-400/90 border border-amber-400/30 px-2 py-0.5 rounded uppercase">
+                        ATELIER
+                      </span>
+                    </div>
+
+                    <div className="my-auto py-2 z-10">
+                      <div className="text-[10px] uppercase font-mono tracking-[0.2em] text-white/50 mb-1">
+                        E-GIFT CARD
+                      </div>
+                      <div className="text-2xl font-mono font-bold text-amber-200 tracking-wider">
+                        ₦100,000
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-white/10 z-10 text-[9px] font-mono text-white/50 uppercase tracking-widest">
+                      <span>Instant Email Delivery</span>
+                      <span>Site-wide Redemption</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Link>

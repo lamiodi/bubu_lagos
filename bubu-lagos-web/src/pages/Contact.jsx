@@ -93,8 +93,8 @@ export function Contact() {
                                     <div>
                                         <h3 className="text-xs font-bold uppercase tracking-widest mb-2">Our Atelier</h3>
                                         <p className="text-sm text-gray-500 leading-relaxed">
-                                            124 Heritage Way, Victoria Island<br />
-                                            Lagos, Nigeria
+                                            Greenville Mall, Admiralty Way<br />
+                                            Lekki Phase 1, Lagos, Nigeria
                                         </p>
                                     </div>
                                 </div>
@@ -106,7 +106,7 @@ export function Contact() {
                                     <div>
                                         <h3 className="text-xs font-bold uppercase tracking-widest mb-2">Concierge</h3>
                                         <p className="text-sm text-gray-500 leading-relaxed">
-                                            +234 (0) 800 BUBU LAGOS<br />
+                                            08161331923<br />
                                             Mon - Fri, 9am - 6pm WAT
                                         </p>
                                     </div>
@@ -119,8 +119,7 @@ export function Contact() {
                                     <div>
                                         <h3 className="text-xs font-bold uppercase tracking-widest mb-2">Email</h3>
                                         <p className="text-sm text-gray-500 leading-relaxed">
-                                            concierge@bubulagos.com<br />
-                                            press@bubulagos.com
+                                            Wodibenuah@yahoo.com
                                         </p>
                                     </div>
                                 </div>

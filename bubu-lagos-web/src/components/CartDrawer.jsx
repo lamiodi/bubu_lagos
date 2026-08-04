@@ -11,10 +11,29 @@ const priceToNumber = (p) => {
   return parsePriceValue(p) || 0;
 };
 
+import { useState, useEffect } from 'react';
+import { api } from '../utils/api';
+import { getImageUrl } from '../lib/utils';
+import { Sparkles } from 'lucide-react';
+
 export function CartDrawer() {
-  const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart();
   const { cartOpen, closeCart, openSearch } = useUI();
   const reduceMotion = useReducedMotion();
+  const [suggestedTurbans, setSuggestedTurbans] = useState([]);
+
+  useEffect(() => {
+    if (cartItems.length > 0 && cartOpen) {
+      const firstItem = cartItems[0];
+      api.get(`/products/recommendations?productId=${firstItem.id}&targetCategory=turbans-geles&limit=2`)
+        .then(res => {
+          if (res.products && res.products.length > 0) {
+            setSuggestedTurbans(res.products);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [cartItems, cartOpen]);
 
   return (
     <Drawer
@@ -122,6 +141,41 @@ export function CartDrawer() {
               );
             })}
           </ul>
+
+          {/* Smart Turban Suggestions */}
+          {suggestedTurbans.length > 0 && (
+            <div className="bg-background-light/70 p-4 border-t border-border">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-accent" />
+                  Pair With Matching Turban
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {suggestedTurbans.map(turban => {
+                  const img = turban.images && turban.images.length > 0 ? getImageUrl(turban.images[0]) : '';
+                  return (
+                    <div key={turban.id} className="bg-white p-2 border border-border flex items-center gap-2 rounded-sm shadow-xs">
+                      <div className="w-9 h-11 bg-gray-100 flex-shrink-0 overflow-hidden">
+                        {img && <img src={img} alt={turban.name} className="w-full h-full object-cover" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-bold uppercase tracking-wider truncate text-text">{turban.name}</p>
+                        <p className="text-[9px] text-text-light">{formatNGN(turban.basePrice)}</p>
+                        <button
+                          type="button"
+                          onClick={() => addToCart({ id: turban.id, name: turban.name, price: turban.basePrice, image: img })}
+                          className="text-[8px] font-bold uppercase tracking-wider text-accent hover:underline mt-0.5"
+                        >
+                          + Add Piece
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Summary + checkout */}
           <div className="flex-shrink-0 border-t border-border bg-background-light px-5 py-5 space-y-4">

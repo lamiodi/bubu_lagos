@@ -69,10 +69,26 @@ export function PaymentVerify() {
     <Layout headerVariant="solid">
       <div className="container mx-auto px-4 py-20 max-w-2xl text-center">
         {status === 'verifying' && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-            <h1 className="text-2xl font-bold">Confirming Your Order…</h1>
-            <p className="text-gray-600">One moment while we verify the atelier payment.</p>
+          <div className="flex flex-col items-center gap-6">
+            <div className="w-12 h-12 border-3 border-black border-t-transparent rounded-full animate-spin"></div>
+            <div className="space-y-2">
+              <h1 className="text-2xl md:text-3xl font-heading font-black uppercase tracking-tight italic">Confirming Your Order…</h1>
+              <p className="text-gray-500 text-sm">One moment while we verify your atelier payment.</p>
+            </div>
+            
+            {/* Skewed Skeleton summary card for visual continuity */}
+            <div className="bg-white border border-gray-100 shadow-sm p-8 rounded-2xl w-full text-left mt-4 space-y-4">
+              <div className="h-4 w-32 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="flex justify-between items-center py-2">
+                <div className="h-3 w-28 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+                <div className="h-5 w-36 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <div className="h-3 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+                <div className="h-5 w-28 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              </div>
+              <div className="h-10 w-full shimmer-light mt-4" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
           </div>
         )}
 
@@ -203,7 +219,7 @@ export function PaymentVerify() {
                 Return to the House
               </Link>
               <a
-                href="mailto:concierge@bubulagos.com"
+                href="mailto:Wodibenuah@yahoo.com"
                 className="flex-1 py-3 border-2 border-black font-bold uppercase tracking-widest text-sm text-center"
               >
                 Speak to Concierge

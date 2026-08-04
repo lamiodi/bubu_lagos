@@ -172,6 +172,20 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
             )}
           </div>
 
+          {/* Color Palette Overlay Badge */}
+          {Array.isArray(product.colorPalette || product.color_palette) && (product.colorPalette || product.color_palette).length > 0 && (
+            <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full z-10">
+              {(product.colorPalette || product.color_palette).slice(0, 3).map((hex, i) => (
+                <span
+                  key={i}
+                  className="w-2.5 h-2.5 rounded-full border border-white/70 shadow-sm"
+                  style={{ backgroundColor: hex }}
+                  title={`Cloth Color: ${hex}`}
+                />
+              ))}
+            </div>
+          )}
+
           <motion.span
             aria-hidden="true"
             className="absolute left-3 right-3 bottom-3 inline-flex items-center justify-center gap-2 py-2.5 bg-accent text-white text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_8px_24px_rgba(15,61,46,0.35)] ring-1 ring-accent-strong/40"

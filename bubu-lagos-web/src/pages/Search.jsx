@@ -7,6 +7,8 @@ import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 
 
+import { SearchSkeleton } from '../components/Skeleton';
+
 export function Search() {
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
@@ -69,22 +71,26 @@ export function Search() {
           />
         </motion.div>
 
-        {loading && <p className="text-[11px] uppercase tracking-widest mb-8">Searching archive...</p>}
-
-        {/* Results Grid */}
-        <div className="w-full max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-4 pb-20">
-          <AnimatePresence>
-            {results.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-              >
-                <ProductCard product={product} delay={0} inView={false} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        {/* Results Grid / Skeleton Loading */}
+        <div className="w-full max-w-6xl pb-20">
+          {loading ? (
+            <SearchSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <AnimatePresence>
+                {results.map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                  >
+                    <ProductCard product={product} delay={0} inView={false} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {query && results.length === 0 && !loading && (

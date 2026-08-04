@@ -133,6 +133,8 @@ export const getProducts = async (req, res) => {
         description: row.category_description
       } : null,
       collections: row.collections || [],
+      colorPalette: row.color_palette || [],
+      suggestedProductIds: row.suggested_product_ids || [],
       variants: Array.isArray(row.variants) ? row.variants.map(v => ({
         id: v.id,
         name: v.name,
@@ -159,41 +161,112 @@ export const getProducts = async (req, res) => {
 
 export const getRecommendations = async (req, res) => {
   try {
-    const { productId, categoryId, limit = 4 } = req.query;
+    const { productId, categoryId, targetCategory, limit = 4 } = req.query;
     
     let products = [];
+    let currentProduct = null;
 
-    if (productId && categoryId) {
-      const relatedResult = await query(
+    if (productId) {
+      const currentRes = await query(`SELECT * FROM products WHERE id = $1`, [productId]);
+      if (currentRes.rows.length > 0) {
+        currentProduct = currentRes.rows[0];
+      }
+    }
+
+    // Tier 1: Explicit Admin-suggested product IDs
+    if (currentProduct && Array.isArray(currentProduct.suggested_product_ids) && currentProduct.suggested_product_ids.length > 0) {
+      const explicitRes = await query(
         `SELECT p.*, c.name as category_name, c.slug as category_slug
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.category_id = $1 AND p.id != $2
+         WHERE p.id = ANY($1::uuid[]) AND p.id != $2
          LIMIT $3`,
-        [categoryId, productId, limit]
+        [currentProduct.suggested_product_ids, productId, limit]
       );
-      products = relatedResult.rows;
+      products = explicitRes.rows;
     }
 
+    // Tier 2: Color-palette matching (e.g. matching Turbans to a Bubu by shared colors)
+    if (products.length < limit && currentProduct && Array.isArray(currentProduct.color_palette) && currentProduct.color_palette.length > 0) {
+      const remainingLimit = limit - products.length;
+      const excludeIds = [productId, ...products.map(p => p.id)];
+      
+      let categoryFilter = '';
+      const params = [currentProduct.color_palette, excludeIds, remainingLimit];
+
+      if (targetCategory) {
+        params.push(targetCategory);
+        categoryFilter = `AND (c.slug = $4 OR c.name ILIKE $4)`;
+      }
+
+      const colorRes = await query(
+        `SELECT p.*, c.name as category_name, c.slug as category_slug
+         FROM products p
+         LEFT JOIN categories c ON p.category_id = c.id
+         WHERE p.color_palette && $1::text[]
+           AND p.id != ALL($2::uuid[])
+           ${categoryFilter}
+         LIMIT $3`,
+        params
+      );
+      products = [...products, ...colorRes.rows];
+    }
+
+    // Tier 3: Same or target category fallback
     if (products.length < limit) {
       const remainingLimit = limit - products.length;
+      const excludeIds = [productId || '00000000-0000-0000-0000-000000000000', ...products.map(p => p.id)];
+      let catId = categoryId;
+      
+      if (targetCategory) {
+        const catRes = await query(`SELECT id FROM categories WHERE slug = $1 OR name ILIKE $1 LIMIT 1`, [targetCategory]);
+        if (catRes.rows.length > 0) catId = catRes.rows[0].id;
+      }
+
+      if (catId) {
+        const catProductsRes = await query(
+          `SELECT p.*, c.name as category_name, c.slug as category_slug
+           FROM products p
+           LEFT JOIN categories c ON p.category_id = c.id
+           WHERE p.category_id = $1 AND p.id != ALL($2::uuid[])
+           LIMIT $3`,
+          [catId, excludeIds, remainingLimit]
+        );
+        products = [...products, ...catProductsRes.rows];
+      }
+    }
+
+    // Tier 4: General latest products fallback
+    if (products.length < limit) {
+      const remainingLimit = limit - products.length;
+      const excludeIds = [productId || '00000000-0000-0000-0000-000000000000', ...products.map(p => p.id)];
       const latestResult = await query(
         `SELECT p.*, c.name as category_name, c.slug as category_slug
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.id NOT IN (${products.length > 0 ? products.map((_, i) => `$${i + 1}`).join(',') : "''"})
+         WHERE p.id != ALL($1::uuid[])
          ORDER BY p.created_at DESC
-         LIMIT $${products.length + 1}`,
-        [...products.map(p => p.id), remainingLimit]
+         LIMIT $2`,
+        [excludeIds, remainingLimit]
       );
       products = [...products, ...latestResult.rows];
     }
 
     res.json({
       products: products.map(p => ({
-        ...p,
+        id: p.id,
+        name: p.name,
+        description: p.description,
         basePrice: parseFloat(p.base_price),
-        images: p.images || []
+        images: p.images || [],
+        videoUrl: p.video_url,
+        colorPalette: p.color_palette || [],
+        suggestedProductIds: p.suggested_product_ids || [],
+        category: p.category_id ? {
+          id: p.category_id,
+          name: p.category_name,
+          slug: p.category_slug
+        } : null
       }))
     });
     
@@ -221,7 +294,7 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants } = req.body;
+    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants, colorPalette, suggestedProductIds } = req.body;
     
     if (req.files) {
       if (req.files['images']) {
@@ -241,6 +314,12 @@ export const createProduct = async (req, res) => {
     if (typeof targetCollectionIds === 'string') {
       try { targetCollectionIds = JSON.parse(targetCollectionIds); } catch (e) { targetCollectionIds = [targetCollectionIds]; }
     }
+    if (typeof colorPalette === 'string') {
+      try { colorPalette = JSON.parse(colorPalette); } catch (e) { colorPalette = []; }
+    }
+    if (typeof suggestedProductIds === 'string') {
+      try { suggestedProductIds = JSON.parse(suggestedProductIds); } catch (e) { suggestedProductIds = []; }
+    }
     
     if (!name || !basePrice || !categoryId) {
       return res.status(400).json({ error: 'Name, basePrice, and categoryId are required' });
@@ -252,10 +331,19 @@ export const createProduct = async (req, res) => {
       await client.query('BEGIN');
       
       const productResult = await client.query(
-        `INSERT INTO products (name, description, base_price, images, video_url, category_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO products (name, description, base_price, images, video_url, category_id, color_palette, suggested_product_ids)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [name, description, basePrice, Array.isArray(images) ? images : [], videoUrl || null, categoryId]
+        [
+          name,
+          description,
+          basePrice,
+          Array.isArray(images) ? images : [],
+          videoUrl || null,
+          categoryId,
+          Array.isArray(colorPalette) ? colorPalette : [],
+          Array.isArray(suggestedProductIds) ? suggestedProductIds : []
+        ]
       );
       
       const product = productResult.rows[0];
@@ -304,7 +392,7 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants } = req.body;
+    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants, colorPalette, suggestedProductIds } = req.body;
     
     let existingImages = [];
     if (images !== undefined) {
@@ -338,6 +426,12 @@ export const updateProduct = async (req, res) => {
     if (typeof targetCollectionIds === 'string') {
       try { targetCollectionIds = JSON.parse(targetCollectionIds); } catch (e) { targetCollectionIds = [targetCollectionIds]; }
     }
+    if (typeof colorPalette === 'string') {
+      try { colorPalette = JSON.parse(colorPalette); } catch (e) {}
+    }
+    if (typeof suggestedProductIds === 'string') {
+      try { suggestedProductIds = JSON.parse(suggestedProductIds); } catch (e) {}
+    }
 
     let finalVideoUrl = videoUrl;
     if (videoUrl === '') { finalVideoUrl = null; }
@@ -354,10 +448,22 @@ export const updateProduct = async (req, res) => {
              base_price = COALESCE($3, base_price),
              images = $4,
              video_url = CASE WHEN $5::text = '' THEN NULL ELSE COALESCE($5, video_url) END,
-             category_id = COALESCE($6, category_id)
-         WHERE id = $7
+             category_id = COALESCE($6, category_id),
+             color_palette = CASE WHEN $7::text[] IS NOT NULL THEN $7 ELSE color_palette END,
+             suggested_product_ids = CASE WHEN $8::text[] IS NOT NULL THEN $8 ELSE suggested_product_ids END
+         WHERE id = $9
          RETURNING *`,
-        [name, description, basePrice, existingImages, videoUrl === '' ? '' : finalVideoUrl, categoryId, id]
+        [
+          name,
+          description,
+          basePrice,
+          existingImages,
+          videoUrl === '' ? '' : finalVideoUrl,
+          categoryId,
+          Array.isArray(colorPalette) ? colorPalette : null,
+          Array.isArray(suggestedProductIds) ? suggestedProductIds : null,
+          id
+        ]
       );
       
       if (result.rows.length === 0) {
@@ -532,6 +638,8 @@ async function getProductByIdInternal(productId, client = null) {
       description: col.description,
       accentColor: col.accent_color
     })),
+    colorPalette: product.color_palette || [],
+    suggestedProductIds: product.suggested_product_ids || [],
     variants: variantsResult.rows.map(v => ({
       id: v.id,
       name: v.name,

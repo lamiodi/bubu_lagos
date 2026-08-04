@@ -5,6 +5,7 @@ import { API_BASE } from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { logger } from '../lib/logger';
 import { ChevronLeft, Package, MapPin, CreditCard, Mail } from 'lucide-react';
+import { OrderDetailSkeleton } from '../components/Skeleton';
 
 /**
  * Order detail page (guest). Fetches a single order by reference AND
@@ -74,6 +75,18 @@ export function OrderDetail() {
     if (email) fetchOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email]);
+
+  if (loading && !order) {
+    return (
+      <Layout headerVariant="solid">
+        <div className="pt-[100px] min-h-screen bg-gray-50/50 pb-20">
+          <div className="max-w-[1200px] mx-auto px-5 md:px-8">
+            <OrderDetailSkeleton />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!order) {
     return (

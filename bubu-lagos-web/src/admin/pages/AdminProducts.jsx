@@ -7,6 +7,43 @@ import { getImageUrl, formatNGN } from '../../lib/utils';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useToast } from '../../context/ToastContext';
 import { logger } from '../../lib/logger';
+import { TableRowSkeleton } from '../../components/Skeleton';
+
+const LUXURY_PRESET_COLORS = [
+  // Signature & Classic Neutrals
+  { name: 'Royal Emerald', hex: '#0F3D2E' },
+  { name: 'Metallic Gold', hex: '#D4AF37' },
+  { name: 'Midnight Black', hex: '#1A1A1A' },
+  { name: 'Ivory Silk', hex: '#F5F5DC' },
+  { name: 'Champagne Gold', hex: '#F7E7CE' },
+  { name: 'Pure White', hex: '#FFFFFF' },
+
+  // Warm & Metallic Tones
+  { name: 'Bronze', hex: '#CD7F32' },
+  { name: 'Rose Gold', hex: '#B76E79' },
+  { name: 'Terracotta', hex: '#E2725B' },
+  { name: 'Burnt Orange', hex: '#CC5500' },
+  { name: 'Mustard Gold', hex: '#E1AD01' },
+  { name: 'Coral Pink', hex: '#F88379' },
+
+  // Rich Jewel Tones
+  { name: 'Ruby Red', hex: '#9B111E' },
+  { name: 'Sunset Crimson', hex: '#800020' },
+  { name: 'Regal Purple', hex: '#4B0082' },
+  { name: 'Plum Wine', hex: '#58111A' },
+  { name: 'Sapphire Blue', hex: '#0F2C59' },
+  { name: 'Cobalt Navy', hex: '#00205B' },
+  { name: 'Turquoise Teal', hex: '#008080' },
+  { name: 'Sage Olive', hex: '#556B2F' },
+
+  // Soft Pastels & Earth Tones
+  { name: 'Blush Pink', hex: '#FFD1DC' },
+  { name: 'Lavender Mist', hex: '#E6E6FA' },
+  { name: 'Powder Blue', hex: '#B0E0E6' },
+  { name: 'Taupe Nude', hex: '#B38B6D' },
+  { name: 'Rich Mocha', hex: '#4A2C2A' },
+  { name: 'Charcoal Grey', hex: '#36454F' }
+];
 
 export function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -113,7 +150,7 @@ export function AdminProducts() {
     }
   };
 
-  const openAddModal = () => {
+  const openModal = () => {
     setEditingProduct(null);
     setFormData({
       name: '',
@@ -124,6 +161,8 @@ export function AdminProducts() {
       images: [],
       videoUrl: '',
       videoFile: null,
+      colorPalette: ['#1B365D', '#D4AF37'],
+      suggestedProductIds: [],
       variants: [{ name: 'One Size (Fits 8 - 20)', sku: '', price: '', stockQuantity: 50 }]
     });
     setShowModal(true);
@@ -141,6 +180,8 @@ export function AdminProducts() {
       images: product.images || [],
       videoUrl: product.videoUrl || '',
       videoFile: null,
+      colorPalette: product.colorPalette || product.color_palette || [],
+      suggestedProductIds: product.suggestedProductIds || product.suggested_product_ids || [],
       variants: (product.variants || []).map((v) => ({ ...v, sku: v.sku || '' }))
     });
     setShowModal(true);
@@ -245,6 +286,8 @@ export function AdminProducts() {
       form.append('basePrice', formData.basePrice);
       form.append('categoryId', formData.categoryId);
       form.append('collections', JSON.stringify(formData.collections));
+      form.append('colorPalette', JSON.stringify(formData.colorPalette || []));
+      form.append('suggestedProductIds', JSON.stringify(formData.suggestedProductIds || []));
 
       // Separate existing URLs from new files
       const existingImages = formData.images.filter((img) => typeof img === 'string');
@@ -513,27 +556,25 @@ export function AdminProducts() {
           </div>
         </div>
 
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">
-            <Loader2 className="animate-spin mx-auto mb-2" size={24} />
-            Loading the collection...
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-6 py-4 font-semibold text-gray-900">Product</th>
-                    <th className="px-6 py-4 font-semibold text-gray-900">Category</th>
-                    <th className="px-6 py-4 font-semibold text-gray-900">Price</th>
-                    <th className="px-6 py-4 font-semibold text-gray-900">Stock</th>
-                    <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
-                    <th className="px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredProducts.map((product) => {
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="px-6 py-4 font-semibold text-gray-900">Product</th>
+                <th className="px-6 py-4 font-semibold text-gray-900">Category</th>
+                <th className="px-6 py-4 font-semibold text-gray-900">Price</th>
+                <th className="px-6 py-4 font-semibold text-gray-900">Stock</th>
+                <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
+                <th className="px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRowSkeleton key={i} columns={6} />
+                ))
+              ) : (
+                filteredProducts.map((product) => {
                     const totalStock = getTotalStock(product);
                     return (
                       <tr key={product.id} className="hover:bg-gray-50 transition-colors">
@@ -583,17 +624,16 @@ export function AdminProducts() {
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  })
+              )}
+            </tbody>
+          </table>
+        </div>
 
             <div className="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
               <span>Showing {filteredProducts.length} of {products.length} products</span>
             </div>
-          </>
-        )}
-      </div>
+        </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -690,6 +730,122 @@ export function AdminProducts() {
                       </label>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Cloth Color Palette (1-3 Colors) */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cloth Color Palette (1 - 3 Colors Maximum)
+                  </label>
+                  <span className="text-xs text-gray-500 font-mono">
+                    {(formData.colorPalette || []).length}/3 Selected
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mb-3">
+                  Used on shop cards as visual overlays and powers smart complementary turban/accessory suggestions.
+                </p>
+                
+                {/* Current Swatches */}
+                <div className="flex flex-wrap items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  {(formData.colorPalette || []).map((hex, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
+                      <span className="w-5 h-5 rounded-full border border-black/10 shadow-inner" style={{ backgroundColor: hex }} />
+                      <span className="text-xs font-mono font-medium text-gray-800">{hex}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            colorPalette: prev.colorPalette.filter((_, i) => i !== idx)
+                          }));
+                        }}
+                        className="text-gray-400 hover:text-red-600 ml-1"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {(formData.colorPalette || []).length < 3 && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        id="color-picker-input"
+                        className="w-8 h-8 rounded border border-gray-300 cursor-pointer p-0.5"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !formData.colorPalette.includes(val)) {
+                            setFormData(prev => ({ ...prev, colorPalette: [...prev.colorPalette, val] }));
+                          }
+                        }}
+                      />
+                      <span className="text-xs text-gray-400">Pick color or click preset below</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Luxury Presets */}
+                {(formData.colorPalette || []).length < 3 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {LUXURY_PRESET_COLORS.map(preset => {
+                      const isSelected = (formData.colorPalette || []).includes(preset.hex);
+                      return (
+                        <button
+                          key={preset.hex}
+                          type="button"
+                          disabled={isSelected}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, colorPalette: [...(prev.colorPalette || []), preset.hex] }));
+                          }}
+                          className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                            isSelected ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200' : 'bg-white hover:bg-gray-100 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: preset.hex }} />
+                          <span>{preset.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Smart Product Suggestions */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Suggested Matching Pieces (e.g. Turbans & Accessories)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Pick complementary pieces to suggest on Product Detail and Cart. If empty, the engine automatically matches matching turbans by color palette.
+                </p>
+                <div className="max-h-36 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-1.5">
+                  {products
+                    .filter(p => p.id !== editingProduct?.id)
+                    .map(p => {
+                      const isSelected = (formData.suggestedProductIds || []).includes(p.id);
+                      return (
+                        <label key={p.id} className="flex items-center justify-between text-xs p-1.5 hover:bg-white rounded cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData(prev => ({ ...prev, suggestedProductIds: [...(prev.suggestedProductIds || []), p.id] }));
+                                } else {
+                                  setFormData(prev => ({ ...prev, suggestedProductIds: (prev.suggestedProductIds || []).filter(id => id !== p.id) }));
+                                }
+                              }}
+                              className="rounded text-black focus:ring-black"
+                            />
+                            <span className="font-medium text-gray-800">{p.name}</span>
+                          </div>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wider">{p.category?.name || 'Item'}</span>
+                        </label>
+                      );
+                    })}
                 </div>
               </div>
 

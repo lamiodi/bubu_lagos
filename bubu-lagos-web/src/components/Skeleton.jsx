@@ -1,9 +1,26 @@
 import { cn } from '../lib/utils';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ProductCardSkeleton } from './ProductCardSkeleton';
 
-export function Skeleton({ className }) {
+/**
+ * Base luxury skeleton loader component.
+ * Theme-aligned with Bubu Lagos skewed design language and shimmer effect.
+ */
+export function Skeleton({ className, skew = true, dark = false }) {
+  const shimmerClass = dark ? 'shimmer-dark' : 'shimmer-light';
+
   return (
     <div
-      className={cn('animate-pulse bg-gray-200 rounded', className)}
+      className={cn(
+        'relative overflow-hidden rounded-xs',
+        shimmerClass,
+        className
+      )}
+      style={
+        skew
+          ? { transform: typeof skew === 'string' ? skew : 'skewX(-4deg)' }
+          : undefined
+      }
       aria-hidden="true"
     />
   );
@@ -14,7 +31,7 @@ export function TableRowSkeleton({ columns = 5 }) {
     <tr className="border-b border-gray-100">
       {Array.from({ length: columns }).map((_, i) => (
         <td key={i} className="px-6 py-4">
-          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" skew={false} />
         </td>
       ))}
     </tr>
@@ -23,13 +40,254 @@ export function TableRowSkeleton({ columns = 5 }) {
 
 export function StatCardSkeleton() {
   return (
-    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm" aria-hidden="true">
       <div className="flex justify-between items-start mb-4">
-        <Skeleton className="h-10 w-10 rounded-lg" />
-        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="h-10 w-10 rounded-lg" skew={false} />
+        <Skeleton className="h-5 w-16 rounded-full" skew={false} />
       </div>
-      <Skeleton className="h-3 w-24 mb-2" />
-      <Skeleton className="h-7 w-32" />
+      <Skeleton className="h-3 w-24 mb-2" skew={false} />
+      <Skeleton className="h-7 w-32" skew={false} />
+    </div>
+  );
+}
+
+export function ProductDetailSkeleton() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      className="flex flex-col lg:flex-row mt-[60px] min-h-[70vh]"
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      aria-hidden="true"
+    >
+      {/* Left Gallery Placeholder */}
+      <div className="w-full lg:w-1/2 flex flex-col gap-4 lg:pr-4 p-4 lg:p-0">
+        <div className="aspect-[3/4] w-full shimmer-light" style={{ transform: 'skewX(-4deg) scale(1.02)' }} />
+        <div className="hidden lg:grid grid-cols-2 gap-4">
+          <div className="aspect-[3/4] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="aspect-[3/4] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+      </div>
+
+      {/* Right Details Placeholder */}
+      <div className="w-full lg:w-1/2 relative p-4 lg:p-12">
+        <div className="lg:max-w-xl mx-auto space-y-8">
+          <div className="h-3 w-1/3 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+
+          <div className="flex justify-between items-start gap-4">
+            <div className="space-y-3 flex-1">
+              <div className="h-7 w-[80%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-7 w-[50%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="h-7 w-28 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          </div>
+
+          <div className="space-y-3 pt-4">
+            <div className="h-3 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="flex gap-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 w-14 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              ))}
+            </div>
+          </div>
+
+          <div className="h-14 w-full shimmer-light mt-8" style={{ transform: 'skewX(-4deg)' }} />
+
+          <div className="space-y-3 pt-6 border-t border-gray-100">
+            <div className="h-3.5 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="h-3.5 w-[90%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="h-3.5 w-[75%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function CartSkeleton() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      className="container mx-auto px-4 py-12 md:py-20 max-w-6xl"
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      aria-hidden="true"
+    >
+      <div className="h-9 w-64 mx-auto mb-12 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+
+      <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex-1 space-y-8">
+          <div className="h-5 w-full shimmer-light pb-4" style={{ transform: 'skewX(-4deg)' }} />
+
+          {[1, 2].map((i) => (
+            <div key={i} className="flex gap-4 md:gap-8 border-b border-gray-100 pb-8">
+              <div className="w-24 h-32 shimmer-light flex-shrink-0" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="flex-1 space-y-4 pt-2">
+                <div className="h-5 w-[60%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+                <div className="h-4 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+                <div className="h-4 w-16 shimmer-light pt-2" style={{ transform: 'skewX(-4deg)' }} />
+              </div>
+              <div className="h-6 w-20 shimmer-light pt-2" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+          ))}
+        </div>
+
+        <div className="lg:w-[400px] bg-gray-50 p-8 h-fit space-y-6">
+          <div className="h-6 w-40 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="space-y-4 py-4 border-y border-gray-200">
+            <div className="flex justify-between">
+              <div className="h-4 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-4 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="flex justify-between">
+              <div className="h-4 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-4 w-32 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+          </div>
+          <div className="h-14 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function CheckoutSkeleton() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      className="container mx-auto px-4 py-12 md:py-20 max-w-6xl"
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      aria-hidden="true"
+    >
+      <div className="h-8 w-44 mb-12 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+
+      <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex-1 space-y-8">
+          <div className="space-y-4">
+            <div className="h-5 w-40 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-gray-100">
+            <div className="h-5 w-48 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="h-12 w-full shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          </div>
+        </div>
+
+        <div className="lg:w-[420px] bg-gray-50 p-8 h-fit space-y-6">
+          <div className="h-6 w-36 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+
+          <div className="space-y-4 border-y border-gray-200 py-4">
+            <div className="flex gap-4">
+              <div className="w-16 h-20 shimmer-light flex-shrink-0" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="flex-1 space-y-2 pt-1">
+                <div className="h-4 w-[70%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+                <div className="h-3 w-16 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <div className="h-4 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-4 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+            <div className="flex justify-between">
+              <div className="h-4 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-4 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+          </div>
+
+          <div className="h-14 w-full shimmer-light mt-6" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function OrderDetailSkeleton() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 sm:p-8 space-y-8"
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      aria-hidden="true"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-6">
+        <div className="space-y-2">
+          <div className="h-3 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="h-6 w-48 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+        <div className="h-8 w-28 shimmer-light rounded-full" style={{ transform: 'skewX(-4deg)' }} />
+      </div>
+
+      <div className="py-2">
+        <div className="h-3 w-32 mb-6 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-4 bg-gray-50 rounded-xl space-y-2">
+              <div className="w-8 h-8 shimmer-light rounded-full mb-3" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-3.5 w-24 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+              <div className="h-2.5 w-16 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+        <div className="p-6 bg-gray-50 rounded-xl space-y-3">
+          <div className="h-4 w-36 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="h-3 w-48 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="h-3 w-40 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+        <div className="p-6 bg-gray-50 rounded-xl space-y-3">
+          <div className="h-4 w-36 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="h-3 w-32 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="h-5 w-28 shimmer-light pt-1" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-gray-100">
+        <div className="h-4 w-28 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        <div className="flex gap-4 p-4 border border-gray-100 rounded-xl">
+          <div className="w-16 h-20 shimmer-light flex-shrink-0" style={{ transform: 'skewX(-4deg)' }} />
+          <div className="flex-1 space-y-2 pt-1">
+            <div className="h-4 w-[60%] shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+            <div className="h-3 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+          </div>
+          <div className="h-5 w-20 shimmer-light" style={{ transform: 'skewX(-4deg)' }} />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function SearchSkeleton({ count = 4 }) {
+  return (
+    <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <ProductCardSkeleton key={i} />
+      ))}
     </div>
   );
 }

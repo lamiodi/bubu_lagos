@@ -7,6 +7,7 @@ import { useUI } from '../context/UIContext';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { Drawer } from './Drawer';
 import { ProductCard } from './ProductCard';
+import { ProductCardSkeleton } from './ProductCardSkeleton';
 
 
 const RECENT_KEY = 'bubu_recent_searches';
@@ -238,7 +239,13 @@ export function SearchDrawer() {
                 </Link>
               </div>
 
-              {results.length > 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : results.length > 0 ? (
                 <ul className="grid grid-cols-2 gap-3">
                   <AnimatePresence>
                     {results.slice(0, 8).map((product, i) => (
@@ -253,7 +260,7 @@ export function SearchDrawer() {
                     ))}
                   </AnimatePresence>
                 </ul>
-              ) : !loading ? (
+              ) : (
                 <div className="py-10 text-center">
                   <p className="text-[12px] text-text-light mb-4">
                     No products match &quot;{query}&quot;
@@ -266,7 +273,7 @@ export function SearchDrawer() {
                     Clear search
                   </button>
                 </div>
-              ) : null}
+              )}
             </div>
           )}
         </div>

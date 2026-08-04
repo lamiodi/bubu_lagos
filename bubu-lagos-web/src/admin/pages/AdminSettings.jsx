@@ -146,7 +146,7 @@ export function AdminSettings() {
                   value={settings.store_email || ''}
                   onChange={(e) => handleChange('store_email', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
-                  placeholder="hello@bubulagos.com"
+                  placeholder="Wodibenuah@yahoo.com"
                 />
               </div>
               <div>
@@ -158,7 +158,7 @@ export function AdminSettings() {
                   value={settings.store_phone || ''}
                   onChange={(e) => handleChange('store_phone', e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
-                  placeholder="+234 123 456 7890"
+                  placeholder="08161331923"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ export function AdminSettings() {
                 onChange={(e) => handleChange('store_address', e.target.value)}
                 rows={2}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black resize-none"
-                placeholder="Lagos, Nigeria"
+                placeholder="Greenville Mall, Admiralty Way, Lekki Phase 1, Lagos, Nigeria"
               />
             </div>
           </div>

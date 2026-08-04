@@ -10,7 +10,7 @@ import { EASE_OUT } from '../lib/motion';
 const PRIMARY_NAV = [
   { to: '/shop?collection=new-arrivals', label: 'New In' },
   { to: '/shop', label: 'E-Shop' },
-  { to: '/gift-card', label: 'Gift' },
+  { to: '/gift-card', label: 'Gift Card' },
 ];
 
 const MOBILE_NAV = [
