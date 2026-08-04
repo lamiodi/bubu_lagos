@@ -147,7 +147,7 @@ export function getInitials(name, fallback = '?') {
  * fails to load. Kept here (not in a sample/mock data file) so the frontend
  * has zero hardcoded product data — everything comes from the database.
  */
-export const FALLBACK_IMAGE = '/logo.png';
+export const FALLBACK_IMAGE = 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883048/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.09_PM.jpg';
 
 /**
  * Class-merge helper for conditional classNames.

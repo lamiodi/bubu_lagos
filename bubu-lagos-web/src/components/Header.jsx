@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { X, ShoppingBag } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, FALLBACK_IMAGE } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from 'framer-motion';

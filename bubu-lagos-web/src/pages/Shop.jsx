@@ -135,7 +135,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
 
   return (
     <motion.header
-      className="relative mb-10 md:mb-14 overflow-hidden bg-black text-white min-h-[300px] md:min-h-[360px] flex items-center"
+      className="relative mb-10 md:mb-14 overflow-hidden bg-black text-white min-h-[300px] md:min-h-[360px] flex items-center pt-16 md:pt-20"
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -323,7 +323,7 @@ export function Shop() {
   const hasActiveFilters = activeCategory !== 'all' || selectedCollections.length > 0 || minPrice || maxPrice;
 
   return (
-    <Layout>
+    <Layout headerVariant="dark">
       <div className="bg-background min-h-screen pb-24">
         {/* Editorial Banner Header */}
         <EditorialBanner
