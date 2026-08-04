@@ -101,25 +101,37 @@ export function ProductDetail() {
 
   const fetchRecommendations = async (productData) => {
     try {
-      // 1. Fetch smart color-matched or admin-suggested matching Turbans & Gelès for "Complete the Look"
-      const turbanRes = await api.get(`/products/recommendations?productId=${productData.id}&targetCategory=turbans-geles&limit=3`);
-      if (turbanRes.products && turbanRes.products.length > 0) {
-        setTurbanProducts(turbanRes.products);
-      }
+      // 2. Fetch all products to reliably find color variations and complete-the-look items
+      const catRes = await api.get(`/products?limit=50`); 
+      let allProducts = catRes.products || [];
+      allProducts = allProducts.filter(p => p.id !== productData.id);
 
-      // 2. Fetch general related pieces
-      if (productData.category?.name) {
-        const catRes = await api.get(`/products?category=${encodeURIComponent(productData.category.name)}&limit=15`);
-        let sameCat = catRes.products || [];
-        sameCat = sameCat.filter(p => p.id !== productData.id);
-        
-        const baseName = productData.name.split('-')[0].trim().split(' ')[0];
-        const colors = sameCat.filter(p => p.name.includes(baseName));
-        setOtherColors(colors.slice(0, 4));
-        
-        const related = sameCat.filter(p => !colors.includes(p));
-        setRelatedProducts(related.slice(0, 3));
-      }
+      // 1. Smart matching Turbans & Gelès for "Complete the Look"
+      const turbans = allProducts.filter(p => p.category?.name === 'Turbans & Gelès' || p.category?.name?.toLowerCase().includes('turban'));
+      setTurbanProducts(turbans.slice(0, 3));
+      
+      // Extract base name by stripping roman numerals at the end (I, II, III, etc.)
+      const extractBaseName = (name) => {
+        if (!name) return '';
+        const match = name.match(/^(.*?)(?:\s+(?:I|II|III|IV|V|VI|VII|VIII|IX|X))?$/i);
+        return match ? match[1].trim() : name.trim();
+      };
+
+      const currentBaseName = extractBaseName(productData.name);
+
+      // Find other products that share the exact same base name
+      const colors = allProducts.filter(p => {
+        return extractBaseName(p.name).toLowerCase() === currentBaseName.toLowerCase();
+      });
+
+      setOtherColors(colors.slice(0, 4));
+      
+      // Find related products (same category, excluding the variants)
+      const related = allProducts.filter(p => 
+        p.category?.name === productData.category?.name && 
+        !colors.find(c => c.id === p.id)
+      );
+      setRelatedProducts(related.slice(0, 3));
     } catch (err) {
       logger.error('Failed to fetch smart recommendations:', err);
     }
