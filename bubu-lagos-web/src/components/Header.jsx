@@ -139,10 +139,7 @@ export function Header({ variant = 'transparent' }) {
             to="/"
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center leading-none"
           >
-            <div className={cn("font-heading font-black tracking-[0.08em]", textColor)}>
-              <span className="block text-[15px] sm:text-[16px] md:text-[18px] leading-[0.85]">BUBU</span>
-              <span className="block text-[10px] md:text-[12px] leading-[1] tracking-[0.22em]">LAGOS</span>
-            </div>
+            <img src="/logo.png" alt="Bubu Lagos" className="h-10 sm:h-12 w-auto object-contain" />
           </Link>
 
           {/* Desktop: secondary + account nav */}
