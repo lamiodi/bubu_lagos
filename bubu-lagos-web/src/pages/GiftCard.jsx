@@ -276,7 +276,7 @@ export function GiftCard() {
                   />
                   <span className="text-[11px] text-gray-500 leading-relaxed">
                     By proceeding, you agree to our{' '}
-                    <Link to="/terms" className="underline hover:text-black">Terms &amp; Conditions</Link>.
+                    <Link to="/contact" className="underline hover:text-black">Terms &amp; Conditions</Link>.
                   </span>
                 </label>
 

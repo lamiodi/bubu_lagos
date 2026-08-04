@@ -206,6 +206,50 @@ export function Contact() {
                         </div>
                     </div>
                 </section>
+
+                {/* Interactive Location Map Section */}
+                <section className="border-t border-black/10 pt-16 pb-20 max-w-[1400px] mx-auto px-5 md:px-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                        <div>
+                            <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em] text-accent mb-2">
+                                <MapPin size={12} className="text-accent" />
+                                Interactive Location Map
+                            </span>
+                            <h2 className="font-heading text-2xl md:text-4xl font-bold uppercase tracking-wider text-black">
+                                Visit Greenville Mall Atelier
+                            </h2>
+                        </div>
+                        <p className="text-xs text-gray-500 max-w-md font-sans">
+                            Located in the heart of Lekki Phase 1. Private styling consultations and gown fitting appointments available upon request.
+                        </p>
+                    </div>
+
+                    {/* Styled Map Container matching luxury UI theme */}
+                    <div className="relative w-full h-[380px] md:h-[480px] rounded-2xl overflow-hidden border border-black/10 shadow-2xl group bg-background-light">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3587.7372632634397!2d3.4723508744800693!3d6.448094924036061!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf448f3a5efd5%3A0x3c6c604878a1a8be!2sGreenville%20Mall!5e1!3m2!1sen!2sng!4v1785841886293!5m2!1sen!2sng"
+                            className="w-full h-full border-0 filter contrast-[1.05] grayscale-[0.15]"
+                            allowFullScreen=""
+                            loading="lazy"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            title="Bubu Lagos Greenville Mall Location"
+                        />
+
+                        {/* Floating Theme-Matched Location Card Badge */}
+                        <div className="absolute left-4 bottom-4 z-10 bg-black/90 backdrop-blur-md text-white p-4 rounded-xl border border-white/20 shadow-2xl max-w-[280px]">
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                                <h4 className="text-[11px] font-heading font-bold uppercase tracking-[0.2em] text-white">
+                                    Greenville Mall
+                                </h4>
+                            </div>
+                            <p className="text-[10px] text-white/70 font-sans leading-relaxed">
+                                Admiralty Way, Lekki Phase 1<br />
+                                Lagos, Nigeria
+                            </p>
+                        </div>
+                    </div>
+                </section>
             </div>
         </Layout>
     );
