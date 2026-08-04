@@ -11,12 +11,18 @@ export function getImageUrl(imagePath) {
   if (url.startsWith('http://res.cloudinary.com')) {
     url = url.replace('http://res.cloudinary.com', 'https://res.cloudinary.com');
   }
-  if (url.includes('cloudinary.com') && url.includes('/video/upload/')) {
-    if (!url.includes('/f_mp4') && !url.includes('/f_auto')) {
-      url = url.replace('/video/upload/', '/video/upload/f_mp4,q_auto/');
-    }
-    if (url.toLowerCase().endsWith('.mov')) {
-      url = url.replace(/\.mov$/i, '.mp4');
+  if (url.includes('cloudinary.com')) {
+    if (url.includes('/video/upload/')) {
+      if (!url.includes('/f_mp4') && !url.includes('/f_auto')) {
+        url = url.replace('/video/upload/', '/video/upload/f_mp4,q_auto/');
+      }
+      if (url.toLowerCase().endsWith('.mov')) {
+        url = url.replace(/\.mov$/i, '.mp4');
+      }
+    } else if (url.includes('/image/upload/')) {
+      if (!url.includes('/f_auto') && !url.includes('/q_auto')) {
+        url = url.replace('/image/upload/', '/image/upload/f_auto,q_auto/');
+      }
     }
   }
   if (url.startsWith('http')) return url;
