@@ -26,7 +26,7 @@ function withSrcSet(src) {
 }
 
 // Inner card — separated so we can wrap it in memo().
-const ProductCardInner = function ProductCard({ product, inView = true, allowVideoPreview = true }) {
+const ProductCardInner = function ProductCard({ product, inView = true, allowVideoPreview = true, priority = false }) {
   // [FIX] inView is part of the public prop API for staggered list entry;
   // some call sites pass delay alongside it.
   void inView;
@@ -129,7 +129,8 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
             src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             srcSet={withSrcSet(displayImage) || undefined}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             whileHover={reduceMotion ? undefined : { scale: 1.07 }}

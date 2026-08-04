@@ -244,6 +244,8 @@ export function ProductDetail() {
                   src={getImageUrl(img) || FALLBACK_IMAGE}
                   alt={`${product.name} View ${index + 1}`}
                   className="w-full h-auto object-cover"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
                   onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                 />
               </motion.div>
@@ -295,6 +297,8 @@ export function ProductDetail() {
                       src={getImageUrl(media) || FALLBACK_IMAGE}
                       alt={`${product.name} View ${index + 1}`}
                       className="w-full h-full object-cover"
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : "auto"}
                       onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                     />
                   )}

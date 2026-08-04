@@ -178,6 +178,7 @@ export function Home() {
                       alt={product.name}
                       className="w-full h-full object-cover"
                       loading={index < 2 ? "eager" : "lazy"}
+                      fetchPriority={index < 2 ? "high" : "auto"}
                       whileHover={reduceMotion ? undefined : { scale: 1.05 }}
                       transition={{ duration: 0.7, ease: EASE_OUT }}
                       onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}

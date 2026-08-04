@@ -569,6 +569,7 @@ export function Shop() {
                     key={product.id} 
                     product={product} 
                     delay={i * 0.04} 
+                    priority={i < 4}
                     allowVideoPreview={i % 4 === 0}
                   />
                 ))}
