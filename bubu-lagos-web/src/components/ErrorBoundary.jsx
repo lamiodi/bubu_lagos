@@ -20,27 +20,47 @@ export class ErrorBoundary extends Component {
   }
 
   handleReload = () => {
+    sessionStorage.removeItem('bubu_chunk_reload');
     window.location.reload();
   };
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
+    sessionStorage.removeItem('bubu_chunk_reload');
+    const isChunkError =
+      this.state.error?.name === 'TypeError' ||
+      this.state.error?.message?.includes('Failed to fetch dynamically imported module') ||
+      this.state.error?.message?.includes('Importing a module script failed') ||
+      this.state.error?.message?.includes('Loading chunk');
+
+    if (isChunkError) {
+      window.location.reload();
+    } else {
+      this.setState({ hasError: false, error: null });
+    }
   };
 
   render() {
     if (!this.state.hasError) return this.props.children;
 
+    const isChunkError =
+      this.state.error?.name === 'TypeError' ||
+      this.state.error?.message?.includes('Failed to fetch dynamically imported module') ||
+      this.state.error?.message?.includes('Importing a module script failed') ||
+      this.state.error?.message?.includes('Loading chunk');
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-5">
         <div className="max-w-md w-full bg-white border border-gray-100 p-10 rounded-sm shadow-sm text-center">
           <span className="block text-[10px] font-bold uppercase tracking-[0.22em] text-red-500 mb-3">
-            Something went wrong
+            {isChunkError ? 'Update Available' : 'Something went wrong'}
           </span>
           <h1 className="font-heading text-2xl font-bold uppercase tracking-widest mb-3">
-            An unexpected error occurred
+            {isChunkError ? 'New Version Released' : 'An unexpected error occurred'}
           </h1>
           <p className="text-sm text-gray-600 leading-relaxed mb-8">
-            We&apos;ve been notified. You can try again, or come back in a moment.
+            {isChunkError
+              ? 'A fresh update of Bubu Lagos is available. Please reload to view the latest experience.'
+              : "We've been notified. You can try again, or come back in a moment."}
           </p>
           {import.meta.env.DEV && this.state.error && (
             <pre className="text-left text-[11px] bg-gray-50 border border-gray-200 p-3 mb-6 overflow-auto max-h-40">

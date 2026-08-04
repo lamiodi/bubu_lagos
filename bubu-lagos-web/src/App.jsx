@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -9,30 +9,31 @@ import { UIProvider } from './context/UIContext';
 import { CartDrawer } from './components/CartDrawer';
 import { SearchDrawer } from './components/SearchDrawer';
 import { AdminRoute } from './admin/components/AdminRoute';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
 // Code-split: ship the Home page (entry) eagerly, lazy-load the rest.
 import { Home } from './pages/Home';
 
-const Shop = lazy(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
-const Search = lazy(() => import('./pages/Search').then((m) => ({ default: m.Search })));
-const Cart = lazy(() => import('./pages/Cart').then((m) => ({ default: m.Cart })));
-const Checkout = lazy(() => import('./pages/Checkout').then((m) => ({ default: m.Checkout })));
-const GiftCard = lazy(() => import('./pages/GiftCard').then((m) => ({ default: m.GiftCard })));
-const PaymentVerify = lazy(() => import('./pages/PaymentVerify').then((m) => ({ default: m.PaymentVerify })));
-const ProductDetail = lazy(() => import('./pages/ProductDetail').then((m) => ({ default: m.ProductDetail })));
-const Contact = lazy(() => import('./pages/Contact').then((m) => ({ default: m.Contact })));
-const OrderDetail = lazy(() => import('./pages/OrderDetail').then((m) => ({ default: m.OrderDetail })));
-const TrackOrder = lazy(() => import('./pages/TrackOrder').then((m) => ({ default: m.TrackOrder })));
-const NotFound = lazy(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
+const Shop = lazyWithRetry(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
+const Search = lazyWithRetry(() => import('./pages/Search').then((m) => ({ default: m.Search })));
+const Cart = lazyWithRetry(() => import('./pages/Cart').then((m) => ({ default: m.Cart })));
+const Checkout = lazyWithRetry(() => import('./pages/Checkout').then((m) => ({ default: m.Checkout })));
+const GiftCard = lazyWithRetry(() => import('./pages/GiftCard').then((m) => ({ default: m.GiftCard })));
+const PaymentVerify = lazyWithRetry(() => import('./pages/PaymentVerify').then((m) => ({ default: m.PaymentVerify })));
+const ProductDetail = lazyWithRetry(() => import('./pages/ProductDetail').then((m) => ({ default: m.ProductDetail })));
+const Contact = lazyWithRetry(() => import('./pages/Contact').then((m) => ({ default: m.Contact })));
+const OrderDetail = lazyWithRetry(() => import('./pages/OrderDetail').then((m) => ({ default: m.OrderDetail })));
+const TrackOrder = lazyWithRetry(() => import('./pages/TrackOrder').then((m) => ({ default: m.TrackOrder })));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound').then((m) => ({ default: m.NotFound })));
 
-const Dashboard = lazy(() => import('./admin/pages/Dashboard').then((m) => ({ default: m.Dashboard })));
-const AdminProducts = lazy(() => import('./admin/pages/AdminProducts').then((m) => ({ default: m.AdminProducts })));
-const AdminOrders = lazy(() => import('./admin/pages/AdminOrders').then((m) => ({ default: m.AdminOrders })));
-const AdminCustomers = lazy(() => import('./admin/pages/AdminCustomers').then((m) => ({ default: m.AdminCustomers })));
-const AdminMessages = lazy(() => import('./admin/pages/AdminMessages').then((m) => ({ default: m.AdminMessages })));
-const AdminSettings = lazy(() => import('./admin/pages/AdminSettings').then((m) => ({ default: m.AdminSettings })));
-const AdminMarketing = lazy(() => import('./admin/pages/AdminMarketing').then((m) => ({ default: m.AdminMarketing })));
-const AdminLogin = lazy(() => import('./admin/pages/AdminLogin').then((m) => ({ default: m.AdminLogin })));
+const Dashboard = lazyWithRetry(() => import('./admin/pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const AdminProducts = lazyWithRetry(() => import('./admin/pages/AdminProducts').then((m) => ({ default: m.AdminProducts })));
+const AdminOrders = lazyWithRetry(() => import('./admin/pages/AdminOrders').then((m) => ({ default: m.AdminOrders })));
+const AdminCustomers = lazyWithRetry(() => import('./admin/pages/AdminCustomers').then((m) => ({ default: m.AdminCustomers })));
+const AdminMessages = lazyWithRetry(() => import('./admin/pages/AdminMessages').then((m) => ({ default: m.AdminMessages })));
+const AdminSettings = lazyWithRetry(() => import('./admin/pages/AdminSettings').then((m) => ({ default: m.AdminSettings })));
+const AdminMarketing = lazyWithRetry(() => import('./admin/pages/AdminMarketing').then((m) => ({ default: m.AdminMarketing })));
+const AdminLogin = lazyWithRetry(() => import('./admin/pages/AdminLogin').then((m) => ({ default: m.AdminLogin })));
 
 function PageLoader() {
   return (
