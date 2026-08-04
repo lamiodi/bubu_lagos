@@ -565,7 +565,12 @@ export function Shop() {
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 md:gap-x-6 md:gap-y-14">
                 {products.map((product, i) => (
-                  <ProductCard key={product.id} product={product} delay={i * 0.04} />
+                  <ProductCard 
+                    key={product.id} 
+                    product={product} 
+                    delay={i * 0.04} 
+                    allowVideoPreview={i < 2}
+                  />
                 ))}
               </div>
             </div>

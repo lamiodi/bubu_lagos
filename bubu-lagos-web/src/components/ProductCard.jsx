@@ -26,7 +26,7 @@ function withSrcSet(src) {
 }
 
 // Inner card — separated so we can wrap it in memo().
-const ProductCardInner = function ProductCard({ product, inView = true }) {
+const ProductCardInner = function ProductCard({ product, inView = true, allowVideoPreview = true }) {
   // [FIX] inView is part of the public prop API for staggered list entry;
   // some call sites pass delay alongside it.
   void inView;
@@ -34,7 +34,7 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
   const cardRef = useRef(null);
 
   const rawMedia = product.videoUrl || product.video || (product.images && product.images.length > 0 ? product.images[0] : null);
-  const isVideoMedia = typeof rawMedia === 'string' && (rawMedia.includes('/video/upload/') || /\.(mp4|mov|webm|m4v)$/i.test(rawMedia));
+  const isVideoMedia = allowVideoPreview && typeof rawMedia === 'string' && (rawMedia.includes('/video/upload/') || /\.(mp4|mov|webm|m4v)$/i.test(rawMedia));
 
   const displayImage = isVideoMedia
     ? getCloudinaryVideoPoster(rawMedia)
