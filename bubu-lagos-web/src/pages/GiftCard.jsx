@@ -95,12 +95,12 @@ export function GiftCard() {
       await navigator.clipboard.writeText(issuedCode);
       toast.success('Code copied');
     } catch {
-      toast.error('Copy failed — please select and copy manually.');
+      toast.error('Copy failed: please select and copy manually.');
     }
   };
 
   return (
-    <Layout headerVariant="dark" title="Gift Card" description="Send the perfect gift — a BuBu Lagos gift card delivered instantly by email.">
+    <Layout headerVariant="dark" title="Gift Card" description="Send the perfect gift: a BuBu Lagos gift card delivered instantly by email.">
       <section className="relative min-h-[calc(100vh-60px)] flex items-center justify-center overflow-hidden bg-black text-white py-20 md:py-28">
         {/* Decorative gradient */}
         <div
@@ -123,8 +123,7 @@ export function GiftCard() {
               Give the <span className="italic text-amber-300">Perfect</span> Gift
             </h1>
             <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-md mx-auto lg:mx-0">
-              Send a Bubu Lagos Gift Card instantly via email. The ultimate gift of choice —
-              for the ones who already have everything, or the ones who deserve something beautiful.
+              Send a Bubu Lagos Gift Card instantly via email. The ultimate gift of choice for the ones who already have everything, or the ones who deserve something beautiful.
             </p>
             <ul className="mt-8 space-y-3 text-sm text-white/80 max-w-md mx-auto lg:mx-0 text-left">
               {['Delivered to their inbox in seconds', 'Redeemable on every collection', 'No expiry, no fees'].map((line) => (
@@ -143,7 +142,7 @@ export function GiftCard() {
             initial={reduceMotion ? false : { opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.1 }}
-            className="bg-white text-black rounded-2xl shadow-2xl p-7 md:p-9 w-full max-w-md mx-auto"
+            className="bg-white text-black rounded-2xl shadow-2xl p-7 md:p-9 w-full max-w-md mx-auto border border-gray-100"
           >
             {issuedCode ? (
               <SuccessCard code={issuedCode} onCopy={copyCode} onReset={() => setIssuedCode(null)} amount={finalAmount} />
@@ -172,9 +171,9 @@ export function GiftCard() {
                           onClick={() => { setAmount(preset); setCustomAmount(''); }}
                           aria-pressed={active}
                           className={cn(
-                            'py-2 text-[10px] font-bold tracking-widest rounded-md border transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none',
+                            'py-2 text-[10px] font-bold tracking-widest rounded-sm border transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none',
                             active
-                              ? 'bg-black text-white border-black'
+                              ? 'bg-accent text-white border-accent shadow-sm'
                               : 'bg-white text-black border-gray-200 hover:border-black'
                           )}
                         >
@@ -192,7 +191,7 @@ export function GiftCard() {
                       placeholder="Custom amount"
                       value={customAmount}
                       onChange={(e) => setCustomAmount(e.target.value)}
-                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                      className="w-full pl-8 pr-4 py-2.5 text-sm border border-gray-200 rounded-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                     />
                   </div>
                 </fieldset>
@@ -206,7 +205,7 @@ export function GiftCard() {
                     placeholder="Your Name (Optional)"
                     value={fromName}
                     onChange={(e) => setFromName(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                   />
                 </div>
 
@@ -222,7 +221,7 @@ export function GiftCard() {
                       required
                       value={recipientEmail}
                       onChange={(e) => setRecipientEmail(e.target.value)}
-                      className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                      className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                       placeholder="friend@example.com"
                     />
                     {recipientEmail && !emailValid && (
@@ -241,11 +240,11 @@ export function GiftCard() {
                       maxLength={14}
                       value={recipientPhone}
                       onChange={(e) => setRecipientPhone(e.target.value.replace(/[^\d+]/g, ''))}
-                      className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-black focus:ring-1 focus:ring-black"
+                      className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
                       placeholder="08012345678"
                       aria-describedby="gc-phone-hint"
                     />
-                    <p id="gc-phone-hint" className={cn('mt-1 text-[10px] uppercase tracking-widest', phoneValid ? 'text-green-600' : 'text-gray-400')}>
+                    <p id="gc-phone-hint" className={cn('mt-1 text-[10px] uppercase tracking-widest', phoneValid ? 'text-accent font-bold' : 'text-gray-400')}>
                       {phoneValid ? 'Looks good' : 'Must be a valid 11-digit Nigerian number.'}
                     </p>
                   </div>
@@ -260,8 +259,8 @@ export function GiftCard() {
                     maxLength={500}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Happy birthday — pick something you'll love."
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-black focus:ring-1 focus:ring-black resize-none"
+                    placeholder="Happy birthday! Pick something you'll love."
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none transition-colors"
                   />
                   <p className="mt-1 text-[10px] text-gray-400 text-right">{message.length}/500</p>
                 </div>
@@ -272,7 +271,7 @@ export function GiftCard() {
                     type="checkbox"
                     checked={agreed}
                     onChange={(e) => setAgreed(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-black focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                    className="mt-0.5 h-4 w-4 rounded-sm border-gray-300 accent-accent focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   />
                   <span className="text-[11px] text-gray-500 leading-relaxed">
                     By proceeding, you agree to our{' '}
@@ -284,7 +283,7 @@ export function GiftCard() {
                 <button
                   type="submit"
                   disabled={!canSubmit}
-                  className="w-full py-4 bg-black text-white text-xs font-bold uppercase tracking-[0.18em] hover:bg-gray-900 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed rounded-md focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
+                  className="w-full btn-primary"
                 >
                   {isSubmitting ? 'Processing…' : `Pay ${formatNGN(finalAmount)}`}
                 </button>

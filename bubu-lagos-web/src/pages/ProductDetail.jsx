@@ -325,11 +325,10 @@ export function ProductDetail() {
               </div>
             </div>
 
-            {/* [MOTION ADDED] Add to Cart button — whileTap + animated checkmark on success */}
             <motion.button
               onClick={handleAddToCart}
               whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-              className="w-full py-4 bg-black text-white text-sm font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors mb-8 flex items-center justify-center gap-3"
+              className="btn-primary w-full py-4 mb-8 flex items-center justify-center gap-3"
             >
               <AnimatePresence mode="wait" initial={false}>
                 {justAdded ? (

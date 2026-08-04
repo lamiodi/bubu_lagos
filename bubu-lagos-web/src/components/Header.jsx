@@ -130,7 +130,7 @@ export function Header({ variant = 'transparent' }) {
                 {item.label}
               </Link>
             ))}
-            <span aria-hidden="true" className={cn("text-[10px] font-bold select-none", textColor)}>——</span>
+            <span aria-hidden="true" className={cn("w-px h-3 bg-current opacity-25 inline-block align-middle mx-1", textColor)} />
             <Link to="/contact" className={navLinkClass}>Concierge</Link>
           </nav>
 

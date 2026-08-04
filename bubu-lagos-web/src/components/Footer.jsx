@@ -112,7 +112,7 @@ export function Footer() {
                 type="checkbox"
                 checked={privacyAccepted}
                 onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                className="mt-0.5 accent-[#0F3D2E] flex-shrink-0"
+                className="mt-0.5 accent-accent flex-shrink-0"
               />
               <span>I have read and accept the Bubu Lagos Privacy Policy.</span>
             </label>
@@ -216,7 +216,7 @@ export function Footer() {
         </div>
 
         <div className="mt-4 text-[10px] text-white/40 text-center sm:text-left">
-          © {new Date().getFullYear()} Bubu Lagos — All rights reserved.
+          © {new Date().getFullYear()} Bubu Lagos. All rights reserved.
         </div>
       </div>
 

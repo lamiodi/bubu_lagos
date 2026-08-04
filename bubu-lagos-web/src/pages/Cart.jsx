@@ -29,8 +29,8 @@ export function Cart() {
             transition={{ duration: 0.4 }}
           >
             <p className="text-lg mb-3">Your selection is empty.</p>
-            <p className="text-sm text-gray-500 mb-8 max-w-md mx-auto">Begin your edit — explore the collection and add a piece to your bag.</p>
-            <Link to="/shop" className="inline-block px-8 py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-gray-900">
+            <p className="text-sm text-gray-500 mb-8 max-w-md mx-auto">Begin your edit: explore the collection and add a piece to your bag.</p>
+            <Link to="/shop" className="btn-primary inline-block px-8 py-4">
               Shop the Collection
             </Link>
           </motion.div>
@@ -126,7 +126,7 @@ export function Cart() {
 
               <Link
                 to="/checkout"
-                className="block w-full bg-black text-white text-center py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors"
+                className="btn-primary block w-full text-center py-4"
               >
                 Proceed to Checkout
               </Link>
