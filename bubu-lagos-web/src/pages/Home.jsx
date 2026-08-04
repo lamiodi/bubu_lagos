@@ -5,11 +5,9 @@ import { Layout } from '../components/Layout';
 import { getImageUrl, formatProductPrice, FALLBACK_IMAGE } from '../lib/utils';
 import { logger } from '../lib/logger';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
-import { ProductCard } from '../components/ProductCard';
-import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { AtelierEditSection } from '../components/AtelierEditSection';
 import { EASE_OUT } from '../lib/motion';
-import { Instagram, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Instagram, ArrowUpRight } from 'lucide-react';
 
 const INSTAGRAM_EDITORIAL_POSTS = [
   {
@@ -214,38 +212,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Featured products carousel/grid */}
-      <motion.section
-        initial={reduceMotion ? false : { opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="px-4 sm:px-5 md:px-8 py-8 md:py-12"
-      >
-        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory sm:grid sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6 scrollbar-hide -mx-4 sm:mx-0 px-4 sm:px-0">
-          <AnimatePresence mode="wait">
-            {loading && featuredProducts.length === 0 ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={`skeleton-${i}`}
-                  className="flex-shrink-0 w-[75vw] sm:w-auto snap-start"
-                >
-                  <ProductCardSkeleton />
-                </div>
-              ))
-            ) : (
-              featuredProducts.map((product, i) => (
-                <div
-                  key={product.id}
-                  className="flex-shrink-0 w-[75vw] sm:w-auto snap-start"
-                >
-                  <ProductCard product={product} delay={i * 0.08} inView={false} />
-                </div>
-              ))
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.section>
 
       {/* THE ATELIER EDIT - Editorial Storytelling Lookbook Section */}
       <AtelierEditSection />
