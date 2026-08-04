@@ -37,6 +37,7 @@ const runMigrations = async () => {
       ) AS bubuSchemaExists
     `);
 
+    let skipUntil = null;
     if (bubuSchemaExists) {
       const { rows: tableRows } = await client.query(`
         SELECT count(*)::int AS n
@@ -46,11 +47,10 @@ const runMigrations = async () => {
       const tableCount = tableRows[0]?.n ?? 0;
       console.log(
         `[bubu] Shared 'bubu' schema is present (${tableCount} tables). ` +
-        `Local migrations 001-017 are managed by the WodiFair backend's ` +
-        `'add_bubu_schema.sql' — skipping.`
+        `Local migrations 001-017 are managed by the WodiFair backend. ` +
+        `We will skip 001-017 and run migrations 018+ locally.`
       );
-      await ensureAdminUser(client);
-      return;
+      skipUntil = '018_seed_official_categories.sql';
     }
 
     // ----- Fallback: no shared schema, run the local migrations. -----
@@ -79,6 +79,10 @@ const runMigrations = async () => {
       .sort();
 
     for (const filename of migrationFiles) {
+      if (skipUntil && filename < skipUntil) {
+        continue;
+      }
+
       if (executedMigrations.has(filename)) {
         console.log(`Skipping ${filename} (already executed)`);
         continue;

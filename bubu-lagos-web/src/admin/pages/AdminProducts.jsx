@@ -50,6 +50,7 @@ export function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -278,7 +279,7 @@ export function AdminProducts() {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     try {
       const form = new FormData();
       form.append('name', formData.name);
@@ -328,7 +329,7 @@ export function AdminProducts() {
         toast.error('Failed to save product. Please check your network connection and try again.');
       }
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -1030,15 +1031,20 @@ export function AdminProducts() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+                  disabled={submitting}
+                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+                  disabled={submitting}
+                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {editingProduct ? 'Update Product' : 'Add Product'}
+                  {submitting && <Loader2 size={18} className="animate-spin" />}
+                  {submitting 
+                    ? (editingProduct ? 'Updating Product...' : 'Adding Product...') 
+                    : (editingProduct ? 'Update Product' : 'Add Product')}
                 </button>
               </div>
             </form>
