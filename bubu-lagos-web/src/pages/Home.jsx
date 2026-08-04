@@ -86,7 +86,7 @@ export function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.05 }}
         >
-          Signature Bubu Atelier
+          BUBU_LAGOS
         </motion.span>
         <motion.h1
           className="font-heading text-3xl md:text-5xl lg:text-6xl font-bold uppercase tracking-[0.01em] leading-[0.95] mb-4"
@@ -261,7 +261,6 @@ export function Home() {
                 href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg=="
                 target="_blank"
                 rel="noopener noreferrer"
-                data-cursor="INSTAGRAM"
                 onMouseEnter={() => setHoveredPostId(post.id)}
                 onMouseLeave={() => setHoveredPostId(null)}
                 className="group relative aspect-[3/4] overflow-hidden bg-gray-100 rounded-sm shadow-xs block"

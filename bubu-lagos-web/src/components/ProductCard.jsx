@@ -91,19 +91,6 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
     };
   }, [inViewCard, targetNumber, hasPriceLabel]);
 
-  // [MOTION ADDED] Custom cursor tracking
-  const cursorX = useMotionValue(-100);
-  const cursorY = useMotionValue(-100);
-  const springConfig = { damping: 22, stiffness: 250, mass: 0.4 };
-  const cursorXSmooth = useSpring(cursorX, springConfig);
-  const cursorYSmooth = useSpring(cursorY, springConfig);
-
-  const handleImageMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    cursorX.set(e.clientX - rect.left);
-    cursorY.set(e.clientY - rect.top);
-  };
-
   return (
     <motion.div
       ref={cardRef}
@@ -125,7 +112,6 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
       >
         <div
           className="relative aspect-[3/4] overflow-hidden bg-background-light"
-          data-cursor="VIEW"
           onMouseEnter={() => {
             if (!reduceMotion) setIsCardHovered(true);
           }}
@@ -137,7 +123,6 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
             setIsCardHovered(false);
             setIsVideoReady(false);
           }}
-          onMouseMove={handleImageMouseMove}
         >
           {/* Base Layer: Static Image is always rendered so there is NEVER a white or blank box */}
           <motion.img
@@ -229,21 +214,6 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
             <span>{product.isGiftCard ? 'Send a Gift Card' : 'View Product'}</span>
             <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
           </motion.span>
-
-          {!reduceMotion && (
-            <motion.div
-              className="hidden md:block absolute w-10 h-10 rounded-full border border-white/80 mix-blend-difference cursor-image-track"
-              style={{
-                x: cursorXSmooth,
-                y: cursorYSmooth,
-                translateX: '-50%',
-                translateY: '-50%',
-                opacity: isCardHovered ? 1 : 0,
-                scale: isCardHovered ? 1 : 0.4,
-              }}
-              transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
-            />
-          )}
         </div>
 
         <div className="flex justify-between items-start gap-2 pt-3 pb-1">

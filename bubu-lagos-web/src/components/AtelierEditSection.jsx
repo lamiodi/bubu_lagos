@@ -458,7 +458,6 @@ export function AtelierEditSection() {
                     role="group"
                     aria-roledescription="slide"
                     aria-label={`${index + 1} of ${count}`}
-                    data-cursor={isActive ? "EXPLORE" : "SELECT"}
                     onClick={() => {
                       if (isActive) {
                         setIsStoryModalOpen(true);

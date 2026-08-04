@@ -8,7 +8,6 @@ import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import { CartDrawer } from './components/CartDrawer';
 import { SearchDrawer } from './components/SearchDrawer';
-import { CustomCursor } from './components/CustomCursor';
 import { AdminRoute } from './admin/components/AdminRoute';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
@@ -103,7 +102,6 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <UIProvider>
-              <CustomCursor />
               <AnimatedRoutes />
               {/* Drawers are mounted once at the root so any page (including
                   pages that don't go through Layout) can open them. They sit

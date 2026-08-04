@@ -144,9 +144,3 @@ html {
   background-size: 800px 100%;
   animation: shimmer 1.6s infinite linear;
 }
-
-/* [MOTION ADDED] Subtle premium cursor scale for product image hover */
-.cursor-image-track {
-  pointer-events: none;
-  will-change: transform, opacity;
-}
