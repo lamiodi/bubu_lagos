@@ -388,7 +388,7 @@ export const createProduct = async (req, res) => {
     
   } catch (error) {
     console.error('Error creating product:', error);
-    res.status(500).json({ error: 'Failed to create product' });
+    res.status(500).json({ error: error.message ? `Failed to create product: ${error.message}` : 'Failed to create product' });
   }
 };
 
@@ -535,7 +535,7 @@ export const updateProduct = async (req, res) => {
     
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ error: 'Failed to update product' });
+    res.status(500).json({ error: error.message ? `Failed to update product: ${error.message}` : 'Failed to update product' });
   }
 };
 

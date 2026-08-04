@@ -319,7 +319,7 @@ export function AdminProducts() {
       fetchProducts();
     } catch (err) {
       logger.error('Failed to save product:', err);
-      const serverMsg = err?.response?.data?.error || err?.message;
+      const serverMsg = err?.data?.error || err?.response?.data?.error || err?.message;
       if (serverMsg?.includes('413') || serverMsg?.toLowerCase().includes('large') || serverMsg?.toLowerCase().includes('entity too large')) {
         toast.error('Upload Error: File size is too large for the server. Please compress your images or video.');
       } else if (serverMsg) {

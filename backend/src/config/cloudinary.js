@@ -16,16 +16,16 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     const ext = file.originalname.split('.').pop().toLowerCase();
-    const isVideo = file.mimetype.startsWith('video') || ['mp4', 'mov', 'webm'].includes(ext);
+    const isVideo = file.mimetype.startsWith('video') || ['mp4', 'mov', 'webm', 'qt', 'm4v'].includes(ext);
+    const sanitizedBase = (file.originalname.split('.')[0] || 'file')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 50);
+
     return {
-      // Shared Cloudinary account with the WodiFair + Retail services.
-      // Folder convention:  wodifair/  retail/  bubu/
-      // This isolates assets per service while using one Cloudinary plan.
       folder: 'bubu',
       resource_type: isVideo ? 'video' : 'image',
       format: isVideo ? 'mp4' : undefined,
-      allowed_formats: isVideo ? ['mp4', 'mov', 'webm'] : ['jpg', 'png', 'jpeg', 'webp'],
-      public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
+      public_id: `${Date.now()}-${sanitizedBase}`,
     };
   },
 });
