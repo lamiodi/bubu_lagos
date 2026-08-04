@@ -11,8 +11,13 @@ export function getImageUrl(imagePath) {
   if (url.startsWith('http://res.cloudinary.com')) {
     url = url.replace('http://res.cloudinary.com', 'https://res.cloudinary.com');
   }
-  if (url.includes('cloudinary.com') && url.includes('/video/upload/') && url.toLowerCase().endsWith('.mov')) {
-    url = url.replace(/\.mov$/i, '.mp4');
+  if (url.includes('cloudinary.com') && url.includes('/video/upload/')) {
+    if (!url.includes('/f_mp4') && !url.includes('/f_auto')) {
+      url = url.replace('/video/upload/', '/video/upload/f_mp4,q_auto/');
+    }
+    if (url.toLowerCase().endsWith('.mov')) {
+      url = url.replace(/\.mov$/i, '.mp4');
+    }
   }
   if (url.startsWith('http')) return url;
   const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';

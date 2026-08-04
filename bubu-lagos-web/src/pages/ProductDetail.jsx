@@ -224,14 +224,17 @@ export function ProductDetail() {
             ))}
 
             {product.videoUrl && (
-              <div className="w-full aspect-[9/16] lg:aspect-square bg-black overflow-hidden">
+              <div className="w-full aspect-[9/16] lg:aspect-square bg-black overflow-hidden rounded-lg">
                 <video
-                  src={getImageUrl(product.videoUrl)}
                   controls
                   playsInline
-                  preload="metadata"
+                  preload="auto"
                   className="w-full h-full object-cover"
-                />
+                >
+                  <source src={getImageUrl(product.videoUrl)} type="video/mp4" />
+                  <source src={product.videoUrl} type="video/quicktime" />
+                  Your browser does not support HTML5 video playback.
+                </video>
               </div>
             )}
           </div>
@@ -251,12 +254,15 @@ export function ProductDetail() {
                   {typeof media === 'object' && media.isVideo ? (
                     <div className="w-full h-full bg-black">
                       <video
-                        src={getImageUrl(media.url)}
                         controls
                         playsInline
-                        preload="metadata"
+                        preload="auto"
                         className="w-full h-full object-cover"
-                      />
+                      >
+                        <source src={getImageUrl(media.url)} type="video/mp4" />
+                        <source src={media.url} type="video/quicktime" />
+                        Your browser does not support HTML5 video playback.
+                      </video>
                     </div>
                   ) : (
                     <img

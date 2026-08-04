@@ -867,7 +867,7 @@ export function AdminProducts() {
                 <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
                   <input
                     type="file"
-                    accept="video/mp4,video/quicktime,video/webm"
+                    accept="video/mp4,video/quicktime,video/webm,video/mov,video/x-quicktime,.mov,.mp4,.webm,.qt"
                     onChange={handleVideoUpload}
                     className="hidden"
                     id="video-upload"
