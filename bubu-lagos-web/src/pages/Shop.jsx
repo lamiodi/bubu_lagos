@@ -156,7 +156,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
 
         {/* Right Side Category Cards */}
         {categoryCards.length > 0 && (
-          <div className="w-full lg:w-auto flex items-center gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+          <div className="w-full lg:w-auto flex items-center gap-3 overflow-x-auto overflow-y-hidden py-3 px-1 scrollbar-none scrollbar-hide">
             {categoryCards.map(catCard => {
               const isSelected = category.toLowerCase() === catCard.slug;
               return (
@@ -334,7 +334,7 @@ export function Shop() {
             <div className="flex flex-col gap-4">
               {/* Primary Filter: Categories Tabs */}
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden py-1 scrollbar-none scrollbar-hide">
                   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-text-light pr-2 hidden sm:inline">
                     Category:
                   </span>
