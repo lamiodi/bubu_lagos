@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, X, Compass, Feather } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { FALLBACK_IMAGE } from '../lib/utils';
+import { FALLBACK_IMAGE, getCloudinaryVideoPoster, getCloudinaryOptimizedVideo } from '../lib/utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -21,7 +21,7 @@ export const ATELIER_SLIDES = [
       { label: 'Material', value: '100% Raw Mulberry Silk' },
       { label: 'Crafting Time', value: '38 Hand Hours' },
     ],
-    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.09 PM.jpeg',
+    src: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883048/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.09_PM.jpg',
     type: 'image',
     alt: 'Emerald silk garment flowing with regal elegance in Lagos atelier'
   },
@@ -36,7 +36,7 @@ export const ATELIER_SLIDES = [
       { label: 'Artisan', value: 'Lagos Master Guild' },
       { label: 'Finish', value: 'French Seams' },
     ],
-    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.15 PM.mp4',
+    src: 'https://res.cloudinary.com/dwmz4youk/video/upload/v1785883060/bubu_cta/WhatsApp_Video_2026-08-04_at_11.21.15_PM.mp4',
     type: 'video',
     alt: 'Artisan hand stitching gold thread into luxury silk fabric'
   },
@@ -51,7 +51,7 @@ export const ATELIER_SLIDES = [
       { label: 'Weight', value: 'Lightweight 19mm Silk' },
       { label: 'Fluidity Grade', value: 'Ultra-Fluid' },
     ],
-    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.15 PM (1).mp4',
+    src: 'https://res.cloudinary.com/dwmz4youk/video/upload/v1785883058/bubu_cta/WhatsApp_Video_2026-08-04_at_11.21.15_PM_1.mp4',
     type: 'video',
     alt: 'Flowing golden silk dress capturing fluid motion'
   },
@@ -66,7 +66,7 @@ export const ATELIER_SLIDES = [
       { label: 'Fabric', value: 'Aso-Oke & Silk Organza' },
       { label: 'Styling Time', value: 'Custom Fitted' },
     ],
-    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM.jpeg',
+    src: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883055/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.13_PM.jpg',
     type: 'image',
     alt: 'Regal fashion portrait highlighting headpiece styling'
   },
@@ -81,7 +81,7 @@ export const ATELIER_SLIDES = [
       { label: 'Process', value: 'Sketch to Couture' },
       { label: 'Quality Check', value: '3-Stage Inspection' },
     ],
-    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.20 PM.mp4',
+    src: 'https://res.cloudinary.com/dwmz4youk/video/upload/v1785883062/bubu_cta/WhatsApp_Video_2026-08-04_at_11.21.20_PM.mp4',
     type: 'video',
     alt: 'Luxury atelier workspace with draping dress forms and tailoring tools'
   },
@@ -96,7 +96,7 @@ export const ATELIER_SLIDES = [
       { label: 'Hardware', value: 'Solid Sculpted Brass' },
       { label: 'Lining', value: 'Soft Breathable Cotton-Silk' },
     ],
-    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (1).jpeg',
+    src: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883049/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.13_PM_1.jpg',
     type: 'image',
     alt: 'Close-up of intricate hand-beaded embroidery details on fine fabric'
   },
@@ -111,7 +111,7 @@ export const ATELIER_SLIDES = [
       { label: 'Palette', value: 'Warm Earth & Ocean Emerald' },
       { label: 'Vibe', value: 'Effortless Royalty' },
     ],
-    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.21 PM.mp4',
+    src: 'https://res.cloudinary.com/dwmz4youk/video/upload/v1785883067/bubu_cta/WhatsApp_Video_2026-08-04_at_11.21.21_PM.mp4',
     type: 'video',
     alt: 'Confident modern African woman in editorial high fashion portrait'
   },
@@ -126,7 +126,7 @@ export const ATELIER_SLIDES = [
       { label: 'Care', value: 'Dry Clean & Soft Storage' },
       { label: 'Edition', value: 'Limited Atelier Runs' },
     ],
-    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (2).jpeg',
+    src: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883051/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.13_PM_2.jpg',
     type: 'image',
     alt: 'Understated elegance in neutral silk drape portrait'
   }
@@ -429,7 +429,7 @@ export function AtelierEditSection() {
             }}
             className="cursor-grab overflow-hidden py-12 md:py-16 outline-none ring-offset-0 focus-visible:ring-1 focus-visible:ring-[#0F3D2E] active:cursor-grabbing select-none"
             style={{
-              perspective: `calc(clamp(200px, 32vw, 340px) * ${perspective})`,
+              perspective: `calc(clamp(240px, 38.4vw, 408px) * ${perspective})`,
               touchAction: 'pan-y',
             }}
             role="region"
@@ -439,12 +439,16 @@ export function AtelierEditSection() {
             <div
               className="relative select-none"
               style={{
-                height: 'clamp(240px, 36vw, 380px)',
+                height: 'clamp(300px, 48vw, 480px)',
                 transformStyle: 'preserve-3d',
               }}
             >
               {ATELIER_SLIDES.map((slide, index) => {
                 const isActive = index === selected;
+                const isVideo = slide.type === 'video' || slide.src.endsWith('.mp4');
+                const posterSrc = isVideo ? getCloudinaryVideoPoster(slide.src) : slide.src;
+                const videoSrc = isVideo ? getCloudinaryOptimizedVideo(slide.src) : null;
+
                 return (
                   <div
                     key={slide.id}
@@ -454,6 +458,7 @@ export function AtelierEditSection() {
                     role="group"
                     aria-roledescription="slide"
                     aria-label={`${index + 1} of ${count}`}
+                    data-cursor={isActive ? "EXPLORE" : "SELECT"}
                     onClick={() => {
                       if (isActive) {
                         setIsStoryModalOpen(true);
@@ -465,22 +470,23 @@ export function AtelierEditSection() {
                       isActive ? 'ring-1 ring-[#0F3D2E]/40 shadow-emerald-950/20' : 'opacity-70 hover:opacity-100'
                     }`}
                     style={{
-                      width: 'clamp(200px, 32vw, 320px)',
-                      height: 'clamp(250px, 40vw, 400px)',
+                      width: 'clamp(240px, 38.4vw, 384px)',
+                      height: 'clamp(300px, 48vw, 480px)',
                     }}
                   >
-                    {slide.type === 'video' || slide.src.endsWith('.mp4') ? (
+                    {isVideo && isActive ? (
                       <video
-                        src={slide.src}
+                        src={videoSrc}
                         autoPlay
                         loop
                         muted
                         playsInline
+                        preload="none"
                         className="h-full w-full select-none object-cover transition-transform duration-700 hover:scale-105"
                       />
                     ) : (
                       <img
-                        src={slide.src}
+                        src={posterSrc}
                         alt={slide.alt}
                         draggable={false}
                         loading={index < 3 ? "eager" : "lazy"}

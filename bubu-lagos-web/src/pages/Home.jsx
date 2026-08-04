@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { Layout } from '../components/Layout';
-import { getImageUrl, formatProductPrice, FALLBACK_IMAGE } from '../lib/utils';
+import { getImageUrl, formatProductPrice, FALLBACK_IMAGE, getCloudinaryVideoPoster, getCloudinaryOptimizedVideo } from '../lib/utils';
 import { logger } from '../lib/logger';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { AtelierEditSection } from '../components/AtelierEditSection';
@@ -12,15 +12,15 @@ import { Instagram, ArrowUpRight } from 'lucide-react';
 const INSTAGRAM_EDITORIAL_POSTS = [
   {
     id: 1,
-    imageUrl: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (3).jpeg',
+    imageUrl: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883052/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.13_PM_3.jpg',
     caption: 'Lagos Couture Sunset · Signature Silk Bubu in Emerald',
     handle: '@bubulagos',
-    tag: '#BubuLagosAtelier',
+    tag: '#Bubu_Lagos',
     isVideo: false
   },
   {
     id: 2,
-    imageUrl: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (4).jpeg',
+    imageUrl: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883053/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.13_PM_4.jpg',
     caption: 'Hand-finished Turban & Gele styling at Admiralty Mall',
     handle: '@bubulagos',
     tag: '#LagosFashion',
@@ -28,7 +28,7 @@ const INSTAGRAM_EDITORIAL_POSTS = [
   },
   {
     id: 3,
-    imageUrl: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.21 PM (1).mp4',
+    imageUrl: 'https://res.cloudinary.com/dwmz4youk/video/upload/v1785883065/bubu_cta/WhatsApp_Video_2026-08-04_at_11.21.21_PM_1.mp4',
     caption: 'Quiet Luxury Drapes · The Royal Velvet Boubou',
     handle: '@bubulagos',
     tag: '#BubuLagos',
@@ -36,7 +36,7 @@ const INSTAGRAM_EDITORIAL_POSTS = [
   },
   {
     id: 4,
-    imageUrl: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (5).jpeg',
+    imageUrl: 'https://res.cloudinary.com/dwmz4youk/image/upload/v1785883054/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.13_PM_5.jpg',
     caption: 'Atelier Moments · Hand-beaded metallic trims',
     handle: '@bubulagos',
     tag: '#LagosCouture',
@@ -48,6 +48,7 @@ export function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hoveredPostId, setHoveredPostId] = useState(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -233,7 +234,14 @@ export function Home() {
             <Instagram size={14} /> Social Proof &amp; Editorial
           </span>
           <h2 className="font-heading text-2xl md:text-4xl font-bold uppercase tracking-widest leading-tight">
-            As Seen On #BubuLagosAtelier
+            <a
+              href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg=="
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-accent transition-colors"
+            >
+              As Seen On #Bubu_Lagos
+            </a>
           </h2>
           <p className="text-xs md:text-sm text-text-light mt-2 max-w-lg mx-auto">
             Tag <a href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg==" target="_blank" rel="noopener noreferrer" className="underline hover:text-black font-semibold">@bubu_lagos</a> to be featured in our seasonal Lagos couture showcase.
@@ -241,43 +249,54 @@ export function Home() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
-          {INSTAGRAM_EDITORIAL_POSTS.map((post) => (
-            <a
-              key={post.id}
-              href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg=="
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative aspect-[3/4] overflow-hidden bg-gray-100 rounded-sm shadow-xs block"
-            >
-              {post.isVideo || post.imageUrl.endsWith('.mp4') ? (
-                <video
-                  src={post.imageUrl}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-              ) : (
-                <img
-                  src={post.imageUrl}
-                  alt={post.caption}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
-                />
-              )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 text-white">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">{post.tag}</span>
-                  <ArrowUpRight size={16} />
+          {INSTAGRAM_EDITORIAL_POSTS.map((post) => {
+            const isVideo = post.isVideo || post.imageUrl.endsWith('.mp4') || post.imageUrl.includes('/video/upload/');
+            const posterSrc = isVideo ? getCloudinaryVideoPoster(post.imageUrl) : post.imageUrl;
+            const videoSrc = isVideo ? getCloudinaryOptimizedVideo(post.imageUrl) : null;
+            const isHovered = hoveredPostId === post.id;
+
+            return (
+              <a
+                key={post.id}
+                href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="INSTAGRAM"
+                onMouseEnter={() => setHoveredPostId(post.id)}
+                onMouseLeave={() => setHoveredPostId(null)}
+                className="group relative aspect-[3/4] overflow-hidden bg-gray-100 rounded-sm shadow-xs block"
+              >
+                {isVideo && isHovered ? (
+                  <video
+                    src={videoSrc}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="none"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                ) : (
+                  <img
+                    src={posterSrc}
+                    alt={post.caption}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 text-white">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">{post.tag}</span>
+                    <ArrowUpRight size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium leading-snug line-clamp-3 mb-2">{post.caption}</p>
+                    <span className="text-[10px] font-mono text-white/70">{post.handle}</span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[11px] font-medium leading-snug line-clamp-3 mb-2">{post.caption}</p>
-                  <span className="text-[10px] font-mono text-white/70">{post.handle}</span>
-                </div>
-              </div>
-            </a>
-          ))}
+              </a>
+            );
+          })}
         </div>
       </motion.section>
 
@@ -285,7 +304,7 @@ export function Home() {
       <section className="relative px-5 md:px-8 py-20 md:py-28 overflow-hidden bg-black text-white">
         <div className="absolute inset-0 opacity-35 z-0">
           <img
-            src="/ctamedia/WhatsApp Image 2026-08-04 at 11.21.09 PM.jpeg"
+            src="https://res.cloudinary.com/dwmz4youk/image/upload/v1785883048/bubu_cta/WhatsApp_Image_2026-08-04_at_11.21.09_PM.jpg"
             alt="The Bubu Lagos Atelier"
             className="w-full h-full object-cover object-center scale-105"
             onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}

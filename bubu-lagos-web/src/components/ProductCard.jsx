@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, useInView } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Heart } from 'lucide-react';
-import { getImageUrl, FALLBACK_IMAGE } from '../lib/utils';
+import { getImageUrl, getCloudinaryVideoPoster, getCloudinaryOptimizedVideo, FALLBACK_IMAGE } from '../lib/utils';
 import { EASE_OUT } from '../lib/motion';
 
 // Hoisted: avoid re-creating these on every render of the card list.
@@ -33,9 +33,14 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef(null);
 
-  const displayImage = product.images && product.images.length > 0
-    ? getImageUrl(product.images[0])
-    : FALLBACK_IMAGE;
+  const rawMedia = product.videoUrl || product.video || (product.images && product.images.length > 0 ? product.images[0] : null);
+  const isVideoMedia = typeof rawMedia === 'string' && (rawMedia.includes('/video/upload/') || /\.(mp4|mov|webm|m4v)$/i.test(rawMedia));
+
+  const displayImage = isVideoMedia
+    ? getCloudinaryVideoPoster(rawMedia)
+    : (product.images && product.images.length > 0 ? getImageUrl(product.images[0]) : FALLBACK_IMAGE);
+
+  const optimizedVideoUrl = isVideoMedia ? getCloudinaryOptimizedVideo(rawMedia) : null;
 
   // [NEW] Gift cards (and any product that opts in via product.linkOverride) should
   // route to their override URL instead of the standard /product/:id detail page.
@@ -56,6 +61,7 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
   const rounded = useTransform(motionValue, (v) => Math.round(v).toLocaleString());
   const [displayCount, setDisplayCount] = useState(hasPriceLabel ? priceText : '0');
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
   const inViewCard = useInView(cardRef, { once: true, margin: '-80px' });
 
   useEffect(() => {
@@ -84,13 +90,12 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
     };
   }, [inViewCard, targetNumber, hasPriceLabel]);
 
-  // [MOTION ADDED] Custom cursor for product image
+  // [MOTION ADDED] Custom cursor tracking
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
   const springConfig = { damping: 22, stiffness: 250, mass: 0.4 };
   const cursorXSmooth = useSpring(cursorX, springConfig);
   const cursorYSmooth = useSpring(cursorY, springConfig);
-  const [cursorVisible, setCursorVisible] = useState(false);
 
   const handleImageMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -119,22 +124,38 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
       >
         <div
           className="relative aspect-[3/4] overflow-hidden bg-background-light"
-          onMouseEnter={() => !reduceMotion && setCursorVisible(true)}
-          onMouseLeave={() => setCursorVisible(false)}
+          data-cursor="VIEW"
+          onMouseEnter={() => {
+            if (!reduceMotion) setIsCardHovered(true);
+          }}
+          onMouseLeave={() => {
+            setIsCardHovered(false);
+          }}
           onMouseMove={handleImageMouseMove}
         >
-          <motion.img
-            src={displayImage}
-            alt={product.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            // srcset: 400w / 800w / 1200w
-            srcSet={withSrcSet(displayImage) || undefined}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            whileHover={reduceMotion ? undefined : { scale: 1.07 }}
-            transition={{ duration: 0.5, ease: EASE_OUT }}
-            onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
-          />
+          {isVideoMedia && isCardHovered ? (
+            <video
+              src={optimizedVideoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="none"
+              className="w-full h-full object-cover scale-[1.03] transition-transform duration-500"
+            />
+          ) : (
+            <motion.img
+              src={displayImage}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              srcSet={withSrcSet(displayImage) || undefined}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              whileHover={reduceMotion ? undefined : { scale: 1.07 }}
+              transition={{ duration: 0.5, ease: EASE_OUT }}
+              onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+            />
+          )}
 
           {product.category?.name && (
             <motion.span

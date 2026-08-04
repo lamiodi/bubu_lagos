@@ -38,6 +38,41 @@ export function getImageUrl(imagePath) {
 }
 
 /**
+ * Extract an ultra-lightweight Cloudinary JPEG poster thumbnail for a video URL.
+ * Converts Cloudinary video uploads to JPG posters (so_0, q_auto:eco, f_auto, w_600).
+ * Downloads ~20KB static image instead of multi-MB video files!
+ */
+export function getCloudinaryVideoPoster(url) {
+  if (!url) return null;
+  let srcUrl = getImageUrl(url) || url;
+  if (srcUrl.includes('cloudinary.com') && srcUrl.includes('/video/upload/')) {
+    let poster = srcUrl.replace(/\.(mp4|mov|m4v|webm|ogv)$/i, '.jpg');
+    if (!poster.includes('/so_0')) {
+      poster = poster.replace('/video/upload/', '/video/upload/so_0,q_auto:eco,f_auto,w_600/');
+    }
+    return poster;
+  }
+  return srcUrl;
+}
+
+/**
+ * Heavily compressed Cloudinary video URL (q_auto:eco, f_mp4, w_720) to save usage.
+ */
+export function getCloudinaryOptimizedVideo(url) {
+  if (!url) return null;
+  let srcUrl = getImageUrl(url) || url;
+  if (srcUrl.includes('cloudinary.com') && srcUrl.includes('/video/upload/')) {
+    if (!srcUrl.includes('/q_auto')) {
+      srcUrl = srcUrl.replace('/video/upload/', '/video/upload/q_auto:eco,f_mp4,w_720/');
+    }
+    if (srcUrl.toLowerCase().endsWith('.mov')) {
+      srcUrl = srcUrl.replace(/\.mov$/i, '.mp4');
+    }
+  }
+  return srcUrl;
+}
+
+/**
  * Format a numeric price as a localized currency string with the ₦ symbol.
  * Accepts a number, or a string like "₦285,000" or "285000".
  */

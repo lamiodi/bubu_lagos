@@ -50,7 +50,7 @@ export function Contact() {
                 {/* Hero Section */}
                 <section className="relative h-[40vh] bg-black overflow-hidden flex items-center justify-center">
                     <video
-                        src="/ctamedia/WhatsApp Video 2026-08-04 at 11.21.20 PM.mp4"
+                        src="https://res.cloudinary.com/dwmz4youk/video/upload/v1785883062/bubu_cta/WhatsApp_Video_2026-08-04_at_11.21.20_PM.mp4"
                         autoPlay
                         loop
                         muted
