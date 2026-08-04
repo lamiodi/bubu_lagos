@@ -45,7 +45,7 @@ export function AdminLogin() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
       <div className="mb-8 text-center">
-        <h1 className="font-heading text-3xl font-black tracking-widest text-black">BUBU LAGOS</h1>
+        <img src="/logo.png" alt="Bubu Lagos" className="h-16 w-auto object-contain mx-auto mb-3" />
         <p className="text-sm text-gray-500 mt-2 tracking-widest uppercase">Atelier Back-Office</p>
       </div>
 

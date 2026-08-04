@@ -139,7 +139,7 @@ export function Header({ variant = 'transparent' }) {
             to="/"
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center leading-none"
           >
-            <img src="/logo.png" alt="Bubu Lagos" className="h-10 sm:h-12 w-auto object-contain" />
+            <img src="/logo.png" alt="Bubu Lagos" className="h-12 sm:h-14 md:h-16 w-auto object-contain" />
           </Link>
 
           {/* Desktop: secondary + account nav */}
@@ -234,7 +234,9 @@ export function Header({ variant = 'transparent' }) {
               transition={{ duration: 0.35, ease: EASE_OUT }}
             >
               <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-                <span className="font-heading text-sm font-bold tracking-[0.15em]">MENU</span>
+                <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  <img src="/logo.png" alt="Bubu Lagos" className="h-10 w-auto object-contain" />
+                </Link>
                 <button
                   className="p-1 -mr-1"
                   onClick={() => setIsMobileMenuOpen(false)}
