@@ -907,16 +907,16 @@ export function AdminProducts() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={loading}
+                    disabled={submitting}
                     className="w-full py-4 flex flex-col items-center justify-center text-gray-500 hover:text-gray-700"
                   >
-                    {loading ? (
+                    {submitting ? (
                       <div className="h-6 w-6 rounded shimmer-light mb-2" />
                     ) : (
                       <Upload size={24} className="mb-2" />
                     )}
                     <span className="text-sm">
-                      {loading ? 'Uploading...' : 'Click to add images'}
+                      {submitting ? 'Uploading...' : 'Click to add images'}
                     </span>
                     <span className="text-xs text-gray-400 mt-1">Max 10 images</span>
                   </button>
