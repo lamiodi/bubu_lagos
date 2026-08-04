@@ -23,6 +23,13 @@ export function getImageUrl(imagePath) {
       if (!url.includes('/f_auto') && !url.includes('/q_auto')) {
         url = url.replace('/image/upload/', '/image/upload/f_auto,q_auto/');
       }
+      // Force Cloudinary to serve a web-safe format by swapping .heic/.heif to .jpg
+      if (url.toLowerCase().endsWith('.heic')) {
+        url = url.replace(/\.heic$/i, '.jpg');
+      }
+      if (url.toLowerCase().endsWith('.heif')) {
+        url = url.replace(/\.heif$/i, '.jpg');
+      }
     }
   }
   if (url.startsWith('http')) return url;
