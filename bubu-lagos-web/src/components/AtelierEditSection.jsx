@@ -21,7 +21,8 @@ export const ATELIER_SLIDES = [
       { label: 'Material', value: '100% Raw Mulberry Silk' },
       { label: 'Crafting Time', value: '38 Hand Hours' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.09 PM.jpeg',
+    type: 'image',
     alt: 'Emerald silk garment flowing with regal elegance in Lagos atelier'
   },
   {
@@ -35,7 +36,8 @@ export const ATELIER_SLIDES = [
       { label: 'Artisan', value: 'Lagos Master Guild' },
       { label: 'Finish', value: 'French Seams' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.15 PM.mp4',
+    type: 'video',
     alt: 'Artisan hand stitching gold thread into luxury silk fabric'
   },
   {
@@ -49,7 +51,8 @@ export const ATELIER_SLIDES = [
       { label: 'Weight', value: 'Lightweight 19mm Silk' },
       { label: 'Fluidity Grade', value: 'Ultra-Fluid' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.15 PM (1).mp4',
+    type: 'video',
     alt: 'Flowing golden silk dress capturing fluid motion'
   },
   {
@@ -63,7 +66,8 @@ export const ATELIER_SLIDES = [
       { label: 'Fabric', value: 'Aso-Oke & Silk Organza' },
       { label: 'Styling Time', value: 'Custom Fitted' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM.jpeg',
+    type: 'image',
     alt: 'Regal fashion portrait highlighting headpiece styling'
   },
   {
@@ -77,7 +81,8 @@ export const ATELIER_SLIDES = [
       { label: 'Process', value: 'Sketch to Couture' },
       { label: 'Quality Check', value: '3-Stage Inspection' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.20 PM.mp4',
+    type: 'video',
     alt: 'Luxury atelier workspace with draping dress forms and tailoring tools'
   },
   {
@@ -91,7 +96,8 @@ export const ATELIER_SLIDES = [
       { label: 'Hardware', value: 'Solid Sculpted Brass' },
       { label: 'Lining', value: 'Soft Breathable Cotton-Silk' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (1).jpeg',
+    type: 'image',
     alt: 'Close-up of intricate hand-beaded embroidery details on fine fabric'
   },
   {
@@ -105,7 +111,8 @@ export const ATELIER_SLIDES = [
       { label: 'Palette', value: 'Warm Earth & Ocean Emerald' },
       { label: 'Vibe', value: 'Effortless Royalty' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.21 PM.mp4',
+    type: 'video',
     alt: 'Confident modern African woman in editorial high fashion portrait'
   },
   {
@@ -119,7 +126,8 @@ export const ATELIER_SLIDES = [
       { label: 'Care', value: 'Dry Clean & Soft Storage' },
       { label: 'Edition', value: 'Limited Atelier Runs' },
     ],
-    src: FALLBACK_IMAGE,
+    src: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (2).jpeg',
+    type: 'image',
     alt: 'Understated elegance in neutral silk drape portrait'
   }
 ];
@@ -461,13 +469,25 @@ export function AtelierEditSection() {
                       height: 'clamp(250px, 40vw, 400px)',
                     }}
                   >
-                    <img
-                      src={slide.src}
-                      alt={slide.alt}
-                      draggable={false}
-                      loading={index < 3 ? "eager" : "lazy"}
-                      className="h-full w-full select-none object-cover transition-transform duration-700 hover:scale-105"
-                    />
+                    {slide.type === 'video' || slide.src.endsWith('.mp4') ? (
+                      <video
+                        src={slide.src}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="h-full w-full select-none object-cover transition-transform duration-700 hover:scale-105"
+                      />
+                    ) : (
+                      <img
+                        src={slide.src}
+                        alt={slide.alt}
+                        draggable={false}
+                        loading={index < 3 ? "eager" : "lazy"}
+                        className="h-full w-full select-none object-cover transition-transform duration-700 hover:scale-105"
+                        onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#32150d]/80 via-transparent to-transparent opacity-80" />
 
                     <div className="absolute bottom-4 left-4 right-4 text-white">
@@ -596,13 +616,25 @@ export function AtelierEditSection() {
               </button>
 
               <div className="grid grid-cols-1 md:grid-cols-2">
-                {/* Image */}
+                {/* Image / Video Media */}
                 <div className="relative aspect-[4/5] md:aspect-auto overflow-hidden bg-[#32150d]">
-                  <img
-                    src={activeSlide.src}
-                    alt={activeSlide.alt}
-                    className="w-full h-full object-cover"
-                  />
+                  {activeSlide.type === 'video' || activeSlide.src.endsWith('.mp4') ? (
+                    <video
+                      src={activeSlide.src}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={activeSlide.src}
+                      alt={activeSlide.alt}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#32150d]/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 text-white">
                     <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#ede5da]/80">

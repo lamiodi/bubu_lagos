@@ -12,31 +12,35 @@ import { Instagram, ArrowUpRight } from 'lucide-react';
 const INSTAGRAM_EDITORIAL_POSTS = [
   {
     id: 1,
-    imageUrl: FALLBACK_IMAGE,
+    imageUrl: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (3).jpeg',
     caption: 'Lagos Couture Sunset · Signature Silk Bubu in Emerald',
     handle: '@bubulagos',
-    tag: '#BubuLagosAtelier'
+    tag: '#BubuLagosAtelier',
+    isVideo: false
   },
   {
     id: 2,
-    imageUrl: FALLBACK_IMAGE,
+    imageUrl: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (4).jpeg',
     caption: 'Hand-finished Turban & Gele styling at Admiralty Mall',
     handle: '@bubulagos',
-    tag: '#LagosFashion'
+    tag: '#LagosFashion',
+    isVideo: false
   },
   {
     id: 3,
-    imageUrl: FALLBACK_IMAGE,
+    imageUrl: '/ctamedia/WhatsApp Video 2026-08-04 at 11.21.21 PM (1).mp4',
     caption: 'Quiet Luxury Drapes · The Royal Velvet Boubou',
     handle: '@bubulagos',
-    tag: '#BubuLagos'
+    tag: '#BubuLagos',
+    isVideo: true
   },
   {
     id: 4,
-    imageUrl: FALLBACK_IMAGE,
+    imageUrl: '/ctamedia/WhatsApp Image 2026-08-04 at 11.21.13 PM (5).jpeg',
     caption: 'Atelier Moments · Hand-beaded metallic trims',
     handle: '@bubulagos',
-    tag: '#LagosCouture'
+    tag: '#LagosCouture',
+    isVideo: false
   }
 ];
 
@@ -245,11 +249,23 @@ export function Home() {
               rel="noopener noreferrer"
               className="group relative aspect-[3/4] overflow-hidden bg-gray-100 rounded-sm shadow-xs block"
             >
-              <img
-                src={post.imageUrl}
-                alt={post.caption}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
+              {post.isVideo || post.imageUrl.endsWith('.mp4') ? (
+                <video
+                  src={post.imageUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+              ) : (
+                <img
+                  src={post.imageUrl}
+                  alt={post.caption}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                />
+              )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 text-white">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">{post.tag}</span>
@@ -265,17 +281,27 @@ export function Home() {
         </div>
       </motion.section>
 
-      {/* Hero-style call-to-action strip */}
-      <section className="px-5 md:px-8 py-16 md:py-24">
+      {/* Hero-style call-to-action strip with rich media backdrop */}
+      <section className="relative px-5 md:px-8 py-20 md:py-28 overflow-hidden bg-black text-white">
+        <div className="absolute inset-0 opacity-35 z-0">
+          <img
+            src="/ctamedia/WhatsApp Image 2026-08-04 at 11.21.09 PM.jpeg"
+            alt="The Bubu Lagos Atelier"
+            className="w-full h-full object-cover object-center scale-105"
+            onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/40" />
+        </div>
+
         <motion.div
-          className="max-w-3xl mx-auto text-center"
+          className="relative z-10 max-w-3xl mx-auto text-center"
           initial={reduceMotion ? false : { opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           <motion.h2
-            className="font-heading text-3xl md:text-5xl font-bold uppercase tracking-widest leading-[0.9] mb-4"
+            className="font-heading text-3xl md:text-5xl font-bold uppercase tracking-widest leading-[0.9] mb-4 text-white"
             initial={reduceMotion ? false : { opacity: 0, y: 48 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
@@ -284,7 +310,7 @@ export function Home() {
             The Bubu Lagos Atelier
           </motion.h2>
           <motion.p
-            className="text-sm md:text-base text-text-light max-w-xl mx-auto mb-8"
+            className="text-sm md:text-base text-white/80 max-w-xl mx-auto mb-8"
             initial={reduceMotion ? false : { opacity: 0, y: 48 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
@@ -302,7 +328,7 @@ export function Home() {
           >
             <Link
               to="/shop"
-              className="inline-block px-10 py-4 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-accent transition-colors"
+              className="inline-block px-10 py-4 bg-accent text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-colors shadow-xl"
             >
               Discover the Atelier
             </Link>

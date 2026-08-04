@@ -49,9 +49,12 @@ export function Contact() {
             <div className="pt-[60px] min-h-screen bg-white">
                 {/* Hero Section */}
                 <section className="relative h-[40vh] bg-black overflow-hidden flex items-center justify-center">
-                    <img
-                        src={FALLBACK_IMAGE}
-                        alt="Atelier"
+                    <video
+                        src="/ctamedia/WhatsApp Video 2026-08-04 at 11.21.20 PM.mp4"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
                         className="absolute inset-0 w-full h-full object-cover opacity-50"
                     />
                     <div className="relative z-10 text-center">
