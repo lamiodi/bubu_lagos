@@ -228,8 +228,8 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
                 y: cursorYSmooth,
                 translateX: '-50%',
                 translateY: '-50%',
-                opacity: cursorVisible ? 1 : 0,
-                scale: cursorVisible ? 1 : 0.4,
+                opacity: isCardHovered ? 1 : 0,
+                scale: isCardHovered ? 1 : 0.4,
               }}
               transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
             />
