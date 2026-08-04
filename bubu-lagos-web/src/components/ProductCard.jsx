@@ -62,6 +62,7 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
   const [displayCount, setDisplayCount] = useState(hasPriceLabel ? priceText : '0');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const inViewCard = useInView(cardRef, { once: true, margin: '-80px' });
 
   useEffect(() => {
@@ -130,33 +131,42 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
           }}
           onMouseLeave={() => {
             setIsCardHovered(false);
+            setIsVideoReady(false);
           }}
           onPointerLeave={() => {
             setIsCardHovered(false);
+            setIsVideoReady(false);
           }}
           onMouseMove={handleImageMouseMove}
         >
-          {isVideoMedia && isCardHovered ? (
+          {/* Base Layer: Static Image is always rendered so there is NEVER a white or blank box */}
+          <motion.img
+            src={displayImage}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            srcSet={withSrcSet(displayImage) || undefined}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            whileHover={reduceMotion ? undefined : { scale: 1.07 }}
+            transition={{ duration: 0.5, ease: EASE_OUT }}
+            onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+          />
+
+          {/* Overlay Layer: Video decodes quietly in background and fades in smoothly only when fully loaded */}
+          {isVideoMedia && isCardHovered && (
             <video
               src={optimizedVideoUrl}
               autoPlay
               loop
               muted
               playsInline
-              preload="none"
-              className="w-full h-full object-cover scale-[1.03] transition-transform duration-500"
-            />
-          ) : (
-            <motion.img
-              src={displayImage}
-              alt={product.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              srcSet={withSrcSet(displayImage) || undefined}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              whileHover={reduceMotion ? undefined : { scale: 1.07 }}
-              transition={{ duration: 0.5, ease: EASE_OUT }}
-              onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+              preload="auto"
+              onCanPlay={() => setIsVideoReady(true)}
+              onLoadedData={() => setIsVideoReady(true)}
+              onError={() => setIsVideoReady(false)}
+              className={`absolute inset-0 w-full h-full object-cover scale-[1.03] transition-opacity duration-300 ${
+                isVideoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
             />
           )}
 
