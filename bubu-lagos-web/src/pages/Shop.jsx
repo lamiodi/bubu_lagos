@@ -82,31 +82,44 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
     return FALLBACK_IMAGE;
   }, [activeCol, category, productsList]);
 
-  // Build category cards featuring real images from DB
-  const categoryCards = useMemo(() => {
-    if (!categoriesList || categoriesList.length === 0) return [];
+  // Build featured product cards to display on the right side
+  const featuredProducts = useMemo(() => {
+    if (!productsList || productsList.length === 0) return [];
+    
+    let selectedProducts = [];
 
-    return categoriesList.map(cat => {
-      const catSlug = cat.slug || cat.name.toLowerCase();
-      const catProds = (productsList || []).filter(p => 
-        (p.category?.slug || '').toLowerCase() === catSlug ||
-        (p.category?.name || '').toLowerCase() === cat.name.toLowerCase()
-      );
+    if (category === 'all') {
+      // Pick 1 from each category
+      const bubus = productsList.filter(p => p.category?.name === 'Bubus');
+      const turbans = productsList.filter(p => p.category?.name === 'Turbans & Gelès');
+      const accessories = productsList.filter(p => p.category?.name === 'Artisan Accessories');
 
-      let image = getImageUrl(cat.image_url || cat.imageUrl);
-      if (!image && catProds.length > 0) {
-        const randProd = catProds[Math.floor(Math.random() * catProds.length)];
-        image = getImageUrl(randProd.images?.[0] || randProd.imageUrl);
+      if (bubus.length > 0) selectedProducts.push(bubus[Math.floor(Math.random() * bubus.length)]);
+      if (turbans.length > 0) selectedProducts.push(turbans[Math.floor(Math.random() * turbans.length)]);
+      if (accessories.length > 0) selectedProducts.push(accessories[Math.floor(Math.random() * accessories.length)]);
+      
+      // If we don't have exactly 3, fill with random products
+      if (selectedProducts.length < 3) {
+        const remaining = productsList.filter(p => !selectedProducts.find(s => s.id === p.id));
+        selectedProducts = [...selectedProducts, ...remaining].slice(0, 3);
       }
+    } else {
+      // Pick 3 from the active category
+      const categoryProds = productsList.filter(p => 
+        (p.category?.slug || '').toLowerCase() === category.toLowerCase() ||
+        (p.category?.name || '').toLowerCase().includes(category.toLowerCase())
+      );
+      selectedProducts = categoryProds.slice(0, 3);
+    }
 
-      return {
-        ...cat,
-        slug: catSlug,
-        image: image || FALLBACK_IMAGE,
-        count: catProds.length
-      };
-    });
-  }, [categoriesList, productsList]);
+    return selectedProducts.map(prod => ({
+      id: prod.id,
+      name: prod.name,
+      price: prod.basePrice,
+      image: getImageUrl(prod.images?.[0] || prod.imageUrl) || FALLBACK_IMAGE,
+      url: `/product/${prod.id}`
+    }));
+  }, [category, productsList]);
 
   const title = activeCol 
     ? activeCol.name 
@@ -154,40 +167,34 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
           )}
         </div>
 
-        {/* Right Side Category Cards */}
-        {categoryCards.length > 0 && (
+        {/* Right Side Featured Products */}
+        {featuredProducts.length > 0 && (
           <div className="w-full lg:w-auto flex items-center gap-3 overflow-x-auto overflow-y-hidden py-3 px-1 scrollbar-none scrollbar-hide">
-            {categoryCards.map(catCard => {
-              const isSelected = category.toLowerCase() === catCard.slug;
-              return (
-                <button
-                  key={catCard.id || catCard.slug}
-                  onClick={() => onSelectCategory(catCard.slug)}
-                  className={cn(
-                    "group relative flex-shrink-0 w-28 md:w-32 h-36 md:h-40 rounded-xl overflow-hidden border transition-all duration-300 text-left shadow-xl",
-                    isSelected
-                      ? "border-accent ring-2 ring-accent scale-105"
-                      : "border-white/20 hover:border-white/60 hover:scale-102"
-                  )}
-                >
-                  <img
-                    src={catCard.image}
-                    alt={catCard.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                  <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col gap-0.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-white line-clamp-1">
-                      {catCard.name}
-                    </span>
-                    <span className="text-[9px] font-mono text-accent-light">
-                      {catCard.count} {catCard.count === 1 ? 'Piece' : 'Pieces'}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+            {featuredProducts.map(prodCard => (
+              <Link
+                key={prodCard.id}
+                to={prodCard.url}
+                className={cn(
+                  "group relative flex-shrink-0 w-28 md:w-32 h-36 md:h-40 rounded-xl overflow-hidden border transition-all duration-300 text-left shadow-xl border-white/20 hover:border-white/60 hover:scale-102"
+                )}
+              >
+                <img
+                  src={prodCard.image}
+                  alt={prodCard.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white line-clamp-1">
+                    {prodCard.name}
+                  </span>
+                  <span className="text-[9px] font-mono text-accent-light">
+                    ₦{prodCard.price?.toLocaleString()}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </div>

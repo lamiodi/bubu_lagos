@@ -127,10 +127,24 @@ export function ProductDetail() {
       setOtherColors(colors.slice(0, 4));
       
       // Find related products (same category, excluding the variants)
-      const related = allProducts.filter(p => 
+      let related = allProducts.filter(p => 
         p.category?.name === productData.category?.name && 
-        !colors.find(c => c.id === p.id)
+        !colors.find(c => c.id === p.id) &&
+        !p.category?.name?.toLowerCase().includes('turban')
       );
+      
+      // Fallback: If inventory is small and we don't have enough same-category items, 
+      // fill with products from other categories (excluding turbans which have their own section)
+      if (related.length < 3) {
+        const otherCategories = allProducts.filter(p => 
+          p.category?.name !== productData.category?.name && 
+          !p.category?.name?.toLowerCase().includes('turban') &&
+          !colors.find(c => c.id === p.id) &&
+          !related.find(r => r.id === p.id)
+        );
+        related = [...related, ...otherCategories];
+      }
+
       setRelatedProducts(related.slice(0, 3));
     } catch (err) {
       logger.error('Failed to fetch smart recommendations:', err);
