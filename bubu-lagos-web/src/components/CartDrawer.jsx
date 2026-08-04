@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Minus, Plus, ShoppingBag, ArrowRight, X, Sparkles, PlusCircle, Check } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, ArrowRight, X, Sparkles, PlusCircle, Check, Truck } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
@@ -13,6 +13,8 @@ const priceToNumber = (p) => {
   if (typeof p === 'number') return p;
   return parsePriceValue(p) || 0;
 };
+
+const FREE_SHIPPING_THRESHOLD = 150000;
 
 export function CartDrawer() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart();
@@ -62,6 +64,9 @@ export function CartDrawer() {
       setAddedItemIds(prev => ({ ...prev, [product.id]: false }));
     }, 1500);
   };
+
+  const freeShippingProgress = Math.min(100, Math.round((cartTotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const amountNeededForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
 
   return (
     <Drawer
@@ -145,6 +150,27 @@ export function CartDrawer() {
         </div>
       ) : (
         <div className="flex flex-col h-full">
+          {/* Free Shipping Progress Indicator */}
+          <div className="bg-emerald-950/5 border-b border-emerald-900/10 px-5 py-3 text-xs shrink-0">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider mb-1.5">
+              <span className="flex items-center gap-1.5 text-accent font-semibold">
+                <Truck size={13} className="text-accent" />
+                {cartTotal >= FREE_SHIPPING_THRESHOLD ? (
+                  <span>Complimentary Delivery Unlocked! 🎉</span>
+                ) : (
+                  <span>Add {formatNGN(amountNeededForFreeShipping)} for Free Lagos Delivery</span>
+                )}
+              </span>
+              <span className="font-mono text-accent font-bold">{freeShippingProgress}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-emerald-950/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent transition-all duration-500 rounded-full"
+                style={{ width: `${freeShippingProgress}%` }}
+              />
+            </div>
+          </div>
+
           {/* Items */}
           <ul className="flex-1 overflow-y-auto divide-y divide-border">
             {cartItems.map((item, i) => {

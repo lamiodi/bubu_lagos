@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { cn, getImageUrl, FALLBACK_IMAGE } from '../lib/utils';
 import { logger } from '../lib/logger';
 import api from '../utils/api';
-import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Sparkles, Filter } from 'lucide-react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
@@ -15,7 +15,7 @@ function CategoryTab({ label, isActive, onClick }) {
     <button
       onClick={onClick}
       className={cn(
-        "relative text-[10px] md:text-[11px] uppercase tracking-[0.14em] font-bold px-4 py-2.5 transition-all duration-200 border",
+        "relative text-[10px] md:text-[11px] uppercase tracking-[0.14em] font-bold px-4 py-2.5 transition-all duration-200 border rounded-xs",
         isActive 
           ? "bg-black text-white border-black shadow-sm" 
           : "bg-white text-text-light border-border hover:border-black hover:text-black"
@@ -82,7 +82,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
     return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&h=600&fit=crop&q=80';
   }, [activeCol, category, productsList]);
 
-  // Build category cards featuring real images from DB (Bubus, Turbans & Gelès, Artisan Accessories)
+  // Build category cards featuring real images from DB
   const categoryCards = useMemo(() => {
     if (!categoriesList || categoriesList.length === 0) return [];
 
@@ -127,7 +127,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Background Image Overlay with Random Category Product from DB */}
+      {/* Background Image Overlay */}
       <div className="absolute inset-0 z-0 opacity-40">
         <img
           src={dynamicBannerImage}
@@ -154,7 +154,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
           )}
         </div>
 
-        {/* Right Side: Category Preview Cards featuring real images from DB (Bubus, Turbans & Gelès, Artisan Accessories) */}
+        {/* Right Side Category Cards */}
         {categoryCards.length > 0 && (
           <div className="w-full lg:w-auto flex items-center gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
             {categoryCards.map(catCard => {
@@ -209,8 +209,6 @@ export function Shop() {
     return raw;
   }, [searchParams]);
 
-  // Source of truth = API. We start with empty arrays so the UI only ever
-  // shows data that has been fetched from the database.
   const [categories, setCategories] = useState([]);
   const [collections, setCollections] = useState([]);
   const [products, setProducts] = useState([]);
@@ -224,7 +222,7 @@ export function Shop() {
   const [maxPrice, setMaxPrice] = useState("");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Fetch Categories & Collections from Backend API (only source of truth)
+  // Fetch Categories & Collections from Backend API
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
@@ -238,7 +236,6 @@ export function Shop() {
             return null;
           })
         ]);
-        // Only overwrite with API data; never fall back to hardcoded data.
         setCategories(catRes?.categories || []);
         setCollections(colRes?.collections || []);
       } catch (err) {
@@ -360,14 +357,14 @@ export function Shop() {
                 <div className="flex items-center gap-3 shrink-0">
                   <button
                     onClick={openSearch}
-                    className="p-2 border border-border hover:border-black transition-colors"
+                    className="p-2 border border-border hover:border-black transition-colors rounded-xs"
                     aria-label="Open search drawer"
                   >
                     <Search size={16} />
                   </button>
                   <button
                     onClick={() => setShowMobileFilters(!showMobileFilters)}
-                    className="flex items-center gap-2 px-3 py-2 border border-border text-[11px] font-bold uppercase tracking-[0.14em] hover:border-black transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 border border-border text-[11px] font-bold uppercase tracking-[0.14em] hover:border-black transition-colors rounded-xs"
                   >
                     <SlidersHorizontal size={14} />
                     <span>Filter & Sort</span>
@@ -391,17 +388,67 @@ export function Shop() {
                     onToggle={handleCollectionToggle}
                   />
                 ))}
-                {hasActiveFilters && (
-                  <button
-                    onClick={handleClearAll}
-                    className="text-[10px] uppercase tracking-[0.14em] text-accent font-bold underline ml-auto hover:text-black"
-                  >
-                    Clear All Filters
-                  </button>
-                )}
               </div>
             </div>
           </div>
+
+          {/* Active Filter Pills Bar (Phase 1 Quick Win) */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-background-light border border-border rounded-sm">
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-text-light flex items-center gap-1.5 mr-1">
+                <Filter size={12} className="text-accent" /> Active Filters:
+              </span>
+
+              {activeCategory !== 'all' && (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-black text-white px-2.5 py-1 rounded-full">
+                  Category: {activeCategory}
+                  <button
+                    onClick={() => handleCategorySelect('all')}
+                    className="hover:text-accent transition-colors ml-0.5"
+                    aria-label="Remove category filter"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+
+              {selectedCollections.map(colSlug => {
+                const colObj = collections.find(c => c.slug === colSlug);
+                return (
+                  <span key={colSlug} className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-accent text-white px-2.5 py-1 rounded-full">
+                    {colObj ? colObj.name : colSlug}
+                    <button
+                      onClick={() => handleCollectionToggle(colSlug)}
+                      className="hover:text-amber-300 transition-colors ml-0.5"
+                      aria-label={`Remove ${colSlug} collection filter`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                );
+              })}
+
+              {(minPrice || maxPrice) && (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-neutral-800 text-white px-2.5 py-1 rounded-full">
+                  Price: ₦{minPrice || '0'} - ₦{maxPrice || '∞'}
+                  <button
+                    onClick={() => { setMinPrice(''); setMaxPrice(''); }}
+                    className="hover:text-amber-300 transition-colors ml-0.5"
+                    aria-label="Remove price filter"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+
+              <button
+                onClick={handleClearAll}
+                className="text-[10px] uppercase tracking-[0.14em] text-accent font-bold underline ml-auto hover:text-black transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
 
           {/* Filter Drawer / Expandable Sort Bar */}
           <AnimatePresence>
@@ -410,7 +457,7 @@ export function Shop() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden border-b border-border mb-8 bg-background-light p-6"
+                className="overflow-hidden border-b border-border mb-8 bg-background-light p-6 rounded-sm"
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
@@ -420,7 +467,7 @@ export function Shop() {
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value)}
-                      className="w-full p-2.5 bg-white border border-border text-[12px] uppercase tracking-wider focus:outline-none focus:border-black"
+                      className="w-full p-2.5 bg-white border border-border text-[12px] uppercase tracking-wider focus:outline-none focus:border-black rounded-xs"
                     >
                       <option value="newest">Newest Arrivals</option>
                       <option value="price_low">Price: Low to High</option>
@@ -438,7 +485,7 @@ export function Shop() {
                         placeholder="Min Price"
                         value={minPrice}
                         onChange={(e) => setMinPrice(e.target.value)}
-                        className="w-full p-2.5 bg-white border border-border text-[12px] focus:outline-none focus:border-black"
+                        className="w-full p-2.5 bg-white border border-border text-[12px] focus:outline-none focus:border-black rounded-xs"
                       />
                       <span className="text-text-light">-</span>
                       <input
@@ -446,7 +493,7 @@ export function Shop() {
                         placeholder="Max Price"
                         value={maxPrice}
                         onChange={(e) => setMaxPrice(e.target.value)}
-                        className="w-full p-2.5 bg-white border border-border text-[12px] focus:outline-none focus:border-black"
+                        className="w-full p-2.5 bg-white border border-border text-[12px] focus:outline-none focus:border-black rounded-xs"
                       />
                     </div>
                   </div>
@@ -454,13 +501,13 @@ export function Shop() {
                   <div className="flex items-end gap-3">
                     <button
                       onClick={handleClearAll}
-                      className="w-full py-2.5 border border-border text-[11px] uppercase tracking-wider font-bold hover:bg-white transition-colors"
+                      className="btn-secondary w-full py-2.5 text-[11px]"
                     >
                       Reset Filters
                     </button>
                     <button
                       onClick={() => setShowMobileFilters(false)}
-                      className="w-full py-2.5 bg-black text-white text-[11px] uppercase tracking-wider font-bold hover:bg-accent transition-colors"
+                      className="btn-primary w-full py-2.5 text-[11px]"
                     >
                       Apply Filters
                     </button>
@@ -482,13 +529,13 @@ export function Shop() {
               <p className="text-red-600 text-sm mb-4">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="px-6 py-2.5 bg-black text-white text-xs uppercase tracking-widest font-bold"
+                className="btn-primary px-6 py-2.5 text-xs"
               >
                 Reload Catalog
               </button>
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-20 bg-background-light border border-border p-8 max-w-md mx-auto my-10">
+            <div className="text-center py-20 bg-background-light border border-border p-8 max-w-md mx-auto my-10 rounded-sm">
               <Sparkles size={24} className="mx-auto text-accent mb-3" />
               <h3 className="font-heading text-xl font-bold uppercase mb-2">No Products Found</h3>
               <p className="text-xs text-text-light mb-6">
@@ -496,7 +543,7 @@ export function Shop() {
               </p>
               <button
                 onClick={handleClearAll}
-                className="px-6 py-2.5 bg-black text-white text-xs uppercase tracking-widest font-bold hover:bg-accent transition-colors"
+                className="btn-primary px-6 py-2.5 text-xs"
               >
                 Explore All Products
               </button>
@@ -535,7 +582,7 @@ export function Shop() {
               </div>
 
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-8 md:p-12">
-                {/* Left Column: Copy & Call To Action */}
+                {/* Left Column */}
                 <div className="lg:col-span-7 flex flex-col gap-4">
                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/20 border border-accent/40 text-accent-light w-fit backdrop-blur-md">
                     <Gift size={13} className="text-accent" />
@@ -553,7 +600,7 @@ export function Shop() {
                   </p>
 
                   <div className="flex flex-wrap items-center gap-4 pt-2">
-                    <span className="inline-flex items-center gap-2.5 px-5 py-3.5 bg-accent text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded-sm group-hover:bg-accent-strong transition-all duration-300 shadow-md">
+                    <span className="btn-accent inline-flex items-center gap-2.5 px-6 py-3.5 text-[11px]">
                       <span>Send a Gift Card</span>
                       <ArrowRight
                         size={15}
@@ -566,10 +613,9 @@ export function Shop() {
                   </div>
                 </div>
 
-                {/* Right Column: 3D Luxury Gift Card Graphic Mockup */}
+                {/* Right Column */}
                 <div className="lg:col-span-5 flex justify-center lg:justify-end">
                   <div className="w-full max-w-[340px] aspect-[1.58/1] rounded-xl bg-gradient-to-br from-neutral-900 via-black to-emerald-950 p-6 flex flex-col justify-between border border-amber-400/30 shadow-2xl relative overflow-hidden group-hover:rotate-1 group-hover:scale-105 transition-all duration-500">
-                    {/* Metallic Glow Orbs */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
                     <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 

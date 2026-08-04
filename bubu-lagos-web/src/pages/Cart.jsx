@@ -1,17 +1,22 @@
 import { Layout } from '../components/Layout';
 import { Link } from 'react-router-dom';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { motion, useReducedMotion } from 'framer-motion';
+
+const FREE_SHIPPING_THRESHOLD = 150000;
 
 export function Cart() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
   const reduceMotion = useReducedMotion();
 
+  const freeShippingProgress = Math.min(100, Math.round((cartTotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const amountNeededForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
+
   return (
     <Layout headerVariant="solid">
       <div className="container mx-auto px-4 py-12 md:py-20 max-w-6xl">
-        {/* [MOTION ADDED] Heading entry */}
+        {/* Heading entry */}
         <motion.h1
           className="text-3xl md:text-4xl font-heading font-black uppercase tracking-widest mb-12 text-center"
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
@@ -45,7 +50,6 @@ export function Cart() {
               </div>
 
               <div className="flex flex-col gap-8">
-                {/* [MOTION ADDED] Staggered list items */}
                 {cartItems.map((item, i) => (
                   <motion.div
                     key={`${item.id}-${item.size}-${item.variantId}`}
@@ -102,12 +106,33 @@ export function Cart() {
 
             {/* Summary */}
             <motion.div
-              className="lg:w-[400px] bg-gray-50 p-8 h-fit"
+              className="lg:w-[400px] bg-background-light p-8 h-fit border border-border rounded-sm"
               initial={reduceMotion ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              <h2 className="font-heading font-bold uppercase tracking-wider mb-6">Order Summary</h2>
+              <h2 className="font-heading font-bold uppercase tracking-wider mb-6 text-xl">Order Summary</h2>
+
+              {/* Free Shipping Progress Indicator */}
+              <div className="bg-white p-4 border border-border rounded-sm mb-6">
+                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider mb-2">
+                  <span className="flex items-center gap-1.5 text-accent">
+                    <Truck size={15} />
+                    {cartTotal >= FREE_SHIPPING_THRESHOLD ? (
+                      <span>Free Delivery Unlocked! 🎉</span>
+                    ) : (
+                      <span>Add ₦{amountNeededForFreeShipping.toLocaleString()} for Free Delivery</span>
+                    )}
+                  </span>
+                  <span className="font-mono text-accent">{freeShippingProgress}%</span>
+                </div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-all duration-500 rounded-full"
+                    style={{ width: `${freeShippingProgress}%` }}
+                  />
+                </div>
+              </div>
 
               <div className="flex flex-col gap-4 mb-8">
                 <div className="flex justify-between text-sm">
@@ -116,9 +141,15 @@ export function Cart() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Delivery</span>
-                  <span className="text-gray-500">Calculated at checkout</span>
+                  <span className="text-gray-500">
+                    {cartTotal >= FREE_SHIPPING_THRESHOLD ? (
+                      <span className="text-accent font-bold">COMPLIMENTARY</span>
+                    ) : (
+                      'Calculated at checkout'
+                    )}
+                  </span>
                 </div>
-                <div className="border-t border-gray-200 pt-4 flex justify-between font-bold text-lg">
+                <div className="border-t border-border pt-4 flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span>₦{cartTotal.toLocaleString()}</span>
                 </div>
@@ -126,7 +157,7 @@ export function Cart() {
 
               <Link
                 to="/checkout"
-                className="btn-primary block w-full text-center py-4"
+                className="btn-primary block w-full text-center py-4 text-xs font-bold uppercase tracking-widest"
               >
                 Proceed to Checkout
               </Link>

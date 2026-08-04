@@ -14,7 +14,7 @@ const SIZE_CHART = [
   { size: 'Free Size', uk: '8 - 20', us: '4 - 16', bustIn: '33-48', waistIn: 'Flexible', hipsIn: 'Flexible', lengthIn: '60-62', bustCm: '84-122', waistCm: 'Flexible', hipsCm: 'Flexible', lengthCm: '152-157' },
 ];
 
-export function SizeGuideModal({ open, onClose }) {
+export function SizeGuideModal({ open, onClose, selectedSize }) {
   const [unit, setUnit] = useState('in'); // 'in' | 'cm'
   const [activeTab, setActiveTab] = useState('chart'); // 'chart' | 'measuring'
 
@@ -30,21 +30,21 @@ export function SizeGuideModal({ open, onClose }) {
           </div>
           <div>
             <h2 className="text-xl font-heading font-black uppercase tracking-tight">Atelier Size Guide</h2>
-            <p className="text-xs text-gray-500 font-normal normal-case">Bubu Lagos silhouette & fit measurement chart</p>
+            <p className="text-xs text-text-light font-normal normal-case">Bubu Lagos silhouette &amp; fit measurement chart</p>
           </div>
         </div>
       }
     >
       <div className="space-y-6">
         {/* Navigation & Controls */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4">
+          <div className="flex items-center gap-2 bg-background-light p-1 rounded-lg">
             <button
               type="button"
               onClick={() => setActiveTab('chart')}
               className={cn(
-                "px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors",
-                activeTab === 'chart' ? "bg-white text-black shadow-2xs" : "text-gray-500 hover:text-black"
+                "px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors",
+                activeTab === 'chart' ? "bg-white text-black shadow-2xs" : "text-text-light hover:text-black"
               )}
             >
               Size Chart
@@ -53,8 +53,8 @@ export function SizeGuideModal({ open, onClose }) {
               type="button"
               onClick={() => setActiveTab('measuring')}
               className={cn(
-                "px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors",
-                activeTab === 'measuring' ? "bg-white text-black shadow-2xs" : "text-gray-500 hover:text-black"
+                "px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-colors",
+                activeTab === 'measuring' ? "bg-white text-black shadow-2xs" : "text-text-light hover:text-black"
               )}
             >
               How to Measure
@@ -63,14 +63,14 @@ export function SizeGuideModal({ open, onClose }) {
 
           {activeTab === 'chart' && (
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-gray-500 font-medium uppercase tracking-wider text-[10px]">Units:</span>
-              <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+              <span className="text-text-light font-medium uppercase tracking-wider text-[10px]">Units:</span>
+              <div className="inline-flex rounded-lg border border-border p-0.5 bg-background-light">
                 <button
                   type="button"
                   onClick={() => setUnit('in')}
                   className={cn(
-                    "px-2.5 py-1 rounded text-[11px] font-bold transition-all",
-                    unit === 'in' ? "bg-black text-white shadow-2xs" : "text-gray-500 hover:text-black"
+                    "px-3 py-1 rounded text-[11px] font-bold transition-all",
+                    unit === 'in' ? "bg-black text-white shadow-2xs" : "text-text-light hover:text-black"
                   )}
                 >
                   Inches (&quot;)
@@ -79,8 +79,8 @@ export function SizeGuideModal({ open, onClose }) {
                   type="button"
                   onClick={() => setUnit('cm')}
                   className={cn(
-                    "px-2.5 py-1 rounded text-[11px] font-bold transition-all",
-                    unit === 'cm' ? "bg-black text-white shadow-2xs" : "text-gray-500 hover:text-black"
+                    "px-3 py-1 rounded text-[11px] font-bold transition-all",
+                    unit === 'cm' ? "bg-black text-white shadow-2xs" : "text-text-light hover:text-black"
                   )}
                 >
                   Centimeters (cm)
@@ -93,7 +93,7 @@ export function SizeGuideModal({ open, onClose }) {
         {/* Tab 1: Size Chart Table */}
         {activeTab === 'chart' && (
           <div className="space-y-5">
-            <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-2xs">
+            <div className="overflow-x-auto rounded-xl border border-border shadow-2xs">
               <table className="w-full text-left text-xs">
                 <thead className="bg-black text-white uppercase tracking-wider text-[10px]">
                   <tr>
@@ -106,46 +106,56 @@ export function SizeGuideModal({ open, onClose }) {
                     <th className="px-4 py-3 font-bold">Length ({unit})</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {SIZE_CHART.map((row) => (
-                    <tr
-                      key={row.size}
-                      className={cn(
-                        "hover:bg-gray-50 transition-colors",
-                        row.size === 'Free Size' && "bg-amber-50/40 font-semibold"
-                      )}
-                    >
-                      <td className="px-4 py-3 font-bold text-black flex items-center gap-1.5">
-                        {row.size}
-                        {row.size === 'Free Size' && (
-                          <Sparkles size={13} className="text-amber-500 flex-shrink-0" />
+                <tbody className="divide-y divide-border bg-white">
+                  {SIZE_CHART.map((row) => {
+                    const isSelectedSize = selectedSize && (
+                      row.size.toUpperCase() === selectedSize.toUpperCase() ||
+                      (selectedSize.toUpperCase() === 'FREE' && row.size === 'Free Size')
+                    );
+                    return (
+                      <tr
+                        key={row.size}
+                        className={cn(
+                          "hover:bg-background-light transition-colors",
+                          row.size === 'Free Size' && "bg-amber-50/40 font-semibold",
+                          isSelectedSize && "bg-emerald-50/80 font-bold border-l-4 border-l-accent"
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{row.uk}</td>
-                      <td className="px-4 py-3 text-gray-600">{row.us}</td>
-                      <td className="px-4 py-3 text-gray-900 font-medium">
-                        {unit === 'in' ? row.bustIn : row.bustCm}
-                      </td>
-                      <td className="px-4 py-3 text-gray-900 font-medium">
-                        {unit === 'in' ? row.waistIn : row.waistCm}
-                      </td>
-                      <td className="px-4 py-3 text-gray-900 font-medium">
-                        {unit === 'in' ? row.hipsIn : row.hipsCm}
-                      </td>
-                      <td className="px-4 py-3 text-gray-900 font-medium">
-                        {unit === 'in' ? row.lengthIn : row.lengthCm}
-                      </td>
-                    </tr>
-                  ))}
+                      >
+                        <td className="px-4 py-3 font-bold text-text flex items-center gap-1.5">
+                          {row.size}
+                          {row.size === 'Free Size' && (
+                            <Sparkles size={13} className="text-amber-500 flex-shrink-0" />
+                          )}
+                          {isSelectedSize && (
+                            <span className="badge-accent text-[8px] py-0 px-1.5 ml-1">Selected</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-text-light">{row.uk}</td>
+                        <td className="px-4 py-3 text-text-light">{row.us}</td>
+                        <td className="px-4 py-3 text-text font-medium">
+                          {unit === 'in' ? row.bustIn : row.bustCm}
+                        </td>
+                        <td className="px-4 py-3 text-text font-medium">
+                          {unit === 'in' ? row.waistIn : row.waistCm}
+                        </td>
+                        <td className="px-4 py-3 text-text font-medium">
+                          {unit === 'in' ? row.hipsIn : row.hipsCm}
+                        </td>
+                        <td className="px-4 py-3 text-text font-medium">
+                          {unit === 'in' ? row.lengthIn : row.lengthCm}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Fit Advice Notice */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 flex items-start gap-3">
-              <Info size={18} className="text-black flex-shrink-0 mt-0.5" />
-              <div className="text-xs text-gray-600 space-y-1">
-                <p className="font-bold text-black">Atelier Fit Recommendation</p>
+            <div className="bg-background-light p-4 rounded-xl border border-border flex items-start gap-3">
+              <Info size={18} className="text-accent flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-text-light space-y-1">
+                <p className="font-bold text-text">Atelier Fit Recommendation</p>
                 <p className="leading-relaxed">
                   Bubu Lagos signature kaftans and boubous feature a relaxed, fluid drape designed for elegance and maximum comfort.
                   If you fall between sizes or desire a more tailored silhouette, we recommend choosing one size down.
@@ -159,42 +169,42 @@ export function SizeGuideModal({ open, onClose }) {
         {activeTab === 'measuring' && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-black">
+              <div className="p-4 bg-background-light rounded-xl border border-border space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-text">
                   <span className="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center">1</span>
                   Bust Measurement
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-text-light leading-relaxed">
                   Measure around the fullest part of your bust, keeping the measuring tape horizontal and comfortable across your back.
                 </p>
               </div>
 
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-black">
+              <div className="p-4 bg-background-light rounded-xl border border-border space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-text">
                   <span className="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center">2</span>
                   Waist Measurement
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-text-light leading-relaxed">
                   Measure around the narrowest part of your natural waistline (typically above your belly button).
                 </p>
               </div>
 
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-black">
+              <div className="p-4 bg-background-light rounded-xl border border-border space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-text">
                   <span className="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center">3</span>
                   Hips Measurement
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-text-light leading-relaxed">
                   Stand with feet together and measure around the fullest point of your hips and rear.
                 </p>
               </div>
 
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-black">
+              <div className="p-4 bg-background-light rounded-xl border border-border space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-text">
                   <span className="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center">4</span>
                   Garment Length
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-text-light leading-relaxed">
                   Measured vertically from the highest point of the shoulder straight down to the bottom hemline.
                 </p>
               </div>
@@ -218,11 +228,11 @@ export function SizeGuideModal({ open, onClose }) {
         )}
 
         {/* Footer actions */}
-        <div className="pt-4 border-t border-gray-100 flex justify-end">
+        <div className="pt-4 border-t border-border flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-black/90 transition-colors"
+            className="btn-primary px-6 py-2.5 text-xs"
           >
             Close Guide
           </button>

@@ -4,9 +4,22 @@ import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useState } from 'react';
 import api from '../utils/api';
-import { X } from 'lucide-react';
+import { X, MapPin, Check, Sparkles } from 'lucide-react';
 import { logger } from '../lib/logger';
 import { motion, useReducedMotion } from 'framer-motion';
+
+const NIGERIA_STATES = [
+  'Lagos', 'FCT Abuja', 'Rivers', 'Oyo', 'Ogun', 'Enugu', 'Kano', 'Edo',
+  'Delta', 'Anambra', 'Akwa Ibom', 'Abia', 'Kaduna', 'Ondo', 'Kwora', 'Cross River'
+];
+
+const POPULAR_LOCATIONS = [
+  { city: 'Lagos Island (Lekki / Ikoyi / VI)', state: 'Lagos' },
+  { city: 'Lagos Mainland (Ikeja / Yaba)', state: 'Lagos' },
+  { city: 'Abuja Central', state: 'FCT Abuja' },
+  { city: 'Port Harcourt', state: 'Rivers' },
+  { city: 'Ibadan', state: 'Oyo' }
+];
 
 export function Checkout() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -21,7 +34,7 @@ export function Checkout() {
     address: '',
     apartment: '',
     city: '',
-    state: '',
+    state: 'Lagos',
     zipCode: '',
     phone: '',
     subscribeNewsletter: false
@@ -39,6 +52,15 @@ export function Checkout() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleQuickLocationSelect = (loc) => {
+    setFormData(prev => ({
+      ...prev,
+      city: loc.city,
+      state: loc.state
+    }));
+    toast.success(`Set location: ${loc.city}, ${loc.state}`);
   };
 
   const handleApplyGiftCard = async () => {
@@ -121,17 +143,12 @@ export function Checkout() {
       const response = await api.post('/orders', orderData);
 
       if (response.payment && response.payment.authorizationUrl) {
-        // Stash the email so the post-Paystack return (PaymentVerify)
-        // can pass it as the 2nd factor to /orders/verify/:reference.
-        // We key the email cache by reference so a single typo doesn't
-        // bleed into a later order. Cleared on PaymentVerify success.
         localStorage.setItem('pendingOrder', JSON.stringify({
           reference: response.order.reference,
           orderId: response.order.id,
           email: orderData.customerEmail
         }));
         localStorage.setItem('checkoutEmail', orderData.customerEmail);
-        // Also stash per-reference so OrderDetail can re-use it later.
         try {
           localStorage.setItem(
             `orderEmail:${response.order.reference}`,
@@ -189,7 +206,7 @@ export function Checkout() {
                     type="email"
                     name="email"
                     placeholder="Email"
-                    className="w-full p-3 border border-gray-300 focus:border-black outline-none" 
+                    className="w-full p-3 border border-border focus:border-black outline-none rounded-xs" 
                     required 
                     value={formData.email}
                     onChange={handleInputChange}
@@ -202,20 +219,45 @@ export function Checkout() {
                       checked={formData.subscribeNewsletter}
                       onChange={handleInputChange}
                     />
-                    Email me with news and offers
+                    Email me with Atelier news, bespoke launches, and private offers
                   </label>
                 </div>
               </section>
 
               <section>
-                <h2 className="text-lg font-bold uppercase tracking-wider mb-4">Shipping Address</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold uppercase tracking-wider">Shipping Address</h2>
+                  <span className="text-[10px] uppercase font-bold text-accent flex items-center gap-1">
+                    <MapPin size={12} /> Fast Delivery Assistance
+                  </span>
+                </div>
+
+                {/* Quick Location Chips */}
+                <div className="mb-4 bg-background-light p-3 border border-border rounded-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-light block mb-2">
+                    Popular Delivery Regions:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {POPULAR_LOCATIONS.map((loc, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleQuickLocationSelect(loc)}
+                        className="text-[10px] font-semibold px-2.5 py-1 bg-white border border-border rounded-full hover:border-black hover:bg-black hover:text-white transition-all"
+                      >
+                        {loc.city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-4">
                   <div className="flex gap-4">
                     <input 
                       type="text" 
                       name="firstName"
                       placeholder="First name" 
-                      className="w-1/2 p-3 border border-gray-300 focus:border-black outline-none" 
+                      className="w-1/2 p-3 border border-border focus:border-black outline-none rounded-xs" 
                       required 
                       value={formData.firstName}
                       onChange={handleInputChange}
@@ -224,7 +266,7 @@ export function Checkout() {
                       type="text" 
                       name="lastName"
                       placeholder="Last name" 
-                      className="w-1/2 p-3 border border-gray-300 focus:border-black outline-none" 
+                      className="w-1/2 p-3 border border-border focus:border-black outline-none rounded-xs" 
                       required 
                       value={formData.lastName}
                       onChange={handleInputChange}
@@ -233,8 +275,8 @@ export function Checkout() {
                   <input 
                     type="text" 
                     name="address"
-                    placeholder="Address" 
-                    className="w-full p-3 border border-gray-300 focus:border-black outline-none" 
+                    placeholder="Street address (e.g. 15 Admiralty Way)" 
+                    className="w-full p-3 border border-border focus:border-black outline-none rounded-xs" 
                     required 
                     value={formData.address}
                     onChange={handleInputChange}
@@ -242,8 +284,8 @@ export function Checkout() {
                   <input 
                     type="text" 
                     name="apartment"
-                    placeholder="Apartment, suite, etc. (optional)" 
-                    className="w-full p-3 border border-gray-300 focus:border-black outline-none" 
+                    placeholder="Apartment, suite, unit, etc. (optional)" 
+                    className="w-full p-3 border border-border focus:border-black outline-none rounded-xs" 
                     value={formData.apartment}
                     onChange={handleInputChange}
                   />
@@ -251,27 +293,29 @@ export function Checkout() {
                     <input 
                       type="text" 
                       name="city"
-                      placeholder="City" 
-                      className="w-1/3 p-3 border border-gray-300 focus:border-black outline-none" 
+                      placeholder="City (e.g. Lekki Phase 1)" 
+                      className="w-1/3 p-3 border border-border focus:border-black outline-none rounded-xs" 
                       required 
                       value={formData.city}
                       onChange={handleInputChange}
                     />
-                    <input 
-                      type="text" 
+                    <select
                       name="state"
-                      placeholder="State" 
-                      className="w-1/3 p-3 border border-gray-300 focus:border-black outline-none" 
-                      required 
                       value={formData.state}
                       onChange={handleInputChange}
-                    />
+                      className="w-1/3 p-3 border border-border focus:border-black outline-none bg-white text-sm rounded-xs"
+                      required
+                    >
+                      <option value="">Select State</option>
+                      {NIGERIA_STATES.map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
                     <input 
                       type="text" 
                       name="zipCode"
-                      placeholder="ZIP code" 
-                      className="w-1/3 p-3 border border-gray-300 focus:border-black outline-none" 
-                      required 
+                      placeholder="ZIP / Postal code" 
+                      className="w-1/3 p-3 border border-border focus:border-black outline-none rounded-xs" 
                       value={formData.zipCode}
                       onChange={handleInputChange}
                     />
@@ -279,8 +323,8 @@ export function Checkout() {
                   <input 
                     type="tel" 
                     name="phone"
-                    placeholder="Phone" 
-                    className="w-full p-3 border border-gray-300 focus:border-black outline-none" 
+                    placeholder="Phone number (+234)" 
+                    className="w-full p-3 border border-border focus:border-black outline-none rounded-xs" 
                     required 
                     value={formData.phone}
                     onChange={handleInputChange}
@@ -290,23 +334,32 @@ export function Checkout() {
 
               <section>
                 <h2 className="text-lg font-bold uppercase tracking-wider mb-4">Shipping Method</h2>
-                <div className="p-4 border border-gray-300 bg-gray-50 text-sm text-gray-500">
-                  Standard Shipping (Free)
+                <div className="p-4 border border-border bg-background-light text-sm text-text flex items-center justify-between rounded-sm">
+                  <div>
+                    <p className="font-bold uppercase tracking-wider text-xs">Standard Atelier Express Delivery</p>
+                    <p className="text-xs text-text-light mt-0.5">Complimentary Lagos &amp; Priority Nationwide Delivery</p>
+                  </div>
+                  <span className="badge-accent text-[9px]">Included</span>
                 </div>
               </section>
 
               <section>
-                <h2 className="text-lg font-bold uppercase tracking-wider mb-4">Payment</h2>
-                <div className="p-4 border border-gray-300 bg-gray-50 text-sm text-gray-600">
-                  <p className="font-medium mb-1">Pay with Paystack</p>
-                  <p className="text-gray-500">You will be redirected to Paystack to complete your payment securely.</p>
+                <h2 className="text-lg font-bold uppercase tracking-wider mb-4">Payment Method</h2>
+                <div className="p-4 border border-border bg-background-light text-sm text-text-light rounded-sm">
+                  <p className="font-bold text-text mb-1 uppercase tracking-wider text-xs flex items-center gap-2">
+                    <Sparkles size={14} className="text-accent" />
+                    Paystack Secure Checkout
+                  </p>
+                  <p className="text-xs leading-relaxed">
+                    Cards, Bank Transfer, USSD, and Apple Pay supported. Payment is encrypted end-to-end.
+                  </p>
                 </div>
               </section>
 
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors mt-4 disabled:bg-gray-400 disabled:cursor-not-allowed lg:hidden"
+                className="btn-primary w-full py-4 uppercase tracking-widest text-xs font-bold transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed lg:hidden"
               >
                 {isSubmitting ? 'Processing...' : `Pay ₦${finalTotal.toLocaleString()}`}
               </button>
@@ -314,7 +367,7 @@ export function Checkout() {
           </div>
 
           <motion.div
-            className="lg:w-[400px] bg-gray-50 p-8 h-fit lg:sticky lg:top-24"
+            className="lg:w-[400px] bg-background-light p-8 h-fit lg:sticky lg:top-24 border border-border rounded-sm"
             initial={reduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
@@ -322,20 +375,20 @@ export function Checkout() {
             <div className="flex flex-col gap-6 mb-8">
               {cartItems.map((item) => (
                 <div key={`${item.id}-${item.size}`} className="flex gap-4">
-                  <div className="relative w-16 h-20 bg-white border border-gray-200">
+                  <div className="relative w-16 h-20 bg-white border border-border">
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-black text-white text-xs flex items-center justify-center rounded-full">{item.quantity}</span>
+                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-black text-white text-xs flex items-center justify-center rounded-full font-mono">{item.quantity}</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-sm">{item.name}</h4>
-                    <p className="text-xs text-gray-500">{item.size}</p>
+                    <h4 className="font-bold text-sm uppercase tracking-wider">{item.name}</h4>
+                    <p className="text-xs text-text-light uppercase tracking-wider">Size: {item.size}</p>
                   </div>
-                  <span className="text-sm font-medium">{item.price}</span>
+                  <span className="text-sm font-bold font-mono">{item.price}</span>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-gray-200 pt-6 mt-6 flex flex-col gap-4">
+            <div className="border-t border-border pt-6 mt-6 flex flex-col gap-4">
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <input 
@@ -343,13 +396,13 @@ export function Checkout() {
                     placeholder="Coupon code" 
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    className="flex-1 p-3 border border-gray-300 focus:border-black outline-none text-sm bg-white" 
+                    className="flex-1 p-3 border border-border focus:border-black outline-none text-xs bg-white uppercase rounded-xs" 
                   />
                   <button 
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={isValidatingCoupon || !couponCode}
-                    className="px-4 py-2 bg-gray-200 text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                    className="btn-secondary px-4 py-2 text-[10px] disabled:opacity-50"
                   >
                     {isValidatingCoupon ? '...' : 'Apply'}
                   </button>
@@ -358,16 +411,16 @@ export function Checkout() {
                 <div className="flex gap-2">
                   <input 
                     type="text" 
-                    placeholder="Gift card" 
+                    placeholder="Gift card code" 
                     value={giftCardCode}
                     onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
-                    className="flex-1 p-3 border border-gray-300 focus:border-black outline-none text-sm bg-white" 
+                    className="flex-1 p-3 border border-border focus:border-black outline-none text-xs bg-white uppercase rounded-xs" 
                   />
                   <button 
                     type="button"
                     onClick={handleApplyGiftCard}
                     disabled={isValidatingGC || !giftCardCode}
-                    className="px-4 py-2 bg-gray-200 text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+                    className="btn-secondary px-4 py-2 text-[10px] disabled:opacity-50"
                   >
                     {isValidatingGC ? '...' : 'Apply'}
                   </button>
@@ -376,12 +429,12 @@ export function Checkout() {
 
               <div className="space-y-2">
                 {appliedCoupon && (
-                  <div className="flex justify-between items-center text-xs py-2 px-3 bg-blue-50 border border-blue-100 rounded text-blue-800">
+                  <div className="flex justify-between items-center text-xs py-2 px-3 bg-emerald-50 border border-emerald-200 rounded text-emerald-900">
                     <div className="flex items-center gap-2">
                       <span className="font-bold">Coupon ({appliedCoupon.code})</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>-₦{couponDiscount.toLocaleString()}</span>
+                      <span className="font-bold">-₦{couponDiscount.toLocaleString()}</span>
                       <button 
                         onClick={() => setAppliedCoupon(null)} 
                         className="text-red-500 hover:text-red-700"
@@ -393,13 +446,13 @@ export function Checkout() {
                 )}
 
                 {appliedGiftCard && (
-                  <div className="flex justify-between items-center text-xs py-2 px-3 bg-green-50 border border-green-100 rounded text-green-800">
+                  <div className="flex justify-between items-center text-xs py-2 px-3 bg-emerald-50 border border-emerald-200 rounded text-emerald-900">
                     <div className="flex items-center gap-2">
                       <span className="font-bold">Gift Card</span>
-                      <span className="opacity-60">{appliedGiftCard.masked}</span>
+                      <span className="opacity-60 font-mono">{appliedGiftCard.masked}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>-₦{giftCardDiscount.toLocaleString()}</span>
+                      <span className="font-bold">-₦{giftCardDiscount.toLocaleString()}</span>
                       <button 
                         onClick={() => setAppliedGiftCard(null)} 
                         className="text-red-500 hover:text-red-700"
@@ -412,45 +465,45 @@ export function Checkout() {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-4 flex flex-col gap-2 text-sm">
+            <div className="border-t border-border pt-4 mt-4 flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>₦{cartTotal.toLocaleString()}</span>
+                <span className="font-mono">₦{cartTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery</span>
-                <span className="text-xs">Complimentary</span>
+                <span className="text-xs text-accent font-bold">COMPLIMENTARY</span>
               </div>
               {couponDiscount > 0 && (
-                <div className="flex justify-between text-blue-600 font-medium">
+                <div className="flex justify-between text-accent font-medium">
                   <span>Coupon Discount</span>
-                  <span>-₦{couponDiscount.toLocaleString()}</span>
+                  <span className="font-mono">-₦{couponDiscount.toLocaleString()}</span>
                 </div>
               )}
               {giftCardDiscount > 0 && (
-                <div className="flex justify-between text-green-600 font-medium">
+                <div className="flex justify-between text-accent font-medium">
                   <span>Gift Card</span>
-                  <span>-₦{giftCardDiscount.toLocaleString()}</span>
+                  <span className="font-mono">-₦{giftCardDiscount.toLocaleString()}</span>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between font-bold text-lg">
+            <div className="border-t border-border mt-4 pt-4 flex justify-between font-bold text-lg">
               <span>Total</span>
               <div className="flex flex-col items-end">
-                <span>₦{finalTotal.toLocaleString()}</span>
-                <span className="text-[10px] text-gray-400 font-normal uppercase tracking-wider">NGN</span>
+                <span className="font-mono font-bold">₦{finalTotal.toLocaleString()}</span>
+                <span className="text-[10px] text-text-light font-normal uppercase tracking-wider">NGN</span>
               </div>
             </div>
             
             <motion.button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                whileTap={reduceMotion ? undefined : { scale: 0.97 }}
-                className="w-full py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors mt-8 disabled:bg-gray-400 disabled:cursor-not-allowed hidden lg:block"
-              >
-                {isSubmitting ? 'Processing...' : `Pay ₦${finalTotal.toLocaleString()}`}
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+              className="btn-primary w-full py-4 text-xs font-bold uppercase tracking-widest mt-8 disabled:opacity-50 disabled:cursor-not-allowed hidden lg:block"
+            >
+              {isSubmitting ? 'Processing...' : `Pay ₦${finalTotal.toLocaleString()}`}
             </motion.button>
           </motion.div>
 

@@ -8,7 +8,7 @@ import api from '../utils/api';
 import { logger } from '../lib/logger';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
-import { ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronUp, ChevronDown, Sparkles, ShoppingBag, Check } from 'lucide-react';
 
 import { ProductDetailSkeleton } from '../components/Skeleton';
 import { SizeGuideModal } from '../components/SizeGuideModal';
@@ -29,9 +29,11 @@ export function ProductDetail() {
   const [otherColors, setOtherColors] = useState([]);
   const [turbanProducts, setTurbanProducts] = useState([]);
   const [justAdded, setJustAdded] = useState(false);
-  const [activeTab, setActiveTab] = useState('photos'); // 'photos' | 'video'
   const [mobileActiveImage, setMobileActiveImage] = useState(0);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
   const mobileGalleryRef = useRef(null);
+  const addToCartBtnRef = useRef(null);
 
   const handleMobileScroll = () => {
     if (!mobileGalleryRef.current) return;
@@ -56,6 +58,23 @@ export function ProductDetail() {
     });
     setMobileActiveImage(index);
   };
+
+  // Sticky Mobile Bar Scroll Observer
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      if (!addToCartBtnRef.current) return;
+      const rect = addToCartBtnRef.current.getBoundingClientRect();
+      // Show sticky bar on mobile when main button is scrolled above viewport
+      if (rect.bottom < 0 && window.innerWidth < 1024) {
+        setShowStickyBar(true);
+      } else {
+        setShowStickyBar(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, []);
 
   useEffect(() => {
     fetchProductDetails();
@@ -106,8 +125,6 @@ export function ProductDetail() {
     }
   };
 
-  // [FIX] Move derived values above handlers so references like `displayImage`
-  // are not accessed before initialization inside the closure below.
   const displayImage = product?.images && product.images.length > 0
     ? getImageUrl(product.images[0]) || FALLBACK_IMAGE
     : FALLBACK_IMAGE;
@@ -118,7 +135,7 @@ export function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    if (justAdded) return; // [FIX] Prevent double-click race.
+    if (justAdded) return;
 
     if (!product.variants?.length) {
       addToCart({
@@ -150,7 +167,6 @@ export function ProductDetail() {
     setJustAdded(true);
   };
 
-  // [FIX] Clear the justAdded timer in cleanup so we never race setState on unmount.
   useEffect(() => {
     if (!justAdded) return undefined;
     const t = setTimeout(() => setJustAdded(false), 1800);
@@ -220,7 +236,7 @@ export function ProductDetail() {
             )}
           </div>
 
-          {/* MOBILE VERTICAL SCROLL IMAGE GALLERY & THEME-MATCHED CONTROL ICONS */}
+          {/* MOBILE VERTICAL SCROLL IMAGE GALLERY */}
           <div className="lg:hidden w-full relative">
             <div
               ref={mobileGalleryRef}
@@ -254,11 +270,10 @@ export function ProductDetail() {
               ))}
             </div>
 
-            {/* THEME-MATCHED CONTROL ICONS & COUNTER (MOBILE) */}
+            {/* CONTROL ICONS & COUNTER (MOBILE) */}
             {allMedia.length > 1 && (
               <>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2.5 z-20">
-                  {/* Previous Image Chevron Icon */}
                   <button
                     type="button"
                     onClick={() => scrollToMobileImage(Math.max(0, mobileActiveImage - 1))}
@@ -269,7 +284,6 @@ export function ProductDetail() {
                     <ChevronUp size={16} />
                   </button>
 
-                  {/* Vertical Indicator Dots */}
                   <div className="flex flex-col items-center gap-1.5 bg-black/60 backdrop-blur-md px-1.5 py-2.5 rounded-full border border-white/20 shadow-md">
                     {allMedia.map((_, idx) => (
                       <button
@@ -286,7 +300,6 @@ export function ProductDetail() {
                     ))}
                   </div>
 
-                  {/* Next Image Chevron Icon */}
                   <button
                     type="button"
                     onClick={() => scrollToMobileImage(Math.min(allMedia.length - 1, mobileActiveImage + 1))}
@@ -298,7 +311,6 @@ export function ProductDetail() {
                   </button>
                 </div>
 
-                {/* Floating Counter Badge */}
                 <div className="absolute left-3 bottom-3 z-20">
                   <div className="bg-black/75 backdrop-blur-md text-white text-[10px] font-mono px-3 py-1.5 rounded-full border border-white/20 shadow-md flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -312,7 +324,7 @@ export function ProductDetail() {
 
         <div className="w-full lg:w-1/2 relative">
           <div className="sticky top-[80px] px-4 py-8 lg:p-12 lg:max-w-xl mx-auto">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-text-light mb-4">
               <Link to="/shop">Shop</Link> <span>/</span> <span>{product.category?.name || 'Products'}</span>
             </div>
 
@@ -325,42 +337,37 @@ export function ProductDetail() {
               </div>
             </div>
 
-            <motion.button
-              onClick={handleAddToCart}
-              whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-              className="btn-primary w-full py-4 mb-8 flex items-center justify-center gap-3"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {justAdded ? (
-                  <motion.span
-                    key="added"
-                    className="flex items-center gap-2"
-                    initial={reduceMotion ? false : { opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={reduceMotion ? undefined : { opacity: 0 }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <motion.path
-                        d="M4 12l5 5L20 6"
-                        initial={reduceMotion ? false : { pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                      />
-                    </svg>
-                    Added to Selection
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="default"
-                    initial={reduceMotion ? false : { opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={reduceMotion ? undefined : { opacity: 0 }}
-                  >
-                    Add to Selection
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
+            <div ref={addToCartBtnRef}>
+              <motion.button
+                onClick={handleAddToCart}
+                whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+                className="btn-primary w-full py-4 mb-8 flex items-center justify-center gap-3"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {justAdded ? (
+                    <motion.span
+                      key="added"
+                      className="flex items-center gap-2"
+                      initial={reduceMotion ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={reduceMotion ? undefined : { opacity: 0 }}
+                    >
+                      <Check size={18} />
+                      Added to Selection
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="default"
+                      initial={reduceMotion ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={reduceMotion ? undefined : { opacity: 0 }}
+                    >
+                      Add to Selection
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
 
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
@@ -368,7 +375,7 @@ export function ProductDetail() {
                 <button
                   type="button"
                   onClick={() => setShowSizeGuide(true)}
-                  className="text-xs underline text-gray-500 hover:text-black transition-colors"
+                  className="text-xs underline text-text-light hover:text-black transition-colors"
                 >
                   Size Guide
                 </button>
@@ -380,10 +387,10 @@ export function ProductDetail() {
                     onClick={() => setSelectedVariant(variant)}
                     disabled={variant.stockQuantity === 0}
                     className={cn(
-                      "h-10 border text-[10px] font-bold transition-all relative",
+                      "h-10 border text-[10px] font-bold transition-all relative rounded-xs",
                       selectedVariant?.id === variant.id
                         ? "border-black bg-black text-white"
-                        : "border-gray-200 hover:border-black text-black",
+                        : "border-border hover:border-black text-black",
                       variant.stockQuantity === 0 && "opacity-40 cursor-not-allowed border-gray-100"
                     )}
                   >
@@ -397,11 +404,11 @@ export function ProductDetail() {
                 ))}
               </div>
               {product.variants?.length === 0 && (
-                <p className="text-xs text-gray-500 italic">No sizes currently available.</p>
+                <p className="text-xs text-text-light italic">No sizes currently available.</p>
               )}
             </div>
 
-            {/* CLOTH COLOR PALETTE (1-3 Colors) */}
+            {/* CLOTH COLOR PALETTE */}
             {Array.isArray(product.colorPalette || product.color_palette) && (product.colorPalette || product.color_palette).length > 0 && (
               <div className="mb-8 p-4 bg-background-light/50 border border-black/5 rounded-lg">
                 <span className="text-xs font-bold uppercase tracking-[0.2em] block mb-2.5 text-black">
@@ -437,7 +444,7 @@ export function ProductDetail() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <span className="text-[9px] uppercase tracking-wide mt-1 block truncate w-16 text-gray-500 group-hover:text-black">
+                      <span className="text-[9px] uppercase tracking-wide mt-1 block truncate w-16 text-text-light group-hover:text-black">
                         {colorProd.name.split('-').pop().trim() || 'View'}
                       </span>
                     </Link>
@@ -452,12 +459,11 @@ export function ProductDetail() {
                 <div className="flex items-center justify-between border-b border-black/5 pb-3">
                   <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-black flex items-center gap-2 font-serif">
                     <Sparkles size={14} className="text-accent" />
-                    Product Description & Silhouette Details
+                    Product Description &amp; Silhouette Details
                   </h3>
                 </div>
 
-                {/* Paragraph Formatting */}
-                <div className="text-xs leading-[1.85] text-gray-700 font-sans space-y-3">
+                <div className="text-xs leading-[1.85] text-text font-sans space-y-3">
                   {product.description.split('\n').filter(Boolean).map((paragraph, pIdx) => (
                     <p key={pIdx}>
                       {paragraph.trim()}
@@ -465,21 +471,20 @@ export function ProductDetail() {
                   ))}
                 </div>
 
-                {/* Craftsmanship Highlights Grid */}
                 <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-black/5">
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-text-light font-sans">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     <span>Artisanal Lagos Tailoring</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-text-light font-sans">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     <span>Flowing Bubu Cut</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-text-light font-sans">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     <span>Hand-Finished Detailing</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-700 font-sans">
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-text-light font-sans">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                     <span>Atelier Heritage Piece</span>
                   </div>
@@ -490,7 +495,7 @@ export function ProductDetail() {
             {/* GARMENT CARE & FABRIC MAINTENANCE */}
             <GarmentCare className="mb-8" />
 
-            <div className="text-[10px] text-gray-400 font-mono">
+            <div className="text-[10px] text-text-light font-mono">
               Ref. {product.id?.slice(0, 8).toUpperCase() || 'N/A'}
             </div>
           </div>
@@ -499,7 +504,7 @@ export function ProductDetail() {
 
       {turbanProducts.length > 0 && (
         <motion.section
-          className="px-4 py-8 lg:py-16 border-t border-gray-100 bg-gray-50/50"
+          className="px-4 py-8 lg:py-16 border-t border-border bg-background-light/50"
           initial={reduceMotion ? false : { opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
@@ -507,7 +512,7 @@ export function ProductDetail() {
         >
           <div className="max-w-6xl mx-auto">
             <h2 className="text-xl lg:text-2xl font-heading font-black uppercase tracking-widest mb-2">Complete the Look</h2>
-            <p className="text-xs text-gray-500 uppercase tracking-widest mb-8">Pair with our signature turbans</p>
+            <p className="text-xs text-text-light uppercase tracking-widest mb-8">Pair with our signature turbans</p>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
               {turbanProducts.map((turban, i) => (
                 <ProductCard key={turban.id} product={turban} delay={i * 0.08} inView={false} />
@@ -519,7 +524,7 @@ export function ProductDetail() {
 
       {relatedProducts.length > 0 && (
         <motion.section
-          className="px-4 py-8 lg:py-16 border-t border-gray-100"
+          className="px-4 py-8 lg:py-16 border-t border-border"
           initial={reduceMotion ? false : { opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
@@ -536,7 +541,47 @@ export function ProductDetail() {
         </motion.section>
       )}
 
-      <SizeGuideModal open={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
+      {/* STICKY MOBILE ADD-TO-SELECTION BAR (Phase 2) */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/90 backdrop-blur-md text-white p-3 px-4 border-t border-white/10 flex items-center justify-between gap-3 shadow-2xl"
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <img src={displayImage} alt={product.name} className="w-10 h-12 object-cover rounded-xs border border-white/20 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white truncate">{product.name}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono text-accent-light font-bold">{displayPrice}</span>
+                  {selectedVariant && (
+                    <span className="text-[9px] text-white/70 uppercase tracking-widest border border-white/20 px-1.5 py-0.5 rounded">
+                      {selectedVariant.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={justAdded}
+              className="btn-accent py-2.5 px-4 text-[10px] whitespace-nowrap shadow-md flex-shrink-0"
+            >
+              {justAdded ? 'Added ✓' : '+ Add to Selection'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <SizeGuideModal
+        open={showSizeGuide}
+        onClose={() => setShowSizeGuide(false)}
+        selectedSize={selectedVariant?.name}
+      />
     </Layout>
   );
 }

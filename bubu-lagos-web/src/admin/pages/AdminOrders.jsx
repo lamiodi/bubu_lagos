@@ -1,7 +1,7 @@
 import { AdminLayout } from '../components/AdminLayout';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Eye, ChevronLeft, ChevronRight, Download, Copy, Inbox, ArrowLeft } from 'lucide-react';
+import { Search, Filter, Eye, ChevronLeft, ChevronRight, Download, Copy, Inbox, ArrowLeft, Calendar } from 'lucide-react';
 import api from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import { logger } from '../../lib/logger';
@@ -23,6 +23,7 @@ export function AdminOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [dateRange, setDateRange] = useState('all'); // 'all' | 'today' | 'week' | 'month'
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -65,11 +66,36 @@ export function AdminOrders() {
     }
   };
 
-  const filteredOrders = useMemo(() => orders.filter((order) =>
-    order.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
-  ), [orders, searchTerm]);
+  const filteredOrders = useMemo(() => {
+    const now = new Date();
+    return orders.filter((order) => {
+      const matchesSearch = 
+        order.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      if (dateRange === 'today') {
+        const orderDate = new Date(order.createdAt);
+        return orderDate.toDateString() === now.toDateString();
+      }
+
+      if (dateRange === 'week') {
+        const orderDate = new Date(order.createdAt);
+        const sevenDaysAgo = new Date(now.valueOf() - 7 * 24 * 60 * 60 * 1000);
+        return orderDate >= sevenDaysAgo;
+      }
+
+      if (dateRange === 'month') {
+        const orderDate = new Date(order.createdAt);
+        const thirtyDaysAgo = new Date(now.valueOf() - 30 * 24 * 60 * 60 * 1000);
+        return orderDate >= thirtyDaysAgo;
+      }
+
+      return true;
+    });
+  }, [orders, searchTerm, dateRange]);
 
   const openOrderDetails = async (order) => {
     try {
@@ -84,7 +110,6 @@ export function AdminOrders() {
     }
   };
 
-  // [FIX #6] Optimistic status update with rollback.
   const updateOrderStatus = async (orderId, newStatus) => {
     const prev = orders;
     const prevSelected = selectedOrder;
@@ -110,7 +135,6 @@ export function AdminOrders() {
     }
   };
 
-  // [FIX #20] Selection + bulk actions.
   const toggleSelect = (id) => {
     setSelectedIds((s) => {
       const next = new Set(s);
@@ -134,7 +158,6 @@ export function AdminOrders() {
       setSelectedIds(new Set());
       fetchOrders(pagination.page);
     } catch (err) {
-      // Fall back: update one-by-one.
       let ok = 0;
       for (const id of ids) {
         try { await api.put(`/orders/${id}/status`, { status }); ok++; } catch { /* ignore */ }
@@ -145,7 +168,6 @@ export function AdminOrders() {
     }
   };
 
-  // [FIX #7] CSV export.
   const exportCSV = () => {
     const rows = [
       ['Reference', 'Customer', 'Email', 'Phone', 'Total', 'Status', 'Date'],
@@ -159,7 +181,7 @@ export function AdminOrders() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `bubu-lagos-orders-${dateRange}-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -229,7 +251,7 @@ export function AdminOrders() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
             <p className="text-gray-500 text-sm">
               {filteredOrders.length !== orders.length
                 ? `${filteredOrders.length} matching · ${pagination.total} total`
@@ -250,33 +272,62 @@ export function AdminOrders() {
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="relative w-full md:w-96">
+          <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <label htmlFor="orders-search" className="sr-only">Search orders</label>
             <input
               id="orders-search"
               type="search"
-              placeholder="Search by reference, name, or email..."
+              placeholder="Search by reference, name, email..."
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="text-gray-400" size={18} />
-            <label htmlFor="status-filter" className="sr-only">Filter by status</label>
-            <select
-              id="status-filter"
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Paid">Paid</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
+
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+            {/* Date Range Quick Filter */}
+            <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200 text-xs font-semibold">
+              <span className="px-2 text-gray-400 flex items-center gap-1">
+                <Calendar size={13} />
+              </span>
+              {[
+                { id: 'all', label: 'All Time' },
+                { id: 'today', label: 'Today' },
+                { id: 'week', label: 'This Week' },
+                { id: 'month', label: 'This Month' }
+              ].map(range => (
+                <button
+                  key={range.id}
+                  type="button"
+                  onClick={() => setDateRange(range.id)}
+                  className={`px-2.5 py-1 rounded transition-all ${
+                    dateRange === range.id
+                      ? 'bg-black text-white shadow-2xs'
+                      : 'text-gray-600 hover:text-black'
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="text-gray-400" size={16} />
+              <select
+                id="status-filter"
+                className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-black/5"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Paid">Paid</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -338,7 +389,7 @@ export function AdminOrders() {
           <TableEmptyState
             icon={Inbox}
             title="No orders found"
-            description={searchTerm ? 'Try clearing your search or filters.' : 'When customers place orders they will appear here.'}
+            description={searchTerm || dateRange !== 'all' ? 'Try clearing your search or date range filters.' : 'When customers place orders they will appear here.'}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -376,16 +427,16 @@ export function AdminOrders() {
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900 font-mono text-xs">{order.reference}</td>
                     <td className="px-6 py-4">
-                      <div className="text-gray-900">{order.customerName}</div>
+                      <div className="text-gray-900 font-medium">{order.customerName}</div>
                       <div className="text-gray-500 text-xs">{order.customerEmail}</div>
                     </td>
-                    <td className="px-6 py-4 text-gray-900 font-medium">{formatNGN(order.totalAmount)}</td>
+                    <td className="px-6 py-4 text-gray-900 font-bold font-mono">{formatNGN(order.totalAmount)}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700'}`}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{formatDate(order.createdAt, { withTime: true })}</td>
+                    <td className="px-6 py-4 text-gray-600 text-xs">{formatDate(order.createdAt, { withTime: true })}</td>
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => openOrderDetails(order)}
@@ -415,7 +466,6 @@ export function AdminOrders() {
               >
                 <ChevronLeft size={16} /> Previous
               </button>
-              {/* [FIX #33] Jump to page */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();

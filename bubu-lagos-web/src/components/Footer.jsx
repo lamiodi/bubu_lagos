@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { SizeGuideModal } from './SizeGuideModal';
+import { Check } from 'lucide-react';
 
 const FOOTER_LINKS = {
   categories: [
@@ -49,6 +50,11 @@ export function Footer() {
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     if (!privacyAccepted) {
       toast.error('Please accept the privacy policy');
       return;
@@ -57,18 +63,18 @@ export function Footer() {
     setIsSubmitting(true);
     try {
       await api.post('/marketing/subscribe', { email });
-      toast.success('Thank you for subscribing!');
+      toast.success('Thank you for subscribing to Bubu Lagos Atelier!');
       setEmail('');
       setPrivacyAccepted(false);
     } catch (err) {
-      toast.error(err.message || 'Failed to subscribe');
+      toast.error(err.message || 'Failed to subscribe. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <footer className="bg-black text-white overflow-hidden">
+    <footer className="bg-black text-white overflow-hidden border-t border-white/10">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 pt-12 sm:pt-16 pb-8">
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-10 mb-12 sm:mb-16"
@@ -79,7 +85,7 @@ export function Footer() {
             show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
           }}
         >
-          {/* Newsletter Column - Spans 2 columns on lg screens for responsive email input layout */}
+          {/* Newsletter Column - Spans 2 columns on lg screens */}
           <motion.div
             className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-2 pr-0 lg:pr-6"
             variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } } }}
@@ -102,7 +108,7 @@ export function Footer() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-shrink-0 px-6 py-3 border border-white/30 border-l-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-white hover:bg-accent hover:border-accent transition-colors duration-200 disabled:opacity-50"
+                className="flex-shrink-0 px-6 py-3 border border-white/30 border-l-0 text-[12px] font-semibold uppercase tracking-[0.08em] text-white hover:bg-accent hover:border-accent transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-1"
               >
                 {isSubmitting ? '...' : 'OK'}
               </button>

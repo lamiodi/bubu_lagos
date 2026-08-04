@@ -8,6 +8,38 @@ import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
 import { EASE_OUT } from '../lib/motion';
+import { Instagram, ArrowUpRight, Sparkles } from 'lucide-react';
+
+const INSTAGRAM_EDITORIAL_POSTS = [
+  {
+    id: 1,
+    imageUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+    caption: 'Lagos Couture Sunset · Signature Silk Bubu in Emerald',
+    handle: '@bubulagos',
+    tag: '#BubuLagosAtelier'
+  },
+  {
+    id: 2,
+    imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
+    caption: 'Hand-finished Turban & Gele styling at Admiralty Mall',
+    handle: '@bubulagos',
+    tag: '#LagosFashion'
+  },
+  {
+    id: 3,
+    imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+    caption: 'Quiet Luxury Drapes · The Royal Velvet Boubou',
+    handle: '@bubulagos',
+    tag: '#BubuLagos'
+  },
+  {
+    id: 4,
+    imageUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop',
+    caption: 'Atelier Moments · Hand-beaded metallic trims',
+    handle: '@bubulagos',
+    tag: '#LagosCouture'
+  }
+];
 
 export function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -42,7 +74,7 @@ export function Home() {
 
   return (
     <Layout headerVariant="transparent">
-      {/* [MOTION ADDED] Brand promise banner above the hero grid */}
+      {/* Brand promise banner above the hero grid */}
       <section className="pt-[80px] pb-4 md:pb-6 px-5 md:px-8 text-center max-w-3xl mx-auto">
         <motion.span
           className="block text-[10px] font-bold uppercase tracking-[0.28em] text-accent mb-3"
@@ -93,10 +125,9 @@ export function Home() {
         </motion.div>
       </section>
 
-      {/* [MOTION ADDED] Hero section with staggered reveal — real products, name + price on photo */}
+      {/* Hero section */}
       <section className="pt-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          {/* Error state */}
           {error && !loading && (
             <div className="col-span-full text-center py-12">
               <p className="text-text-light text-sm mb-4">{error}</p>
@@ -111,7 +142,6 @@ export function Home() {
 
           <AnimatePresence mode="wait">
             {loading ? (
-              // [MOTION ADDED] Skeleton hero tiles while products load
               Array.from({ length: 4 }).map((_, i) => (
                 <motion.div
                   key={`hero-skel-${i}`}
@@ -148,12 +178,10 @@ export function Home() {
                       transition={{ duration: 0.7, ease: EASE_OUT }}
                       onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                     />
-                    {/* [MOTION ADDED] Dark gradient scrim so the caption is always legible */}
                     <div
                       aria-hidden="true"
                       className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
                     />
-                    {/* [MOTION ADDED] Product name + price caption (staggered) */}
                     <div className="absolute bottom-0 left-0 right-0 p-5 flex flex-col gap-1">
                       <motion.span
                         className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80"
@@ -185,7 +213,7 @@ export function Home() {
         </div>
       </section>
 
-      {/* [MOTION ADDED] Scroll-triggered featured products section */}
+      {/* Featured products carousel/grid */}
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -196,7 +224,6 @@ export function Home() {
         <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory sm:grid sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6 scrollbar-hide -mx-4 sm:mx-0 px-4 sm:px-0">
           <AnimatePresence mode="wait">
             {loading && featuredProducts.length === 0 ? (
-              // [MOTION ADDED] Render 4 skeletons with the same grid footprint
               Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
@@ -219,7 +246,56 @@ export function Home() {
         </div>
       </motion.section>
 
-      {/* [MOTION ADDED] Hero-style call-to-action strip (preserves existing layout) */}
+      {/* INSTAGRAM EDITORIAL SHOWCASE (Phase 3) */}
+      <motion.section
+        className="px-4 sm:px-6 md:px-8 py-16 bg-background-light/40 border-t border-border"
+        initial={reduceMotion ? false : { opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="max-w-6xl mx-auto text-center mb-10">
+          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent flex items-center justify-center gap-1.5 mb-2">
+            <Instagram size={14} /> Social Proof &amp; Editorial
+          </span>
+          <h2 className="font-heading text-2xl md:text-4xl font-bold uppercase tracking-widest leading-tight">
+            As Seen On #BubuLagosAtelier
+          </h2>
+          <p className="text-xs md:text-sm text-text-light mt-2 max-w-lg mx-auto">
+            Tag <a href="https://instagram.com/bubulagos" target="_blank" rel="noopener noreferrer" className="underline hover:text-black font-semibold">@bubulagos</a> to be featured in our seasonal Lagos couture showcase.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
+          {INSTAGRAM_EDITORIAL_POSTS.map((post) => (
+            <a
+              key={post.id}
+              href="https://instagram.com/bubulagos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative aspect-[3/4] overflow-hidden bg-gray-100 rounded-sm shadow-xs block"
+            >
+              <img
+                src={post.imageUrl}
+                alt={post.caption}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 text-white">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">{post.tag}</span>
+                  <ArrowUpRight size={16} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium leading-snug line-clamp-3 mb-2">{post.caption}</p>
+                  <span className="text-[10px] font-mono text-white/70">{post.handle}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </motion.section>
+
+      {/* Hero-style call-to-action strip */}
       <section className="px-5 md:px-8 py-16 md:py-24">
         <motion.div
           className="max-w-3xl mx-auto text-center"
