@@ -79,7 +79,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, categor
       }
     }
 
-    return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&h=600&fit=crop&q=80';
+    return FALLBACK_IMAGE;
   }, [activeCol, category, productsList]);
 
   // Build category cards featuring real images from DB
@@ -574,7 +574,7 @@ export function Shop() {
               {/* Background Image & Overlay Gradient */}
               <div className="absolute inset-0 z-0 opacity-35">
                 <img
-                  src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=1600&fit=crop&q=80"
+                  src={FALLBACK_IMAGE}
                   alt="Luxury Gift Wrapping"
                   className="w-full h-full object-cover scale-105 group-hover:scale-110 transition-transform duration-700"
                 />

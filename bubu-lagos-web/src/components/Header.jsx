@@ -248,7 +248,7 @@ export function Header({ variant = 'transparent' }) {
 
               <div className="relative h-44 overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&h=600&fit=crop&q=80"
+                  src={FALLBACK_IMAGE}
                   alt="Bubu Lagos atelier"
                   className="w-full h-full object-cover"
                   // Above-the-fold: eager so the drawer is instant when opened.

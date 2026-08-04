@@ -2,6 +2,7 @@ import { Layout } from '../components/Layout';
 import { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import api from '../utils/api';
+import { FALLBACK_IMAGE } from '../lib/utils';
 import { Send, MapPin, Phone, Mail } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 
@@ -49,7 +50,7 @@ export function Contact() {
                 {/* Hero Section */}
                 <section className="relative h-[40vh] bg-black overflow-hidden flex items-center justify-center">
                     <img
-                        src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&h=600&fit=crop"
+                        src={FALLBACK_IMAGE}
                         alt="Atelier"
                         className="absolute inset-0 w-full h-full object-cover opacity-50"
                     />

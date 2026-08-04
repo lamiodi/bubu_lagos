@@ -99,7 +99,7 @@ export function getInitials(name, fallback = '?') {
  * fails to load. Kept here (not in a sample/mock data file) so the frontend
  * has zero hardcoded product data — everything comes from the database.
  */
-export const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=800&h=1000&fit=crop';
+export const FALLBACK_IMAGE = '/logo.png';
 
 /**
  * Class-merge helper for conditional classNames.

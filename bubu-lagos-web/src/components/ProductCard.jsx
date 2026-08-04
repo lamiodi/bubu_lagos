@@ -35,7 +35,7 @@ const ProductCardInner = function ProductCard({ product, inView = true }) {
 
   const displayImage = product.images && product.images.length > 0
     ? getImageUrl(product.images[0])
-    : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=533&fit=crop';
+    : FALLBACK_IMAGE;
 
   // [NEW] Gift cards (and any product that opts in via product.linkOverride) should
   // route to their override URL instead of the standard /product/:id detail page.

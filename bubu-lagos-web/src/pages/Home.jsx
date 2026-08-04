@@ -12,28 +12,28 @@ import { Instagram, ArrowUpRight } from 'lucide-react';
 const INSTAGRAM_EDITORIAL_POSTS = [
   {
     id: 1,
-    imageUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop',
+    imageUrl: FALLBACK_IMAGE,
     caption: 'Lagos Couture Sunset · Signature Silk Bubu in Emerald',
     handle: '@bubulagos',
     tag: '#BubuLagosAtelier'
   },
   {
     id: 2,
-    imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop',
+    imageUrl: FALLBACK_IMAGE,
     caption: 'Hand-finished Turban & Gele styling at Admiralty Mall',
     handle: '@bubulagos',
     tag: '#LagosFashion'
   },
   {
     id: 3,
-    imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop',
+    imageUrl: FALLBACK_IMAGE,
     caption: 'Quiet Luxury Drapes · The Royal Velvet Boubou',
     handle: '@bubulagos',
     tag: '#BubuLagos'
   },
   {
     id: 4,
-    imageUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop',
+    imageUrl: FALLBACK_IMAGE,
     caption: 'Atelier Moments · Hand-beaded metallic trims',
     handle: '@bubulagos',
     tag: '#LagosCouture'

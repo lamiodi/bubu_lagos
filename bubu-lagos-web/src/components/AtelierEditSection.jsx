@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, X, Compass, Feather } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { FALLBACK_IMAGE } from '../lib/utils';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,7 +21,7 @@ export const ATELIER_SLIDES = [
       { label: 'Material', value: '100% Raw Mulberry Silk' },
       { label: 'Crafting Time', value: '38 Hand Hours' },
     ],
-    src: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Emerald silk garment flowing with regal elegance in Lagos atelier'
   },
   {
@@ -34,7 +35,7 @@ export const ATELIER_SLIDES = [
       { label: 'Artisan', value: 'Lagos Master Guild' },
       { label: 'Finish', value: 'French Seams' },
     ],
-    src: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Artisan hand stitching gold thread into luxury silk fabric'
   },
   {
@@ -48,7 +49,7 @@ export const ATELIER_SLIDES = [
       { label: 'Weight', value: 'Lightweight 19mm Silk' },
       { label: 'Fluidity Grade', value: 'Ultra-Fluid' },
     ],
-    src: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Flowing golden silk dress capturing fluid motion'
   },
   {
@@ -62,7 +63,7 @@ export const ATELIER_SLIDES = [
       { label: 'Fabric', value: 'Aso-Oke & Silk Organza' },
       { label: 'Styling Time', value: 'Custom Fitted' },
     ],
-    src: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Regal fashion portrait highlighting headpiece styling'
   },
   {
@@ -76,7 +77,7 @@ export const ATELIER_SLIDES = [
       { label: 'Process', value: 'Sketch to Couture' },
       { label: 'Quality Check', value: '3-Stage Inspection' },
     ],
-    src: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Luxury atelier workspace with draping dress forms and tailoring tools'
   },
   {
@@ -90,7 +91,7 @@ export const ATELIER_SLIDES = [
       { label: 'Hardware', value: 'Solid Sculpted Brass' },
       { label: 'Lining', value: 'Soft Breathable Cotton-Silk' },
     ],
-    src: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Close-up of intricate hand-beaded embroidery details on fine fabric'
   },
   {
@@ -104,7 +105,7 @@ export const ATELIER_SLIDES = [
       { label: 'Palette', value: 'Warm Earth & Ocean Emerald' },
       { label: 'Vibe', value: 'Effortless Royalty' },
     ],
-    src: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Confident modern African woman in editorial high fashion portrait'
   },
   {
@@ -118,7 +119,7 @@ export const ATELIER_SLIDES = [
       { label: 'Care', value: 'Dry Clean & Soft Storage' },
       { label: 'Edition', value: 'Limited Atelier Runs' },
     ],
-    src: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop',
+    src: FALLBACK_IMAGE,
     alt: 'Understated elegance in neutral silk drape portrait'
   }
 ];
