@@ -6,7 +6,11 @@ export const getSettings = async (req, res) => {
       `SELECT setting_key, setting_value FROM store_settings`
     );
 
-    const settings = {};
+    const settings = {
+      store_name: 'Bubu Lagos',
+      currency: 'NGN',
+      shipping_fee: '0'
+    };
     result.rows.forEach(row => {
       settings[row.setting_key] = row.setting_value;
     });

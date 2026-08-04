@@ -7,7 +7,6 @@ import { logger } from '../lib/logger';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
-import { AtelierEditSection } from '../components/AtelierEditSection';
 import { EASE_OUT } from '../lib/motion';
 import { Instagram, ArrowUpRight, Sparkles } from 'lucide-react';
 
@@ -246,9 +245,6 @@ export function Home() {
           </AnimatePresence>
         </div>
       </motion.section>
-
-      {/* THE ATELIER EDIT - Editorial Storytelling Lookbook Section */}
-      <AtelierEditSection />
 
       {/* INSTAGRAM EDITORIAL SHOWCASE (Phase 3) */}
       <motion.section

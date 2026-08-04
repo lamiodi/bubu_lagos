@@ -120,7 +120,7 @@ export const getProducts = async (req, res) => {
     const products = result.rows.map(row => ({
       id: row.id,
       name: row.name,
-      sku: row.sku || `BL-${row.category_slug ? row.category_slug.toUpperCase() : 'GEN'}-${row.id.slice(0, 4)}`,
+      sku: row.sku || `BL-${row.category_slug ? row.category_slug.toUpperCase() : 'GEN'}-${(row.id || '').slice(0, 4)}`,
       description: row.description,
       basePrice: parseFloat(row.base_price),
       images: row.images || [],
@@ -179,7 +179,7 @@ export const getRecommendations = async (req, res) => {
         `SELECT p.*, c.name as category_name, c.slug as category_slug
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.id = ANY($1::uuid[]) AND p.id != $2
+         WHERE p.id = ANY($1::text[]) AND p.id != $2
          LIMIT $3`,
         [currentProduct.suggested_product_ids, productId, limit]
       );
@@ -189,7 +189,7 @@ export const getRecommendations = async (req, res) => {
     // Tier 2: Color-palette matching (e.g. matching Turbans to a Bubu by shared colors)
     if (products.length < limit && currentProduct && Array.isArray(currentProduct.color_palette) && currentProduct.color_palette.length > 0) {
       const remainingLimit = limit - products.length;
-      const excludeIds = [productId, ...products.map(p => p.id)];
+      const excludeIds = [productId, ...products.map(p => p.id)].filter(Boolean);
       
       let categoryFilter = '';
       const params = [currentProduct.color_palette, excludeIds, remainingLimit];
@@ -204,7 +204,7 @@ export const getRecommendations = async (req, res) => {
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
          WHERE p.color_palette && $1::text[]
-           AND p.id != ALL($2::uuid[])
+           AND p.id != ALL($2::text[])
            ${categoryFilter}
          LIMIT $3`,
         params
@@ -215,7 +215,7 @@ export const getRecommendations = async (req, res) => {
     // Tier 3: Same or target category fallback
     if (products.length < limit) {
       const remainingLimit = limit - products.length;
-      const excludeIds = [productId || '00000000-0000-0000-0000-000000000000', ...products.map(p => p.id)];
+      const excludeIds = [productId, ...products.map(p => p.id)].filter(Boolean);
       let catId = categoryId;
       
       if (targetCategory) {
@@ -228,7 +228,7 @@ export const getRecommendations = async (req, res) => {
           `SELECT p.*, c.name as category_name, c.slug as category_slug
            FROM products p
            LEFT JOIN categories c ON p.category_id = c.id
-           WHERE p.category_id = $1 AND p.id != ALL($2::uuid[])
+           WHERE p.category_id = $1 AND p.id != ALL($2::text[])
            LIMIT $3`,
           [catId, excludeIds, remainingLimit]
         );
@@ -239,12 +239,12 @@ export const getRecommendations = async (req, res) => {
     // Tier 4: General latest products fallback
     if (products.length < limit) {
       const remainingLimit = limit - products.length;
-      const excludeIds = [productId || '00000000-0000-0000-0000-000000000000', ...products.map(p => p.id)];
+      const excludeIds = [productId, ...products.map(p => p.id)].filter(Boolean);
       const latestResult = await query(
         `SELECT p.*, c.name as category_name, c.slug as category_slug
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.id != ALL($1::uuid[])
+         WHERE p.id != ALL($1::text[])
          ORDER BY p.created_at DESC
          LIMIT $2`,
         [excludeIds, remainingLimit]
@@ -294,7 +294,8 @@ export const getProductById = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants, colorPalette, suggestedProductIds } = req.body;
+    let { name, description, basePrice, price, images, videoUrl, categoryId, collectionIds, collections, variants, colorPalette, suggestedProductIds } = req.body;
+    basePrice = basePrice || price;
     
     if (req.files) {
       if (req.files['images']) {
@@ -380,7 +381,9 @@ export const createProduct = async (req, res) => {
       await client.query('ROLLBACK');
       throw error;
     } finally {
-      client.release();
+      if (client && typeof client.release === 'function') {
+        client.release();
+      }
     }
     
   } catch (error) {
@@ -392,7 +395,8 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    let { name, description, basePrice, images, videoUrl, categoryId, collectionIds, collections, variants, colorPalette, suggestedProductIds } = req.body;
+    let { name, description, basePrice, price, images, videoUrl, categoryId, collectionIds, collections, variants, colorPalette, suggestedProductIds } = req.body;
+    basePrice = basePrice || price;
     
     let existingImages = [];
     if (images !== undefined) {
@@ -524,7 +528,9 @@ export const updateProduct = async (req, res) => {
       await client.query('ROLLBACK');
       throw error;
     } finally {
-      client.release();
+      if (client && typeof client.release === 'function') {
+        client.release();
+      }
     }
     
   } catch (error) {
@@ -619,7 +625,7 @@ async function getProductByIdInternal(productId, client = null) {
   return {
     id: product.id,
     name: product.name,
-    sku: product.sku || `BL-${product.category_slug ? product.category_slug.toUpperCase() : 'GEN'}-${product.id.slice(0, 4)}`,
+    sku: product.sku || `BL-${product.category_slug ? product.category_slug.toUpperCase() : 'GEN'}-${(product.id || '').slice(0, 4)}`,
     description: product.description,
     basePrice: parseFloat(product.base_price),
     images: product.images || [],

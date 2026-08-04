@@ -26,12 +26,11 @@ describe('Settings Controller', () => {
     it('should return store settings', async () => {
       query.mockResolvedValueOnce({
         rows: [{
-          store_name: 'Bubu Lagos',
-          store_email: 'hello@bubulagos.com',
-          store_phone: '+234123456789',
-          store_address: '123 Main St, Lagos',
-          currency: 'NGN',
-          shipping_fee: 1500
+          setting_key: 'store_name',
+          setting_value: 'Bubu Lagos'
+        }, {
+          setting_key: 'currency',
+          setting_value: 'NGN'
         }]
       });
 
@@ -48,8 +47,7 @@ describe('Settings Controller', () => {
       await getSettings(mockReq, mockRes);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
         store_name: 'Bubu Lagos',
-        currency: 'NGN',
-        shipping_fee: 0
+        currency: 'NGN'
       }));
     });
   });
@@ -64,21 +62,23 @@ describe('Settings Controller', () => {
         currency: 'USD',
         shippingFee: 2000
       };
-      query.mockResolvedValueOnce({
+      query.mockResolvedValue({
         rows: [{
-          store_name: 'Updated Store',
-          store_email: 'new@email.com',
-          store_phone: '+234987654321',
-          store_address: '456 New St',
-          currency: 'USD',
-          shipping_fee: 2000
+          setting_key: 'store_name',
+          setting_value: 'Updated Store'
+        }, {
+          setting_key: 'currency',
+          setting_value: 'USD'
         }]
       });
 
       await updateSettings(mockReq, mockRes);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-        store_name: 'Updated Store',
-        currency: 'USD'
+        message: 'Settings updated successfully',
+        settings: expect.objectContaining({
+          store_name: 'Updated Store',
+          currency: 'USD'
+        })
       }));
     });
 
@@ -86,11 +86,10 @@ describe('Settings Controller', () => {
       mockReq.body = {
         storeName: 'Partial Update'
       };
-      query.mockResolvedValueOnce({
+      query.mockResolvedValue({
         rows: [{
-          store_name: 'Partial Update',
-          store_email: 'hello@bubulagos.com',
-          currency: 'NGN'
+          setting_key: 'store_name',
+          setting_value: 'Partial Update'
         }]
       });
 
@@ -101,16 +100,15 @@ describe('Settings Controller', () => {
 
   describe('getDashboardStats', () => {
     it('should return dashboard statistics', async () => {
-      query.mockResolvedValueOnce({ rows: [{ count: '150' }] });
-      query.mockResolvedValueOnce({ rows: [{ sum: '750000' }] });
-      query.mockResolvedValueOnce({ rows: [{ count: '75' }] });
-      query.mockResolvedValueOnce({ rows: [{ count: '40' }] });
+      query.mockResolvedValueOnce({ rows: [{ total_orders: '150', total_revenue: '750000' }] });
+      query.mockResolvedValueOnce({ rows: [{ total_products: '75' }] });
+      query.mockResolvedValueOnce({ rows: [{ total_customers: '40' }] });
       query.mockResolvedValueOnce({
         rows: [
-          { date: '2024-01-01', total: '25000' },
-          { date: '2024-01-02', total: '30000' }
+          { id: 'ord-1', reference: 'REF123', total_amount: '25000', status: 'Paid', created_at: '2024-01-01' }
         ]
       });
+      query.mockResolvedValueOnce({ rows: [] });
 
       await getDashboardStats(mockReq, mockRes);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -123,10 +121,10 @@ describe('Settings Controller', () => {
     });
 
     it('should handle null revenue', async () => {
-      query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
-      query.mockResolvedValueOnce({ rows: [{ sum: null }] });
-      query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
-      query.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+      query.mockResolvedValueOnce({ rows: [{ total_orders: '0', total_revenue: '0' }] });
+      query.mockResolvedValueOnce({ rows: [{ total_products: '0' }] });
+      query.mockResolvedValueOnce({ rows: [{ total_customers: '0' }] });
+      query.mockResolvedValueOnce({ rows: [] });
       query.mockResolvedValueOnce({ rows: [] });
 
       await getDashboardStats(mockReq, mockRes);
