@@ -547,7 +547,7 @@ export function ProductDetail() {
             <p className="text-xs text-text-light uppercase tracking-widest mb-8">Pair with our signature turbans</p>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
               {turbanProducts.map((turban, i) => (
-                <ProductCard key={turban.id} product={turban} delay={i * 0.08} inView={false} allowVideoPreview={i < 1} />
+                <ProductCard key={turban.id} product={turban} delay={i * 0.08} inView={false} allowVideoPreview={false} />
               ))}
             </div>
           </div>
@@ -566,7 +566,7 @@ export function ProductDetail() {
             <h2 className="text-xl lg:text-2xl font-heading font-black uppercase tracking-widest mb-4 lg:mb-8">You May Also Like</h2>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
               {relatedProducts.map((relProduct, i) => (
-                <ProductCard key={relProduct.id} product={relProduct} delay={i * 0.08} inView={false} allowVideoPreview={i < 1} />
+                <ProductCard key={relProduct.id} product={relProduct} delay={i * 0.08} inView={false} allowVideoPreview={false} />
               ))}
             </div>
           </div>

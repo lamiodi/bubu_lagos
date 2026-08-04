@@ -131,6 +131,9 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
           onMouseLeave={() => {
             setIsCardHovered(false);
           }}
+          onPointerLeave={() => {
+            setIsCardHovered(false);
+          }}
           onMouseMove={handleImageMouseMove}
         >
           {isVideoMedia && isCardHovered ? (

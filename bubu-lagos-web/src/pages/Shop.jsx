@@ -569,7 +569,7 @@ export function Shop() {
                     key={product.id} 
                     product={product} 
                     delay={i * 0.04} 
-                    allowVideoPreview={i < 2}
+                    allowVideoPreview={i % 4 === 0}
                   />
                 ))}
               </div>
