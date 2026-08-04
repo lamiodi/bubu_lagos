@@ -23,6 +23,7 @@ const storage = new CloudinaryStorage({
       // This isolates assets per service while using one Cloudinary plan.
       folder: 'bubu',
       resource_type: isVideo ? 'video' : 'image',
+      format: isVideo ? 'mp4' : undefined,
       allowed_formats: isVideo ? ['mp4', 'mov', 'webm'] : ['jpg', 'png', 'jpeg', 'webp'],
       public_id: `${Date.now()}-${file.originalname.split('.')[0]}`,
     };
