@@ -26,7 +26,7 @@
     "multer": "^2.1.1",
     "multer-storage-cloudinary": "^4.0.0",
     "paystack": "^2.0.1",
-    "pg": "^8.13.3",
+    "pg": "^8.22.0",
     "resend": "^4.1.0"
   },
   "devDependencies": {
