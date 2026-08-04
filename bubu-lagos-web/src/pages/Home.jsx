@@ -232,7 +232,7 @@ export function Home() {
             As Seen On #BubuLagosAtelier
           </h2>
           <p className="text-xs md:text-sm text-text-light mt-2 max-w-lg mx-auto">
-            Tag <a href="https://instagram.com/bubulagos" target="_blank" rel="noopener noreferrer" className="underline hover:text-black font-semibold">@bubulagos</a> to be featured in our seasonal Lagos couture showcase.
+            Tag <a href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg==" target="_blank" rel="noopener noreferrer" className="underline hover:text-black font-semibold">@bubu_lagos</a> to be featured in our seasonal Lagos couture showcase.
           </p>
         </div>
 
@@ -240,7 +240,7 @@ export function Home() {
           {INSTAGRAM_EDITORIAL_POSTS.map((post) => (
             <a
               key={post.id}
-              href="https://instagram.com/bubulagos"
+              href="https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg=="
               target="_blank"
               rel="noopener noreferrer"
               className="group relative aspect-[3/4] overflow-hidden bg-gray-100 rounded-sm shadow-xs block"

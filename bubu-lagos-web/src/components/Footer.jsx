@@ -28,13 +28,13 @@ const FOOTER_LINKS = {
   ],
   contact: [
     { href: 'mailto:Wodibenuah@yahoo.com', label: 'Email Concierge' },
-    { href: 'https://instagram.com/bubulagos', label: 'Instagram: @bubulagos', external: true },
+    { href: 'https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg==', label: 'Instagram: @bubu_lagos', external: true },
     { to: '/contact', label: 'Atelier Appointment' },
   ],
 };
 
 const SOCIAL_LINKS = [
-  { href: 'https://instagram.com/bubulagos', label: 'Instagram', external: true },
+  { href: 'https://www.instagram.com/bubu_lagos?igsh=MWFubXR5MHExNGpvcg==', label: 'Instagram', external: true },
 ];
 
 const headingClass = "text-[12px] font-semibold uppercase tracking-[0.12em] mb-4 text-white/90";
