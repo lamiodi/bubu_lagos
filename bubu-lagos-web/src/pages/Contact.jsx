@@ -227,11 +227,11 @@ export function Contact() {
                     {/* Styled Map Container matching luxury UI theme */}
                     <div className="relative w-full h-[380px] md:h-[480px] rounded-2xl overflow-hidden border border-black/10 shadow-2xl group bg-background-light">
                         <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3587.7372632634397!2d3.4723508744800693!3d6.448094924036061!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf448f3a5efd5%3A0x3c6c604878a1a8be!2sGreenville%20Mall!5e1!3m2!1sen!2sng!4v1785841886293!5m2!1sen!2sng"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.7176767228807!2d3.4723508744800693!3d6.448094924036061!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf448f3a5efd5%3A0x3c6c604878a1a8be!2sGreenville%20Mall!5e0!3m2!1sen!2sng!4v1785841886293!5m2!1sen!2sng"
                             className="w-full h-full border-0 filter contrast-[1.05] grayscale-[0.15]"
                             allowFullScreen=""
                             loading="lazy"
-                            referrerPolicy="strict-origin-when-cross-origin"
+                            referrerPolicy="no-referrer-when-downgrade"
                             title="Bubu Lagos Greenville Mall Location"
                         />
 
