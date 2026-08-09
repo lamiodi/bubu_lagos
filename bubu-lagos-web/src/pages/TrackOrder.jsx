@@ -15,14 +15,7 @@ import { useToast } from '../context/ToastContext';
 import { EASE_OUT } from '../lib/motion';
 import { OrderDetailSkeleton } from '../components/Skeleton';
 
-const STATUS_STEPS = [
-  { value: 'pending',   label: 'Order Placed',   icon: Clock },
-  { value: 'paid',      label: 'Payment Confirmed', icon: CheckCircle },
-  { value: 'processing',label: 'Processing',     icon: Package },
-  { value: 'shipped',   label: 'Shipped',        icon: Truck },
-  { value: 'delivered', label: 'Delivered',      icon: CheckCircle },
-  { value: 'cancelled', label: 'Cancelled',      icon: XCircle },
-];
+
 
 const formatDate = (iso) => {
   if (!iso) return '';
@@ -35,7 +28,6 @@ const formatNaira = (n) => `₦${(Number(n) || 0).toLocaleString()}`;
 
 export function TrackOrder() {
   const [searchParams] = useSearchParams();
-  const toast = useToast();
   const [ref, setRef] = useState(searchParams.get('ref') || '');
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [loading, setLoading] = useState(false);

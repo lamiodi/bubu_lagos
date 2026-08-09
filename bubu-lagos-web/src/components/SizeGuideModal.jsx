@@ -118,7 +118,7 @@ export function SizeGuideModal({ open, onClose, selectedSize }) {
                         className={cn(
                           "hover:bg-background-light transition-colors",
                           row.size === 'Free Size' && "bg-amber-50/40 font-semibold",
-                          isSelectedSize && "bg-emerald-50/80 font-bold border-l-4 border-l-accent"
+                          isSelectedSize && "bg-emerald-50/80 font-bold text-accent"
                         )}
                       >
                         <td className="px-4 py-3 font-bold text-text flex items-center gap-1.5">

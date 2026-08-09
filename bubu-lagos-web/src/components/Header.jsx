@@ -4,7 +4,7 @@ import { X, ShoppingBag } from 'lucide-react';
 import { cn, FALLBACK_IMAGE } from '../lib/utils';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
-import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { EASE_OUT } from '../lib/motion';
 
 const PRIMARY_NAV = [
@@ -33,10 +33,6 @@ export function Header({ variant = 'transparent' }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const reduceMotion = useReducedMotion();
-
-  // [MOTION ADDED] Scroll-driven bottom border opacity (fades in 0 → 1)
-  const { scrollY } = useScroll();
-  const borderOpacity = useTransform(scrollY, [0, 80], [0, 1]);
 
   useEffect(() => {
     let ticking = false;
@@ -106,11 +102,6 @@ export function Header({ variant = 'transparent' }) {
           headerBg
         )}
       >
-        <motion.div
-          aria-hidden="true"
-          className="absolute bottom-0 left-0 right-0 h-px bg-black"
-          style={{ opacity: reduceMotion ? 1 : borderOpacity }}
-        />
         <div className="h-full px-4 sm:px-5 md:px-8 flex items-center justify-between relative">
           {/* Mobile: hamburger */}
           <button

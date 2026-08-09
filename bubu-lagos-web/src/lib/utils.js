@@ -44,15 +44,21 @@ export function getImageUrl(imagePath) {
  */
 export function getCloudinaryVideoPoster(url) {
   if (!url) return null;
-  let srcUrl = getImageUrl(url) || url;
+  let srcUrl = url;
+  if (srcUrl.startsWith('http://res.cloudinary.com')) {
+    srcUrl = srcUrl.replace('http://res.cloudinary.com', 'https://res.cloudinary.com');
+  }
   if (srcUrl.includes('cloudinary.com') && srcUrl.includes('/video/upload/')) {
     let poster = srcUrl.replace(/\.(mp4|mov|m4v|webm|ogv)$/i, '.jpg');
+    // Ensure we don't stack parameters if they already exist
+    poster = poster.replace(/\/video\/upload\/[^/]+\/v\d+\//, '/video/upload/');
+    
     if (!poster.includes('/so_0')) {
-      poster = poster.replace('/video/upload/', '/video/upload/so_0,q_auto:eco,f_auto,w_600/');
+      poster = poster.replace('/video/upload/', '/video/upload/so_0,q_auto:eco,f_jpg,w_600/');
     }
     return poster;
   }
-  return srcUrl;
+  return getImageUrl(url);
 }
 
 /**
@@ -60,8 +66,13 @@ export function getCloudinaryVideoPoster(url) {
  */
 export function getCloudinaryOptimizedVideo(url) {
   if (!url) return null;
-  let srcUrl = getImageUrl(url) || url;
+  let srcUrl = url;
+  if (srcUrl.startsWith('http://res.cloudinary.com')) {
+    srcUrl = srcUrl.replace('http://res.cloudinary.com', 'https://res.cloudinary.com');
+  }
   if (srcUrl.includes('cloudinary.com') && srcUrl.includes('/video/upload/')) {
+    // Strip existing transforms to replace them cleanly
+    srcUrl = srcUrl.replace(/\/video\/upload\/[^/]+\/v\d+\//, '/video/upload/');
     if (!srcUrl.includes('/q_auto')) {
       srcUrl = srcUrl.replace('/video/upload/', '/video/upload/q_auto:eco,f_mp4,w_720/');
     }

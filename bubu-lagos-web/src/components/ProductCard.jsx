@@ -36,9 +36,9 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
   const rawMedia = product.videoUrl || product.video || (product.images && product.images.length > 0 ? product.images[0] : null);
   const isVideoMedia = allowVideoPreview && typeof rawMedia === 'string' && (rawMedia.includes('/video/upload/') || /\.(mp4|mov|webm|m4v)$/i.test(rawMedia));
 
-  const displayImage = isVideoMedia
-    ? getCloudinaryVideoPoster(rawMedia)
-    : (product.images && product.images.length > 0 ? getImageUrl(product.images[0]) : FALLBACK_IMAGE);
+  const displayImage = product.images && product.images.length > 0
+    ? getImageUrl(product.images[0])
+    : (isVideoMedia ? getCloudinaryVideoPoster(rawMedia) : FALLBACK_IMAGE);
 
   const optimizedVideoUrl = isVideoMedia ? getCloudinaryOptimizedVideo(rawMedia) : null;
 

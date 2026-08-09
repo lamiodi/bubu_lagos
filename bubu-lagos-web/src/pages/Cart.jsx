@@ -90,7 +90,11 @@ export function Cart() {
                             <Plus size={14} />
                           </button>
                         </div>
-                        <span className="md:hidden font-bold">{item.price}</span>
+                        <span className="md:hidden font-bold">
+                          {parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) * item.quantity
+                            ? `₦${(parseInt(String(item.price).replace(/[^0-9]/g, ''), 10) * item.quantity).toLocaleString()}`
+                            : item.price}
+                        </span>
                       </div>
 
                       <div className="hidden md:block font-bold min-w-[80px] text-right">

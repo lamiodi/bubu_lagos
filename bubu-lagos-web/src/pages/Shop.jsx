@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { cn, getImageUrl, FALLBACK_IMAGE } from '../lib/utils';
 import { logger } from '../lib/logger';
 import api from '../utils/api';
-import { Search, SlidersHorizontal, ChevronDown, X, ArrowRight, Gift, Check, Sparkles, Filter } from 'lucide-react';
+import { Search, Filter, X, ArrowRight, Gift, Check, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCardSkeleton } from '../components/ProductCardSkeleton';
@@ -43,7 +43,7 @@ function CollectionChip({ collection, isSelected, onToggle }) {
   );
 }
 
-function EditorialBanner({ category, activeCollections, collectionsList, categoriesList, productsList, onSelectCategory }) {
+function EditorialBanner({ category, activeCollections, collectionsList, productsList }) {
   const reduceMotion = useReducedMotion();
   
   // Find current collection banner if single collection filter active
@@ -221,7 +221,7 @@ export function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const reduceMotion = useReducedMotion();
+  // const reduceMotion = useReducedMotion();
 
   // Price & Sorting
   const [sort, setSort] = useState("newest");
@@ -544,9 +544,9 @@ export function Shop() {
           ) : products.length === 0 ? (
             <div className="text-center py-20 bg-background-light border border-border p-8 max-w-md mx-auto my-10 rounded-sm">
               <Sparkles size={24} className="mx-auto text-accent mb-3" />
-              <h3 className="font-heading text-xl font-bold uppercase mb-2">No Products Found</h3>
-              <p className="text-xs text-text-light mb-6">
-                We couldn't find any products matching your active category and collection criteria.
+              <h3 className="text-xl font-bold font-heading uppercase tracking-widest mb-3 text-black">No pieces found</h3>
+              <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                Sorry, we couldn&apos;t find any pieces matching your current filters.
               </p>
               <button
                 onClick={handleClearAll}
@@ -605,7 +605,7 @@ export function Shop() {
                   </div>
 
                   <h3 className="font-heading text-[28px] md:text-[38px] lg:text-[46px] font-bold uppercase leading-[1.0] tracking-[0.01em] text-white">
-                    Give the Gift of <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">Uncompromising Luxury</span>
+                    Give the Gift of <span className="text-amber-400">Uncompromising Luxury</span>
                   </h3>
 
                   <p className="text-[12px] md:text-[14px] leading-[1.7] text-white/80 max-w-xl font-sans">

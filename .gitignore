@@ -33,3 +33,7 @@ logs/
 *.tmp
 *.temp
 .cache/
+
+# Skills
+skills/
+skills-lock.json
