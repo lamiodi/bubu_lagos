@@ -117,11 +117,9 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
           }}
           onMouseLeave={() => {
             setIsCardHovered(false);
-            setIsVideoReady(false);
           }}
           onPointerLeave={() => {
             setIsCardHovered(false);
-            setIsVideoReady(false);
           }}
         >
           {/* Base Layer: Static Image is always rendered so there is NEVER a white or blank box */}
@@ -139,7 +137,7 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
           />
 
           {/* Overlay Layer: Video decodes quietly in background and fades in smoothly only when fully loaded */}
-          {isVideoMedia && isCardHovered && (
+          {isVideoMedia && (
             <video
               src={optimizedVideoUrl}
               autoPlay
