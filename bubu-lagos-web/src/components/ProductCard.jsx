@@ -65,6 +65,54 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
   const [isVideoReady, setIsVideoReady] = useState(false);
   const inViewCard = useInView(cardRef, { once: true, margin: '-80px' });
 
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
+  const videoRef = useRef(null);
+  const playTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isVideoMedia) return;
+    let isSubscribed = true;
+
+    const scheduleNextPlay = () => {
+      if (!isSubscribed) return;
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+      const delay = Math.random() * 7000 + 3000;
+      playTimerRef.current = setTimeout(() => {
+        if (videoRef.current && isSubscribed) {
+          videoRef.current.currentTime = 0;
+          const promise = videoRef.current.play();
+          if (promise !== undefined) {
+            promise.then(() => {
+              if (isSubscribed) setIsVideoVisible(true);
+            }).catch(() => {
+              scheduleNextPlay();
+            });
+          }
+        }
+      }, delay);
+    };
+
+    const onEnded = () => {
+      setIsVideoVisible(false);
+      scheduleNextPlay();
+    };
+
+    const videoEl = videoRef.current;
+    if (videoEl) {
+      videoEl.addEventListener('ended', onEnded);
+    }
+
+    scheduleNextPlay();
+
+    return () => {
+      isSubscribed = false;
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+      if (videoEl) {
+        videoEl.removeEventListener('ended', onEnded);
+      }
+    };
+  }, [isVideoMedia]);
+
   useEffect(() => {
     if (reduceMotion || hasPriceLabel) {
       setDisplayCount(hasPriceLabel ? priceText : targetNumber.toLocaleString());
@@ -139,9 +187,8 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
           {/* Overlay Layer: Video decodes quietly in background and fades in smoothly only when fully loaded */}
           {isVideoMedia && (
             <video
+              ref={videoRef}
               src={optimizedVideoUrl}
-              autoPlay
-              loop
               muted
               playsInline
               preload="auto"
@@ -149,7 +196,7 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
               onLoadedData={() => setIsVideoReady(true)}
               onError={() => setIsVideoReady(false)}
               className={`absolute inset-0 w-full h-full object-cover scale-[1.03] transition-opacity duration-300 ${
-                isVideoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                isVideoReady && isVideoVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             />
           )}
