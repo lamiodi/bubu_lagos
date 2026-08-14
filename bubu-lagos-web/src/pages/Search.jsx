@@ -85,7 +85,7 @@ export function Search() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: i * 0.05 }}
                   >
-                    <ProductCard product={product} delay={0} inView={false} />
+                    <ProductCard product={product} delay={0} />
                   </motion.div>
                 ))}
               </AnimatePresence>

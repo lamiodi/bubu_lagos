@@ -27,9 +27,6 @@ function withSrcSet(src) {
 
 // Inner card — separated so we can wrap it in memo().
 const ProductCardInner = function ProductCard({ product, inView = true, allowVideoPreview = true, priority = false }) {
-  // [FIX] inView is part of the public prop API for staggered list entry;
-  // some call sites pass delay alongside it.
-  void inView;
   const reduceMotion = useReducedMotion();
   const cardRef = useRef(null);
 
@@ -64,6 +61,7 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
   const [isCardHovered, setIsCardHovered] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const inViewCard = useInView(cardRef, { once: true, margin: '-80px' });
+  const isCardVisible = inView || inViewCard || reduceMotion;
 
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const videoRef = useRef(null);
@@ -143,7 +141,7 @@ const ProductCardInner = function ProductCard({ product, inView = true, allowVid
     <motion.div
       ref={cardRef}
       initial="hidden"
-      animate={inView ? 'rest' : 'hidden'}
+      animate={isCardVisible ? 'rest' : 'hidden'}
       variants={CARD_VARIANTS}
       whileHover={reduceMotion ? undefined : 'hover'}
       whileFocus={reduceMotion ? undefined : 'hover'}
@@ -281,5 +279,7 @@ export const ProductCard = memo(ProductCardInner, (prev, next) =>
   prev.product?.id === next.product?.id &&
   prev.delay === next.delay &&
   prev.inView === next.inView &&
-  prev.product?.name === next.product?.name
+  prev.product?.name === next.product?.name &&
+  prev.product?.basePrice === next.product?.basePrice &&
+  prev.product?.variants?.[0]?.price === next.product?.variants?.[0]?.price
 );

@@ -207,7 +207,7 @@ export function SearchDrawer() {
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {trending.map((product) => (
-                    <ProductCard key={product.id} product={product} delay={0} inView={false} />
+                    <ProductCard key={product.id} product={product} delay={0} />
                   ))}
                 </div>
               </section>
@@ -255,7 +255,7 @@ export function SearchDrawer() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.15) }}
                       >
-                        <ProductCard product={product} delay={0} inView={false} />
+                        <ProductCard product={product} delay={0} />
                       </motion.li>
                     ))}
                   </AnimatePresence>

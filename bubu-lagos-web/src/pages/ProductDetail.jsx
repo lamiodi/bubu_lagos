@@ -77,6 +77,9 @@ export function ProductDetail() {
   }, []);
 
   useEffect(() => {
+    setActiveImage(0);
+    setMobileActiveImage(0);
+    setSelectedVariant(null);
     fetchProductDetails();
     window.scrollTo(0, 0);
   }, [id]);
@@ -89,6 +92,8 @@ export function ProductDetail() {
       setProduct(data);
       if (data.variants && data.variants.length > 0) {
         setSelectedVariant(data.variants[0]);
+      } else {
+        setSelectedVariant(null);
       }
       fetchRecommendations(data);
     } catch (err) {
@@ -227,7 +232,12 @@ export function ProductDetail() {
     : [];
 
   return (
-    <Layout headerVariant="solid">
+    <Layout
+      headerVariant="solid"
+      title={`${product.name} | Bubu Lagos Atelier`}
+      description={product.description || `Discover ${product.name} from the Bubu Lagos luxury couture collection.`}
+      image={displayImage}
+    >
       <div className="flex flex-col lg:flex-row mt-[60px]">
         <div className="w-full lg:w-1/2 flex flex-col lg:gap-4 lg:pr-4">
           {/* DESKTOP STACKED IMAGE GALLERY */}
@@ -551,7 +561,9 @@ export function ProductDetail() {
             <p className="text-xs text-text-light uppercase tracking-widest mb-8">Pair with our signature turbans</p>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
               {turbanProducts.map((turban, i) => (
-                <ProductCard key={turban.id} product={turban} delay={i * 0.08} inView={false} allowVideoPreview={false} />
+                <div key={turban.id} className="w-[240px] sm:w-[280px] md:w-auto flex-shrink-0 snap-start">
+                  <ProductCard product={turban} delay={i * 0.08} allowVideoPreview={false} />
+                </div>
               ))}
             </div>
           </div>
@@ -566,11 +578,13 @@ export function ProductDetail() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-6xl mx-auto pb-16 lg:pb-0">
             <h2 className="text-xl lg:text-2xl font-heading font-black uppercase tracking-widest mb-4 lg:mb-8">You May Also Like</h2>
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 md:grid md:grid-cols-3 scrollbar-hide">
               {relatedProducts.map((relProduct, i) => (
-                <ProductCard key={relProduct.id} product={relProduct} delay={i * 0.08} inView={false} allowVideoPreview={false} />
+                <div key={relProduct.id} className="w-[240px] sm:w-[280px] md:w-auto flex-shrink-0 snap-start">
+                  <ProductCard product={relProduct} delay={i * 0.08} allowVideoPreview={false} />
+                </div>
               ))}
             </div>
           </div>
