@@ -37,3 +37,8 @@ logs/
 # Skills
 skills/
 skills-lock.json
+
+# Large media / raw product assets
+bubu-lagos-web/public/product/
+public/product/
+
