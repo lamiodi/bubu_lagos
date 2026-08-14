@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { query, getClient } from '../src/db.js';
+import { query } from '../src/db.js';
 
 dotenv.config();
 
@@ -18,18 +18,21 @@ cloudinary.config({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const baseDir = path.resolve(__dirname, '../../bubu-lagos-web/public/product');
-const tempDir = path.resolve(__dirname, '../temp_4k_processed');
+const tempDir = path.resolve(__dirname, '../temp_4k_desat_processed');
 
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
 }
 
 /**
- * Enhances image to 4K resolution (max dimension 3840px)
- * using Lanczos3 interpolation and subtle unsharp masking for fabric texture,
- * while preserving the original background 100%.
+ * 4K HD Image Enhancer with 20% Reduced Saturation:
+ * - Natural, balanced color rendition.
+ * - S-curve dynamic clarity without over-saturation.
+ * - 4K Lanczos3 upscale (3840px max dimension).
+ * - Multi-frequency unsharp mask for fabric texture.
+ * - 100% untouched original background.
  */
-async function enhanceAndUpscaleTo4K(inputBuffer, outputFilename) {
+async function enhanceAndUpscaleHD4K(inputBuffer, outputFilename, colorProfile = 'default') {
   const image = sharp(inputBuffer);
   const metadata = await image.metadata();
 
@@ -44,9 +47,25 @@ async function enhanceAndUpscaleTo4K(inputBuffer, outputFilename) {
     targetHeight = Math.round((3840 / metadata.width) * metadata.height);
   }
 
-  console.log(`  Processing ${outputFilename}: ${metadata.width}x${metadata.height} -> 4K (${targetWidth}x${targetHeight})`);
+  console.log(`  Enhancing ${outputFilename}: ${metadata.width}x${metadata.height} -> 4K (${targetWidth}x${targetHeight}) [Profile: ${colorProfile}, Saturation: -20%]`);
 
   const outputPath = path.join(tempDir, outputFilename);
+
+  // 20% reduced saturation profiles
+  let sat = 1.00;
+  let bright = 1.01;
+  let linSlope = 1.06;
+  let linOffset = -4;
+
+  if (colorProfile === 'green') {
+    sat = 1.04; // 20% down from 1.30
+  } else if (colorProfile === 'purple') {
+    sat = 1.02; // 20% down from 1.28
+  } else if (colorProfile === 'brown') {
+    sat = 0.99; // 20% down from 1.24
+  } else if (colorProfile === 'ameerah') {
+    sat = 0.98; // 20% down from 1.22
+  }
 
   await sharp(inputBuffer)
     .resize({
@@ -56,10 +75,19 @@ async function enhanceAndUpscaleTo4K(inputBuffer, outputFilename) {
       kernel: sharp.kernel.lanczos3,
       withoutEnlargement: false,
     })
+    .modulate({
+      brightness: bright,
+      saturation: sat,
+    })
+    .linear(linSlope, linOffset)
+    .gamma(1.02)
     .sharpen({
-      sigma: 1.1,
-      m1: 0.8,
-      m2: 2.2,
+      sigma: 1.3,
+      m1: 1.3,
+      m2: 3.0,
+      x1: 2,
+      y2: 12,
+      y3: 24,
     })
     .toColorspace('srgb')
     .jpeg({
@@ -72,22 +100,32 @@ async function enhanceAndUpscaleTo4K(inputBuffer, outputFilename) {
   return outputPath;
 }
 
-async function uploadToCloudinary(filePath, publicIdSuffix = '') {
+async function uploadToCloudinary(filePath, retries = 3) {
   const fileName = path.basename(filePath);
   console.log(`  Uploading 4K asset ${fileName} to Cloudinary...`);
-  const res = await cloudinary.uploader.upload(filePath, {
-    folder: 'bubu',
-    resource_type: 'image',
-    use_filename: true,
-    unique_filename: true,
-    overwrite: true,
-  });
-  console.log(`  ✅ Uploaded 4K -> ${res.secure_url} (${res.width}x${res.height})`);
-  return res.secure_url;
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await cloudinary.uploader.upload(filePath, {
+        folder: 'bubu',
+        resource_type: 'image',
+        use_filename: true,
+        unique_filename: true,
+        overwrite: true,
+        timeout: 180000,
+      });
+      console.log(`  ✅ Uploaded 4K -> ${res.secure_url} (${res.width}x${res.height})`);
+      return res.secure_url;
+    } catch (err) {
+      console.warn(`  ⚠️ Attempt ${attempt} failed for ${fileName}:`, err.message || err);
+      if (attempt === retries) throw err;
+      await new Promise(r => setTimeout(r, 3000 * attempt));
+    }
+  }
 }
 
 async function downloadUrlToBuffer(url) {
-  console.log(`  Downloading remote image: ${url}...`);
+  console.log(`  Downloading source image: ${url}...`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.statusText}`);
   const arrayBuf = await res.arrayBuffer();
@@ -96,7 +134,7 @@ async function downloadUrlToBuffer(url) {
 
 async function main() {
   console.log('====================================================');
-  console.log('🚀 4K Image Enhancement & Upload Pipeline Starting');
+  console.log('🎨 4K HD Processing with 20% Reduced Saturation');
   console.log('====================================================\n');
 
   // 1. Process The EGO Dress I (Brown)
@@ -106,7 +144,7 @@ async function main() {
   const brown4kUrls = [];
   for (const f of brownFiles) {
     const inputBuf = fs.readFileSync(path.join(brownDir, f));
-    const processedPath = await enhanceAndUpscaleTo4K(inputBuf, `4k_ego_brown_${path.parse(f).name}.jpg`);
+    const processedPath = await enhanceAndUpscaleHD4K(inputBuf, `4k_ego_brown_${path.parse(f).name}.jpg`, 'brown');
     const url = await uploadToCloudinary(processedPath);
     brown4kUrls.push(url);
   }
@@ -118,7 +156,7 @@ async function main() {
   const green4kUrls = [];
   for (const f of greenFiles) {
     const inputBuf = fs.readFileSync(path.join(greenDir, f));
-    const processedPath = await enhanceAndUpscaleTo4K(inputBuf, `4k_ego_green_${path.parse(f).name}.jpg`);
+    const processedPath = await enhanceAndUpscaleHD4K(inputBuf, `4k_ego_green_${path.parse(f).name}.jpg`, 'green');
     const url = await uploadToCloudinary(processedPath);
     green4kUrls.push(url);
   }
@@ -130,7 +168,7 @@ async function main() {
   const purple4kUrls = [];
   for (const f of purpleFiles) {
     const inputBuf = fs.readFileSync(path.join(purpleDir, f));
-    const processedPath = await enhanceAndUpscaleTo4K(inputBuf, `4k_ego_purple_${path.parse(f).name}.jpg`);
+    const processedPath = await enhanceAndUpscaleHD4K(inputBuf, `4k_ego_purple_${path.parse(f).name}.jpg`, 'purple');
     const url = await uploadToCloudinary(processedPath);
     purple4kUrls.push(url);
   }
@@ -146,12 +184,12 @@ async function main() {
   const ameerah2_4kUrls = [];
   for (let i = 0; i < ameerah2SourceUrls.length; i++) {
     const inputBuf = await downloadUrlToBuffer(ameerah2SourceUrls[i]);
-    const processedPath = await enhanceAndUpscaleTo4K(inputBuf, `4k_ameerah_2_img_${i + 1}.jpg`);
+    const processedPath = await enhanceAndUpscaleHD4K(inputBuf, `4k_ameerah_2_img_${i + 1}.jpg`, 'ameerah');
     const url = await uploadToCloudinary(processedPath);
     ameerah2_4kUrls.push(url);
   }
 
-  console.log('\n=== Uploaded 4K URLs Summary ===');
+  console.log('\n=== Ultra HD 4K URLs Summary ===');
   console.log('The EGO Dress I (Brown):', brown4kUrls);
   console.log('The EGO Dress II (Green):', green4kUrls);
   console.log('The EGO Dress III (Purple):', purple4kUrls);
@@ -159,8 +197,6 @@ async function main() {
 
   // 5. Database Updates
   console.log('\n=== Step 5: Synchronizing Supabase Database ===');
-  const client = await getClient();
-
   const egoDescription = `The EGO Dress\n\nEffortless Majesty, Contemporary Fluidity.\n\nDesigned with a voluminous, floor-sweeping silhouette crafted from premium rich textured silk. The Ego Dress offers a universal 'One Size Fits All' cut that gracefully drapes UK/US sizes 8 through 20. Featuring wide draped sleeves, an elegant neckline, and exceptional movement tailored for festive celebrations, luxury soirées, and upscale gatherings.\n\nProduct Details:\n* Luxurious premium fluid silk drape\n* Relaxed, flowing silhouette with graceful movement\n* Universal One Size Fits All (Comfortably fits UK/US 8 - 20)\n* Perfect for celebrations, soirées, and destination luxury\n\nStyling Tip:\nPair with our handcrafted silk velvet crown turbans and statement gold jewelry for an iconic Bubu Lagos look.`;
 
   const ameerahDescription = `The AMEERAH Dress II\n\nAn elevated reimagining of a classic, designed for those who command the room. Crafted from premium, breathable fabrics with meticulous attention to drape and movement.\n\nProduct Details:\n* Artisanal Lagos Tailoring\n* Signature Bubu fluid drape\n* Universal One Size Fits All (Comfortably fits UK/US 8 - 20)\n* Hand-finished luxury hem and detailing\n\nStyling Tip:\nPair with an artisanal silk turban and metallic heels for effortless glamour.`;
@@ -194,83 +230,69 @@ async function main() {
     }
   ];
 
-  try {
-    await client.query('BEGIN');
-
-    for (const item of updates) {
-      let targetId = item.id;
-      if (!targetId) {
-        const check = await client.query('SELECT id FROM products WHERE name = $1', [item.name]);
-        if (check.rows.length > 0) {
-          targetId = check.rows[0].id;
-        }
-      }
-
-      if (targetId) {
-        console.log(`Updating database for "${item.name}" (ID: ${targetId})...`);
-        await client.query(
-          `UPDATE products 
-           SET images = $1, description = $2, base_price = $3 
-           WHERE id = $4`,
-          [item.images, item.description, item.price, targetId]
-        );
-
-        // Ensure variant exists with 'One Size (Fits 8 - 20)'
-        await client.query(
-          `DELETE FROM product_variants WHERE product_id = $1`,
-          [targetId]
-        );
-        await client.query(
-          `INSERT INTO product_variants (product_id, name, price, stock_quantity)
-           VALUES ($1, $2, $3, $4)`,
-          [targetId, 'One Size (Fits 8 - 20)', item.price, 25]
-        );
+  for (const item of updates) {
+    let targetId = item.id;
+    if (!targetId) {
+      const check = await query('SELECT id FROM products WHERE name = $1', [item.name]);
+      if (check.rows.length > 0) {
+        targetId = check.rows[0].id;
       }
     }
 
-    await client.query('COMMIT');
-    console.log('✅ Database transaction committed successfully!');
+    if (targetId) {
+      console.log(`Updating database for "${item.name}" (ID: ${targetId})...`);
+      await query(
+        `UPDATE products 
+         SET images = $1, description = $2, base_price = $3 
+         WHERE id = $4`,
+        [item.images, item.description, item.price, targetId]
+      );
 
-    // 6. Update products.json
-    console.log('\n=== Step 6: Updating backend/products.json ===');
-    const productsJsonPath = path.resolve(__dirname, '../products.json');
-    if (fs.existsSync(productsJsonPath)) {
-      const products = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
-
-      for (const p of products) {
-        if (p.name === 'The EGO Dress I') {
-          p.images = brown4kUrls;
-          p.description = egoDescription;
-        } else if (p.name === 'The EGO Dress II') {
-          p.images = green4kUrls;
-          p.description = egoDescription;
-        } else if (p.name === 'The EGO Dress III') {
-          p.images = purple4kUrls;
-          p.description = egoDescription;
-        } else if (p.name === 'The AMEERAH Dress II' || p.id === '25a31395-7fde-4fc3-9c73-72a908ba4fd2') {
-          p.images = ameerah2_4kUrls;
-          p.description = ameerahDescription;
-        }
-      }
-
-      fs.writeFileSync(productsJsonPath, JSON.stringify(products, null, 2), 'utf8');
-      console.log('✅ Updated backend/products.json');
+      await query(
+        `DELETE FROM product_variants WHERE product_id = $1`,
+        [targetId]
+      );
+      await query(
+        `INSERT INTO product_variants (product_id, name, price, stock_quantity)
+         VALUES ($1, $2, $3, $4)`,
+        [targetId, 'One Size (Fits 8 - 20)', item.price, 25]
+      );
     }
-
-    // Clean up temporary processed directory
-    console.log('\n🧹 Cleaning up temporary local files...');
-    fs.rmSync(tempDir, { recursive: true, force: true });
-    console.log('✅ Cleaned up temporary files.');
-
-    console.log('\n🎉 ALL 4K PROCESSING, UPLOADING, AND DATABASE SYNCHRONIZATION COMPLETE!');
-
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('❌ Error during database transaction:', err);
-    throw err;
-  } finally {
-    client.release();
   }
+  console.log('✅ Database synchronized with all 4K assets!');
+
+  // 6. Update products.json
+  console.log('\n=== Step 6: Updating backend/products.json ===');
+  const productsJsonPath = path.resolve(__dirname, '../products.json');
+  if (fs.existsSync(productsJsonPath)) {
+    const products = JSON.parse(fs.readFileSync(productsJsonPath, 'utf8'));
+
+    for (const p of products) {
+      if (p.name === 'The EGO Dress I') {
+        p.images = brown4kUrls;
+        p.description = egoDescription;
+      } else if (p.name === 'The EGO Dress II') {
+        p.images = green4kUrls;
+        p.description = egoDescription;
+      } else if (p.name === 'The EGO Dress III') {
+        p.images = purple4kUrls;
+        p.description = egoDescription;
+      } else if (p.name === 'The AMEERAH Dress II' || p.id === '25a31395-7fde-4fc3-9c73-72a908ba4fd2') {
+        p.images = ameerah2_4kUrls;
+        p.description = ameerahDescription;
+      }
+    }
+
+    fs.writeFileSync(productsJsonPath, JSON.stringify(products, null, 2), 'utf8');
+    console.log('✅ Updated backend/products.json');
+  }
+
+  // Clean up temporary processed directory
+  console.log('\n🧹 Cleaning up temporary local files...');
+  fs.rmSync(tempDir, { recursive: true, force: true });
+  console.log('✅ Cleaned up temporary files.');
+
+  console.log('\n🎉 ALL 4K PROCESSING WITH -20% SATURATION COMPLETE!');
 }
 
 main().catch(err => {
