@@ -417,26 +417,30 @@ export function ProductDetail() {
 
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-bold uppercase tracking-wider">Size: {selectedVariant?.name || 'Select'}</span>
+                <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Size:</span>
+                  <span className="text-black font-extrabold">{selectedVariant?.name || 'Select'}</span>
+                </span>
                 <button
                   type="button"
                   onClick={() => setShowSizeGuide(true)}
-                  className="text-xs underline text-text-light hover:text-black transition-colors"
+                  className="text-xs font-bold underline text-text-light hover:text-black transition-colors flex items-center gap-1"
                 >
+                  <Sparkles size={12} className="text-accent" />
                   Size Guide
                 </button>
               </div>
-              <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {product.variants && product.variants.map((variant) => (
                   <button
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
                     disabled={variant.stockQuantity === 0}
                     className={cn(
-                      "h-10 border text-[10px] font-bold transition-all relative rounded-xs",
+                      "min-h-10 px-4 py-2 border text-xs font-bold transition-all relative rounded-md flex items-center justify-center text-center",
                       selectedVariant?.id === variant.id
-                        ? "border-black bg-black text-white"
-                        : "border-border hover:border-black text-black",
+                        ? "border-black bg-black text-white shadow-xs"
+                        : "border-border hover:border-black text-black bg-white",
                       variant.stockQuantity === 0 && "opacity-40 cursor-not-allowed border-gray-100"
                     )}
                   >
@@ -451,6 +455,16 @@ export function ProductDetail() {
               </div>
               {product.variants?.length === 0 && (
                 <p className="text-xs text-text-light italic">No sizes currently available.</p>
+              )}
+
+              {/* Bubu Universal Fit Callout */}
+              {Boolean(selectedVariant?.name?.toLowerCase().includes('one size') || selectedVariant?.name?.toLowerCase().includes('fits 8')) && (
+                <div className="mt-3 p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl flex items-start gap-2.5">
+                  <Sparkles size={15} className="text-accent mt-0.5 flex-shrink-0" />
+                  <div className="text-[11px] text-amber-950 leading-relaxed">
+                    <strong className="font-bold text-black">Bubu Universal Fit (UK 8 – 20 / US 4 – 16):</strong> Masterfully tailored with a voluminous, fluid drape that falls effortlessly across your curves with zero restrictive seams.
+                  </div>
+                </div>
               )}
             </div>
 

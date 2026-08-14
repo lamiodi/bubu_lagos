@@ -27,7 +27,8 @@
     "multer-storage-cloudinary": "^4.0.0",
     "paystack": "^2.0.1",
     "pg": "^8.22.0",
-    "resend": "^4.1.0"
+    "resend": "^4.1.0",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.16",
