@@ -160,9 +160,8 @@ export function ProductDetail() {
     ? getImageUrl(product.images[0]) || FALLBACK_IMAGE
     : FALLBACK_IMAGE;
 
-  const displayPrice = product?.variants && product.variants.length > 0
-    ? formatProductPrice(product.variants[0].price)
-    : formatProductPrice(product?.basePrice);
+  const activePrice = selectedVariant?.price ?? product?.variants?.[0]?.price ?? product?.basePrice;
+  const displayPrice = formatProductPrice(activePrice);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -431,27 +430,38 @@ export function ProductDetail() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2.5">
-                {product.variants && product.variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={() => setSelectedVariant(variant)}
-                    disabled={variant.stockQuantity === 0}
-                    className={cn(
-                      "min-h-10 px-4 py-2 border text-xs font-bold transition-all relative rounded-md flex items-center justify-center text-center",
-                      selectedVariant?.id === variant.id
-                        ? "border-black bg-black text-white shadow-xs"
-                        : "border-border hover:border-black text-black bg-white",
-                      variant.stockQuantity === 0 && "opacity-40 cursor-not-allowed border-gray-100"
-                    )}
-                  >
-                    {variant.name}
-                    {variant.stockQuantity === 0 && (
-                      <span className="absolute inset-0 flex items-center justify-center">
-                        <span className="w-full h-[1px] bg-black rotate-45 opacity-20"></span>
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {product.variants && product.variants.map((variant) => {
+                  const isPriceDifferent = variant.price && product.basePrice && Number(variant.price) !== Number(product.basePrice);
+                  return (
+                    <button
+                      key={variant.id}
+                      onClick={() => setSelectedVariant(variant)}
+                      disabled={variant.stockQuantity === 0}
+                      className={cn(
+                        "min-h-10 px-4 py-2 border text-xs font-bold transition-all relative rounded-md flex items-center justify-center text-center gap-1.5",
+                        selectedVariant?.id === variant.id
+                          ? "border-black bg-black text-white shadow-xs"
+                          : "border-border hover:border-black text-black bg-white",
+                        variant.stockQuantity === 0 && "opacity-40 cursor-not-allowed border-gray-100"
+                      )}
+                    >
+                      <span>{variant.name}</span>
+                      {isPriceDifferent && (
+                        <span className={cn(
+                          "text-[10px] font-normal",
+                          selectedVariant?.id === variant.id ? "text-white/80" : "text-text-light"
+                        )}>
+                          ({formatProductPrice(variant.price)})
+                        </span>
+                      )}
+                      {variant.stockQuantity === 0 && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <span className="w-full h-[1px] bg-black rotate-45 opacity-20"></span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               {product.variants?.length === 0 && (
                 <p className="text-xs text-text-light italic">No sizes currently available.</p>

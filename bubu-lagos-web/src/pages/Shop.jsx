@@ -115,7 +115,7 @@ function EditorialBanner({ category, activeCollections, collectionsList, product
     return selectedProducts.map(prod => ({
       id: prod.id,
       name: prod.name,
-      price: prod.basePrice,
+      price: prod.variants?.[0]?.price ?? prod.basePrice,
       image: getImageUrl(prod.images?.[0] || prod.imageUrl) || FALLBACK_IMAGE,
       url: `/product/${prod.id}`
     }));

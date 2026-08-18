@@ -1,7 +1,7 @@
 import { query, getClient } from '../db.js';
 import Paystack from 'paystack';
 import crypto from 'crypto';
-import { sendOrderConfirmationEmail, sendShippingUpdateEmail } from '../services/emailService.js';
+import { sendOrderConfirmationEmail, sendShippingUpdateEmail, sendDeliveryEmail } from '../services/emailService.js';
 
 const paystack = Paystack(process.env.PAYSTACK_SECRET_KEY);
 
@@ -284,21 +284,25 @@ export const createOrder = async (req, res) => {
 
     // Create order items and update stock
     for (const item of validatedItems) {
-      // Create order item
+      // Create order item (satisfying both modern and legacy column schemas)
       await client.query(
         `INSERT INTO order_items (
           order_id,
           product_id,
           product_variant_id,
+          variant_id,
           quantity,
           unit_price,
+          price_at_purchase,
           total_price
-        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           orderId,
           item.variant.product_id,
           item.variant.id,
+          item.variant.id,
           item.quantity,
+          item.price,
           item.price,
           item.itemTotal
         ]
@@ -397,10 +401,6 @@ export const createOrder = async (req, res) => {
 export const verifyPayment = async (req, res) => {
   try {
     const { reference } = req.params;
-    // Require the buyer's email as a 2nd factor. The reference is
-    // guessable up to ~1 in 16M (Date.now() + 4 hex) but the email
-    // makes a successful probe ~1 in 7B+. Returning 404 on mismatch
-    // prevents enumeration.
     const email = String(req.query.email || '').trim().toLowerCase();
     if (!reference) {
       return res.status(400).json({ error: 'Payment reference is required' });
@@ -412,39 +412,6 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ error: 'Invalid input' });
     }
 
-    // Verify the order exists for (reference, email) BEFORE contacting
-    // Paystack. This means a random probe never burns a Paystack API
-    // call and never reveals timing differences.
-    const probeResult = await query(
-      `SELECT id, customer_email FROM orders
-       WHERE reference = $1 AND LOWER(customer_email) = $2`,
-      [reference, email]
-    );
-    if (probeResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Verify payment with Paystack
-    const verificationResponse = await paystack.transaction.verify(reference);
-
-    if (!verificationResponse.status) {
-      return res.status(400).json({
-        error: 'Payment verification failed',
-        details: verificationResponse.message
-      });
-    }
-
-    const paymentData = verificationResponse.data;
-
-    // Update order status based on payment verification
-    let orderStatus = 'Pending';
-
-    if (paymentData.status === 'success') {
-      orderStatus = 'Paid';
-    } else if (paymentData.status === 'failed') {
-      orderStatus = 'Pending'; // Keep as pending for failed payments
-    }
-
     const client = await getClient();
 
     try {
@@ -452,8 +419,8 @@ export const verifyPayment = async (req, res) => {
 
       // Fetch the order and lock it
       const existingOrderResult = await client.query(
-        `SELECT * FROM orders WHERE reference = $1 FOR UPDATE`,
-        [reference]
+        `SELECT * FROM orders WHERE reference = $1 AND LOWER(customer_email) = $2 FOR UPDATE`,
+        [reference, email]
       );
 
       if (existingOrderResult.rows.length === 0) {
@@ -463,11 +430,11 @@ export const verifyPayment = async (req, res) => {
 
       const existingOrder = existingOrderResult.rows[0];
 
-      // If the order has already been successfully verified or successfully marked failed, skip reprocessing
-      if (existingOrder.status === 'Paid' || existingOrder.status === 'Failed') {
+      // If the order has already been successfully verified or marked failed/cancelled, return immediately
+      if (existingOrder.status === 'Paid' || existingOrder.status === 'Processing' || existingOrder.status === 'Shipped' || existingOrder.status === 'Delivered') {
         await client.query('ROLLBACK');
         return res.json({
-          success: existingOrder.status === 'Paid',
+          success: true,
           order: {
             id: existingOrder.id,
             reference: existingOrder.reference,
@@ -477,18 +444,61 @@ export const verifyPayment = async (req, res) => {
             paymentVerifiedAt: existingOrder.payment_verified_at
           },
           payment: {
-            status: paymentData.status,
-            amount: paymentData.amount / 100,
-            currency: paymentData.currency,
-            paidAt: paymentData.paid_at,
-            reference: paymentData.reference
+            status: 'success',
+            amount: parseFloat(existingOrder.total_amount),
+            reference: existingOrder.payment_reference || existingOrder.reference
           },
-          message: `Payment verification already processed as ${existingOrder.status}`
+          message: `Order payment verified (${existingOrder.status})`
         });
       }
 
-      if (paymentData.status === 'failed') {
-        orderStatus = 'Failed'; // Mark failed permanently to drop the checkout hold
+      if (existingOrder.status === 'Failed' || existingOrder.status === 'Cancelled') {
+        await client.query('ROLLBACK');
+        return res.json({
+          success: false,
+          order: {
+            id: existingOrder.id,
+            reference: existingOrder.reference,
+            status: existingOrder.status,
+            totalAmount: parseFloat(existingOrder.total_amount),
+            customerEmail: existingOrder.customer_email
+          },
+          payment: {
+            status: 'failed',
+            reference: existingOrder.reference
+          },
+          message: `Order is marked as ${existingOrder.status}`
+        });
+      }
+
+      // Verify payment with Paystack
+      let verificationResponse;
+      try {
+        verificationResponse = await paystack.transaction.verify(reference);
+      } catch (paystackErr) {
+        console.error('Paystack verification call error:', paystackErr.message);
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: 'Payment verification failed with provider',
+          details: paystackErr.message
+        });
+      }
+
+      if (!verificationResponse || !verificationResponse.status) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: 'Payment verification failed',
+          details: verificationResponse?.message
+        });
+      }
+
+      const paymentData = verificationResponse.data;
+      let orderStatus = 'Pending';
+
+      if (paymentData.status === 'success') {
+        orderStatus = 'Paid';
+      } else if (paymentData.status === 'failed') {
+        orderStatus = 'Failed';
       }
 
       // Update order status
@@ -496,16 +506,12 @@ export const verifyPayment = async (req, res) => {
         `UPDATE orders 
          SET status = $1,
              payment_reference = $2,
-             payment_verified_at = NOW()
+             payment_verified_at = NOW(),
+             updated_at = NOW()
          WHERE reference = $3
          RETURNING *`,
-        [orderStatus, reference, reference]
+        [orderStatus, paymentData.reference || reference, reference]
       );
-
-      if (orderResult.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Order not found' });
-      }
 
       const order = orderResult.rows[0];
 
@@ -539,7 +545,6 @@ export const verifyPayment = async (req, res) => {
 
       // If payment failed, restore stock
       if (paymentData.status === 'failed') {
-        // Get order items
         const itemsResult = await client.query(
           `SELECT oi.product_variant_id, oi.quantity
            FROM order_items oi
@@ -547,7 +552,6 @@ export const verifyPayment = async (req, res) => {
           [order.id]
         );
 
-        // Restore stock for each item
         for (const item of itemsResult.rows) {
           await client.query(
             `UPDATE product_variants 
@@ -648,7 +652,8 @@ export const getOrderById = async (req, res) => {
         paymentVerifiedAt: order.payment_verified_at,
         trackingNumber: order.tracking_number,
         shippingCarrier: order.shipping_carrier,
-        createdAt: order.created_at
+        createdAt: order.created_at,
+        updatedAt: order.updated_at
       },
       items
     });
@@ -709,8 +714,11 @@ export const getOrders = async (req, res) => {
       reference: order.reference,
       customerName: order.customer_name,
       customerEmail: order.customer_email,
+      customerPhone: order.customer_phone,
       totalAmount: parseFloat(order.total_amount),
       status: order.status,
+      trackingNumber: order.tracking_number,
+      shippingCarrier: order.shipping_carrier,
       createdAt: order.created_at
     }));
 
@@ -731,15 +739,36 @@ export const getOrders = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
+  const client = await getClient();
   try {
     const { id } = req.params;
     const { status, trackingNumber, shippingCarrier } = req.body;
 
-    if (!status || !['Pending', 'Paid', 'Shipped', 'Cancelled'].includes(status)) {
-      return res.status(400).json({ error: 'Valid status is required (Pending, Paid, Shipped, or Cancelled)' });
+    const VALID_STATUSES = ['Pending', 'Paid', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
+    if (!status || !VALID_STATUSES.includes(status)) {
+      return res.status(400).json({ 
+        error: `Valid status is required (${VALID_STATUSES.join(', ')})` 
+      });
     }
 
-    const result = await query(
+    await client.query('BEGIN');
+
+    // Fetch existing order to check previous status
+    const existingRes = await client.query(
+      `SELECT * FROM orders WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
+
+    if (existingRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const previousOrder = existingRes.rows[0];
+    const previousStatus = previousOrder.status;
+
+    const result = await client.query(
       `UPDATE orders 
        SET status = $1,
            tracking_number = COALESCE($2, tracking_number),
@@ -750,19 +779,55 @@ export const updateOrderStatus = async (req, res) => {
       [status, trackingNumber || null, shippingCarrier || null, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
     const order = result.rows[0];
 
-    // If status changed to Shipped, send email
+    // If order was cancelled (and previously not cancelled), restore variant stock
+    if (status === 'Cancelled' && previousStatus !== 'Cancelled') {
+      const itemsResult = await client.query(
+        `SELECT product_variant_id, quantity FROM order_items WHERE order_id = $1`,
+        [id]
+      );
+      for (const item of itemsResult.rows) {
+        if (item.product_variant_id) {
+          await client.query(
+            `UPDATE product_variants SET stock_quantity = stock_quantity + $1 WHERE id = $2`,
+            [item.quantity, item.product_variant_id]
+          );
+        }
+      }
+    }
+
+    // If order was uncanceled (moved back from Cancelled), re-deduct stock
+    if (previousStatus === 'Cancelled' && status !== 'Cancelled') {
+      const itemsResult = await client.query(
+        `SELECT product_variant_id, quantity FROM order_items WHERE order_id = $1`,
+        [id]
+      );
+      for (const item of itemsResult.rows) {
+        if (item.product_variant_id) {
+          await client.query(
+            `UPDATE product_variants SET stock_quantity = GREATEST(0, stock_quantity - $1) WHERE id = $2`,
+            [item.quantity, item.product_variant_id]
+          );
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+
+    // Send status update emails (non-blocking)
     if (status === 'Shipped' && order.customer_email) {
       try {
-        const trackingInfo = trackingNumber ? { trackingNumber, shippingCarrier } : null;
+        const trackingInfo = order.tracking_number ? { trackingNumber: order.tracking_number, shippingCarrier: order.shipping_carrier } : null;
         await sendShippingUpdateEmail(order.customer_email, order, trackingInfo, order.customer_name);
       } catch (emailErr) {
         console.error('Failed to send shipping update email:', emailErr);
+      }
+    } else if (status === 'Delivered' && order.customer_email) {
+      try {
+        await sendDeliveryEmail(order.customer_email, order, order.customer_name);
+      } catch (emailErr) {
+        console.error('Failed to send delivery email:', emailErr);
       }
     }
 
@@ -770,51 +835,81 @@ export const updateOrderStatus = async (req, res) => {
       id: order.id,
       reference: order.reference,
       status: order.status,
+      trackingNumber: order.tracking_number,
+      shippingCarrier: order.shipping_carrier,
       updatedAt: order.updated_at,
       message: `Order status updated to ${status}`
     });
 
   } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Error updating order status:', error);
     res.status(500).json({ error: 'Failed to update order status' });
+  } finally {
+    client.release();
   }
 };
 
 /**
- * [NEW] Bulk update status for many orders in a single request.
- * Body: { ids: number[], status: 'Pending' | 'Paid' | 'Shipped' | 'Cancelled' }
+ * Bulk update status for many orders in a single request.
  */
 export const bulkUpdateStatus = async (req, res) => {
+  const client = await getClient();
   try {
     const { ids, status } = req.body;
+
+    const VALID_STATUSES = ['Pending', 'Paid', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'ids must be a non-empty array' });
     }
-    if (!status || !['Pending', 'Paid', 'Shipped', 'Cancelled'].includes(status)) {
-      return res.status(400).json({ error: 'Valid status is required (Pending, Paid, Shipped, or Cancelled)' });
+    if (!status || !VALID_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `Valid status is required (${VALID_STATUSES.join(', ')})` });
     }
 
-    // Cap the batch size to avoid runaway updates
     const limitedIds = ids.slice(0, 500);
 
-    const result = await query(
+    await client.query('BEGIN');
+
+    // If cancelling, restore stock for all affected orders that were not previously cancelled
+    if (status === 'Cancelled') {
+      const itemsToRestore = await client.query(
+        `SELECT oi.product_variant_id, oi.quantity 
+         FROM order_items oi
+         JOIN orders o ON oi.order_id = o.id
+         WHERE o.id = ANY($1::text[]) AND o.status != 'Cancelled' AND oi.product_variant_id IS NOT NULL`,
+        [limitedIds]
+      );
+      for (const item of itemsToRestore.rows) {
+        await client.query(
+          `UPDATE product_variants SET stock_quantity = stock_quantity + $1 WHERE id = $2`,
+          [item.quantity, item.product_variant_id]
+        );
+      }
+    }
+
+    const result = await client.query(
       `UPDATE orders
        SET status = $1, updated_at = NOW()
-       WHERE id = ANY($2::int[])
-       RETURNING id, reference, status, customer_email`,
+       WHERE id = ANY($2::text[])
+       RETURNING id, reference, status, customer_email, customer_name, tracking_number, shipping_carrier`,
       [status, limitedIds]
     );
 
-    // Fire-and-forget shipping emails for newly shipped orders
+    await client.query('COMMIT');
+
+    // Fire emails asynchronously
     if (status === 'Shipped') {
       for (const order of result.rows) {
         if (order.customer_email) {
-          try {
-            await sendShippingUpdateEmail(order.customer_email, order, null, order.customer_name);
-          } catch (emailErr) {
-            console.error(`Failed to send shipping email for order ${order.reference}:`, emailErr);
-          }
+          const trackingInfo = order.tracking_number ? { trackingNumber: order.tracking_number, shippingCarrier: order.shipping_carrier } : null;
+          sendShippingUpdateEmail(order.customer_email, order, trackingInfo, order.customer_name).catch(e => console.error(e));
+        }
+      }
+    } else if (status === 'Delivered') {
+      for (const order of result.rows) {
+        if (order.customer_email) {
+          sendDeliveryEmail(order.customer_email, order, order.customer_name).catch(e => console.error(e));
         }
       }
     }
@@ -829,23 +924,17 @@ export const bulkUpdateStatus = async (req, res) => {
       })),
     });
   } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Error bulk-updating order status:', error);
     res.status(500).json({ error: 'Failed to bulk-update order status' });
+  } finally {
+    client.release();
   }
 };
 
-// Paystack Webhook Handler
-// ---------------------------------------------------------------------------
-// trackOrder  (PUBLIC — guest checkout)
-//
-//   GET /api/orders/track?ref=BUBU-…&email=customer@example.com
-//
-//   Returns a sanitised view of the order. Requires BOTH the reference
-//   AND the email used at checkout — a guess of one without the other
-//   returns 404 (no enumeration). Rate-limited via the global
-//   apiLimiter. Never returns internal IDs, customer_id, gift card
-//   codes, or the raw payment reference.
-// ---------------------------------------------------------------------------
+/**
+ * Public Track Order Endpoint
+ */
 export const trackOrder = async (req, res) => {
   try {
     const rawRef = String(req.query.ref || '').trim();
@@ -859,7 +948,8 @@ export const trackOrder = async (req, res) => {
 
     const orderResult = await query(
       `SELECT id, reference, status, customer_name, customer_email, customer_phone,
-              shipping_address, total_amount, payment_verified_at, created_at
+              shipping_address, total_amount, payment_verified_at, tracking_number, shipping_carrier,
+              created_at, updated_at
        FROM orders
        WHERE reference = $1 AND LOWER(customer_email) = $2`,
       [rawRef, rawEmail]
@@ -884,10 +974,15 @@ export const trackOrder = async (req, res) => {
         reference: order.reference,
         status: order.status,
         customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        customerPhone: order.customer_phone,
         shippingAddress: order.shipping_address,
         totalAmount: parseFloat(order.total_amount),
+        trackingNumber: order.tracking_number,
+        shippingCarrier: order.shipping_carrier,
         paidAt: order.payment_verified_at,
         createdAt: order.created_at,
+        updatedAt: order.updated_at
       },
       items: itemsResult.rows.map((it) => ({
         productName: it.product_name,

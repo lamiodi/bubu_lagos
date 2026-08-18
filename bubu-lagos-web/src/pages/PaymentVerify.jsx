@@ -151,18 +151,18 @@ export function PaymentVerify() {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-md">
+            <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full max-w-lg">
               <Link
-                to="/shop"
-                className="flex-1 py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors text-center"
+                to={`/track-order?ref=${encodeURIComponent(orderDetails?.reference || '')}&email=${encodeURIComponent(orderDetails?.customerEmail || '')}`}
+                className="flex-1 py-4 bg-black text-white font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors text-center text-xs"
               >
-                Shop the Collection
+                Track Fulfillment Live
               </Link>
               <Link
-                to="/contact"
-                className="flex-1 py-4 border-2 border-black font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors text-center"
+                to="/shop"
+                className="flex-1 py-4 border-2 border-black font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors text-center text-xs"
               >
-                Speak to Concierge
+                Shop Collection
               </Link>
             </div>
           </motion.div>

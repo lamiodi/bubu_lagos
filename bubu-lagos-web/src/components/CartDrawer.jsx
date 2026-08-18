@@ -50,13 +50,15 @@ export function CartDrawer() {
 
   const handleQuickAdd = (product) => {
     const img = product.images && product.images.length > 0 ? getImageUrl(product.images[0]) : FALLBACK_IMAGE;
+    const defaultVariant = product.variants?.[0];
+    const price = defaultVariant?.price ?? product.basePrice;
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.basePrice,
+      price: price,
       image: img,
-      variantId: product.variants?.[0]?.id || null
-    }, product.variants?.[0]?.name || 'Default');
+      variantId: defaultVariant?.id || null
+    }, defaultVariant?.name || 'Default');
 
     toast.success(`Added ${product.name} to selection`);
     setAddedItemIds(prev => ({ ...prev, [product.id]: true }));

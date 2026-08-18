@@ -248,10 +248,27 @@ export function AdminProducts() {
     });
   };
 
+  const handleBasePriceChange = (newPrice) => {
+    setFormData((prev) => {
+      const oldPrice = prev.basePrice;
+      const updatedVariants = (prev.variants || []).map(v => {
+        if (!v.price || String(v.price) === String(oldPrice)) {
+          return { ...v, price: newPrice };
+        }
+        return v;
+      });
+      return {
+        ...prev,
+        basePrice: newPrice,
+        variants: updatedVariants
+      };
+    });
+  };
+
   const addVariant = () => {
     setFormData((prev) => ({
       ...prev,
-      variants: [...prev.variants, { name: '', sku: '', price: '', stockQuantity: 0 }]
+      variants: [...prev.variants, { name: '', sku: '', price: prev.basePrice || '', stockQuantity: 0 }]
     }));
   };
 
@@ -305,7 +322,13 @@ export function AdminProducts() {
         form.append('videoUrl', '');
       }
 
-      form.append('variants', JSON.stringify(formData.variants));
+      const sanitizedVariants = (formData.variants || []).map((v) => ({
+        ...v,
+        price: v.price !== '' && v.price !== undefined ? parseFloat(v.price) : parseFloat(formData.basePrice),
+        stockQuantity: parseInt(v.stockQuantity, 10) || 0
+      }));
+
+      form.append('variants', JSON.stringify(sanitizedVariants));
 
       if (editingProduct) {
         // [FIX] Use PUT for updates so we don't accidentally create duplicates.
@@ -682,7 +705,7 @@ export function AdminProducts() {
                   <input
                     type="number"
                     value={formData.basePrice}
-                    onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                    onChange={(e) => handleBasePriceChange(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black"
                     required
                   />

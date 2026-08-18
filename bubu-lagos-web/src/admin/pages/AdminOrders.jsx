@@ -11,10 +11,13 @@ import { TableRowSkeleton, TableEmptyState } from '../../components/Skeleton';
 import { formatNGN, formatDate } from '../../lib/utils';
 
 const STATUS_COLORS = {
-  'Pending': 'bg-yellow-100 text-yellow-700',
-  'Paid': 'bg-blue-100 text-blue-700',
-  'Shipped': 'bg-green-100 text-green-700',
-  'Cancelled': 'bg-red-100 text-red-700'
+  'Pending': 'bg-amber-100 text-amber-800',
+  'Paid': 'bg-blue-100 text-blue-800',
+  'Processing': 'bg-indigo-100 text-indigo-800',
+  'Shipped': 'bg-purple-100 text-purple-800',
+  'Delivered': 'bg-emerald-100 text-emerald-800',
+  'Cancelled': 'bg-rose-100 text-rose-800',
+  'Failed': 'bg-red-100 text-red-800'
 };
 
 export function AdminOrders() {
@@ -324,7 +327,9 @@ export function AdminOrders() {
                 <option value="">All Statuses</option>
                 <option value="Pending">Pending</option>
                 <option value="Paid">Paid</option>
+                <option value="Processing">Processing</option>
                 <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
             </div>
@@ -333,9 +338,9 @@ export function AdminOrders() {
 
         {/* Bulk action bar */}
         {selectedIds.size > 0 && (
-          <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center justify-between text-sm">
+          <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center justify-between text-sm flex-wrap gap-2">
             <span className="font-medium text-blue-900">{selectedIds.size} selected</span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => bulkUpdate('Paid')}
                 className="px-3 py-1 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
@@ -343,10 +348,22 @@ export function AdminOrders() {
                 Mark Paid
               </button>
               <button
+                onClick={() => bulkUpdate('Processing')}
+                className="px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-indigo-700 transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
+              >
+                Mark Processing
+              </button>
+              <button
                 onClick={() => bulkUpdate('Shipped')}
-                className="px-3 py-1 bg-green-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-green-700 transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
+                className="px-3 py-1 bg-purple-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-purple-700 transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
               >
                 Mark Shipped
+              </button>
+              <button
+                onClick={() => bulkUpdate('Delivered')}
+                className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-emerald-700 transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none"
+              >
+                Mark Delivered
               </button>
               <button
                 onClick={() => setPendingCancel({ count: selectedIds.size })}
@@ -622,20 +639,24 @@ export function AdminOrders() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {['Paid', 'Shipped', 'Cancelled'].map((status) => (
+                {[
+                  { key: 'Paid', label: 'Mark as Paid', bg: 'bg-blue-600 hover:bg-blue-700 text-white' },
+                  { key: 'Processing', label: 'Mark as Processing', bg: 'bg-indigo-600 hover:bg-indigo-700 text-white' },
+                  { key: 'Shipped', label: 'Mark as Shipped', bg: 'bg-purple-600 hover:bg-purple-700 text-white' },
+                  { key: 'Delivered', label: 'Mark as Delivered', bg: 'bg-emerald-600 hover:bg-emerald-700 text-white' },
+                  { key: 'Cancelled', label: 'Mark as Cancelled', bg: 'bg-red-600 hover:bg-red-700 text-white' }
+                ].map(({ key, label, bg }) => (
                   <button
-                    key={status}
-                    onClick={() => updateOrderStatus(selectedOrder.order?.id, status)}
-                    disabled={updatingStatus || selectedOrder.order?.status === status}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none ${
-                      selectedOrder.order?.status === status
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : status === 'Cancelled'
-                          ? 'bg-red-600 text-white hover:bg-red-700'
-                          : 'bg-black text-white hover:bg-gray-800'
+                    key={key}
+                    onClick={() => updateOrderStatus(selectedOrder.order?.id, key)}
+                    disabled={updatingStatus || selectedOrder.order?.status === key}
+                    className={`px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 outline-none ${
+                      selectedOrder.order?.status === key
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                        : bg
                     }`}
                   >
-                    Mark as {status}
+                    {label}
                   </button>
                 ))}
               </div>
