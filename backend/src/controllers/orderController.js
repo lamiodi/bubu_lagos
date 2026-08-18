@@ -3,7 +3,13 @@ import Paystack from 'paystack';
 import crypto from 'crypto';
 import { sendOrderConfirmationEmail, sendShippingUpdateEmail, sendDeliveryEmail } from '../services/emailService.js';
 
-const paystack = Paystack(process.env.PAYSTACK_SECRET_KEY);
+const getPaystack = () => {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('PAYSTACK_SECRET_KEY is not configured in environment');
+  }
+  return Paystack(secretKey);
+};
 
 export const createOrder = async (req, res) => {
   const client = await getClient();
@@ -356,7 +362,7 @@ export const createOrder = async (req, res) => {
       }
     };
 
-    const paymentResponse = await paystack.transaction.initialize(paymentData);
+    const paymentResponse = await getPaystack().transaction.initialize(paymentData);
 
     if (!paymentResponse.status) {
       await client.query('ROLLBACK');
@@ -474,7 +480,7 @@ export const verifyPayment = async (req, res) => {
       // Verify payment with Paystack
       let verificationResponse;
       try {
-        verificationResponse = await paystack.transaction.verify(reference);
+        verificationResponse = await getPaystack().transaction.verify(reference);
       } catch (paystackErr) {
         console.error('Paystack verification call error:', paystackErr.message);
         await client.query('ROLLBACK');

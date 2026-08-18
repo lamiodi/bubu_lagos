@@ -11,7 +11,7 @@ export const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS', // never count CORS preflights
+  skip: (req) => req.method === 'OPTIONS' || (req.originalUrl && req.originalUrl.startsWith('/api/webhooks')),
 });
 
 // Per-IP limiter for the auth-sensitive endpoints (login, register,

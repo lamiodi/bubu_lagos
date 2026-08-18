@@ -314,7 +314,7 @@ export function Checkout() {
                     <input 
                       type="text" 
                       name="zipCode"
-                      placeholder="ZIP / Postal code" 
+                      placeholder="Postal code (optional)" 
                       className="w-1/3 p-3 border border-border focus:border-black outline-none rounded-xs" 
                       value={formData.zipCode}
                       onChange={handleInputChange}

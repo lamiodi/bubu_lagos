@@ -43,9 +43,15 @@ router.post('/paystack', async (req, res) => {
       return res.status(500).send('Server misconfigured');
     }
 
+    const secretKey = process.env.PAYSTACK_SECRET_KEY || PAYSTACK_SECRET_KEY;
+    if (!secretKey) {
+      console.error('[bubu-webhook] PAYSTACK_SECRET_KEY is missing in environment variables');
+      return res.status(500).send('Server misconfigured');
+    }
+
     // 1. Verify HMAC SHA-512 over the EXACT raw bytes Paystack sent.
     const expected = crypto
-      .createHmac('sha512', PAYSTACK_SECRET_KEY)
+      .createHmac('sha512', secretKey)
       .update(req.rawBody)
       .digest('hex');
 

@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync } from 'fs';
@@ -21,8 +21,6 @@ import couponRoutes from './routes/couponRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import { startCronJobs } from './services/cronService.js';
 import { getPoolStats } from './db.js';
-
-dotenv.config();
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_PROD = NODE_ENV === 'production';
